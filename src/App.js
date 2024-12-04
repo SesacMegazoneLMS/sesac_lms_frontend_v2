@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import AuthLayout from './layouts/AuthLayout';
 import MainLayout from './layouts/MainLayout';
@@ -20,6 +21,8 @@ import RoadmapsPage from './pages/roadmap/RoadmapsPage';
 import FreeCourses from './pages/course/FreeCourses';
 import AuthCallback from './pages/auth/AuthCallback';
 import ConfirmEmail from './pages/auth/ConfirmEmail';
+import CommunityPage from './pages/community/CommunityPage';
+import styled from 'styled-components';
 
 function App() {
   return (
@@ -35,7 +38,8 @@ function App() {
             <Route path="profile" element={<ProfilePage />} />
             <Route path="cart" element={<CartPage />} />
             <Route path="roadmaps" element={<RoadmapsPage />} />
-            {/* 강사 전용 라우트 */}
+            <Route path="community" element={<CommunityPage />} />
+            
             <Route path="instructor">
               <Route path="course/create" element={<CourseCreatePage />} />
               <Route path="course/:id/edit" element={<CourseManagementPage />} />
