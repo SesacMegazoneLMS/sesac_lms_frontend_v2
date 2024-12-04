@@ -32,9 +32,9 @@ function HomePage() {
             현업 전문가들과 함께하는 실전 강의로 <br />
             당신의 커리어를 성장시키세요
           </p>
-          <Link to="/courses/free">
+          <Link to="/courses/free기>
             <button className="bg-white text-blue-600 px-6 py-3 rounded-md font-medium hover:bg-gray-100">
-              무료 강의 시작하기
+              무료 강의 종료하기
             </button>
           </Link>
         </div>
