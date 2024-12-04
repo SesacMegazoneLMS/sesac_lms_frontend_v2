@@ -1,0 +1,174 @@
+{
+    "reviews": [
+      {
+        "id": 1,
+        "courseId": 1,
+        "userId": 1,
+        "rating": 5,
+        "content": "강의가 매우 체계적이고 이해하기 쉬웠습니다.",
+        "createdAt": "2024-03-20T15:00:00Z",
+        "likes": 12,
+        "helpful": true
+      },
+      {
+        "id": 2,
+        "courseId": 1,
+        "userId": 3,
+        "rating": 4,
+        "content": "실무에서 바로 적용할 수 있는 내용이 많았습니다.",
+        "createdAt": "2024-03-18T10:00:00Z",
+        "likes": 8,
+        "helpful": true
+      },
+      {
+        "id": 3,
+        "courseId": 2,
+        "userId": 4,
+        "rating": 5,
+        "content": "보안에 대한 기초부터 심화까지 잘 설명되어 있어요.",
+        "createdAt": "2024-03-17T09:30:00Z",
+        "likes": 15,
+        "helpful": true
+      },
+      {
+        "id": 4,
+        "courseId": 3,
+        "userId": 5,
+        "rating": 4,
+        "content": "프론트엔드 개발의 핵심을 잘 짚어주셨습니다.",
+        "createdAt": "2024-03-16T14:20:00Z",
+        "likes": 10,
+        "helpful": true
+      },
+      {
+        "id": 5,
+        "courseId": 1,
+        "userId": 6,
+        "rating": 3,
+        "content": "좋은 내용이지만 진도가 조금 빠른 감이 있네요.",
+        "createdAt": "2024-03-15T11:45:00Z",
+        "likes": 5,
+        "helpful": false
+      },
+      {
+        "id": 6,
+        "courseId": 2,
+        "userId": 7,
+        "rating": 5,
+        "content": "실제 해킹 사례를 통한 학습이 매우 효과적이었습니다.",
+        "createdAt": "2024-03-14T16:30:00Z",
+        "likes": 20,
+        "helpful": true
+      },
+      {
+        "id": 7,
+        "courseId": 3,
+        "userId": 8,
+        "rating": 4,
+        "content": "최신 트렌드를 반영한 강의 내용이 좋았습니다.",
+        "createdAt": "2024-03-13T13:15:00Z",
+        "likes": 7,
+        "helpful": true
+      },
+      {
+        "id": 8,
+        "courseId": 1,
+        "userId": 9,
+        "rating": 5,
+        "content": "스프링의 핵심 개념을 정말 잘 설명해주셨어요.",
+        "createdAt": "2024-03-12T10:20:00Z",
+        "likes": 18,
+        "helpful": true
+      },
+      {
+        "id": 9,
+        "courseId": 2,
+        "userId": 10,
+        "rating": 4,
+        "content": "보안 관련 실습이 매우 유익했습니다.",
+        "createdAt": "2024-03-11T15:40:00Z",
+        "likes": 9,
+        "helpful": true
+      },
+      {
+        "id": 10,
+        "courseId": 3,
+        "userId": 11,
+        "rating": 5,
+        "content": "웹 개발의 A to Z를 배울 수 있었습니다.",
+        "createdAt": "2024-03-10T12:00:00Z",
+        "likes": 14,
+        "helpful": true
+      },
+      {
+        "id": 11,
+        "courseId": 1,
+        "userId": 12,
+        "rating": 4,
+        "content": "실무 예제가 많아서 좋았습니다.",
+        "createdAt": "2024-03-09T09:15:00Z",
+        "likes": 11,
+        "helpful": true
+      },
+      {
+        "id": 12,
+        "courseId": 2,
+        "userId": 13,
+        "rating": 5,
+        "content": "보안 전문가의 실전 노하우가 담겨있어요.",
+        "createdAt": "2024-03-08T14:50:00Z",
+        "likes": 16,
+        "helpful": true
+      },
+      {
+        "id": 13,
+        "courseId": 3,
+        "userId": 14,
+        "rating": 3,
+        "content": "기초적인 내용이 조금 부족한 것 같습니다.",
+        "createdAt": "2024-03-07T11:30:00Z",
+        "likes": 4,
+        "helpful": false
+      },
+      {
+        "id": 14,
+        "courseId": 1,
+        "userId": 15,
+        "rating": 5,
+        "content": "강사님의 설명이 매우 명확하고 이해하기 쉬웠어요.",
+        "createdAt": "2024-03-06T16:20:00Z",
+        "likes": 13,
+        "helpful": true
+      },
+      {
+        "id": 15,
+        "courseId": 2,
+        "userId": 16,
+        "rating": 4,
+        "content": "보안 관련 최신 트렌드를 잘 다뤄주셨습니다.",
+        "createdAt": "2024-03-05T13:40:00Z",
+        "likes": 8,
+        "helpful": true
+      },
+      {
+        "id": 16,
+        "courseId": 3,
+        "userId": 17,
+        "rating": 5,
+        "content": "프론트엔드 개발자로 성장하는데 큰 도움이 되었어요.",
+        "createdAt": "2024-03-04T10:10:00Z",
+        "likes": 19,
+        "helpful": true
+      },
+      {
+        "id": 17,
+        "courseId": 1,
+        "userId": 18,
+        "rating": 4,
+        "content": "스프링 부트의 실전 활용법을 잘 배웠습니다.",
+        "createdAt": "2024-03-03T15:25:00Z",
+        "likes": 7,
+        "helpful": true
+      }
+    ]
+  }

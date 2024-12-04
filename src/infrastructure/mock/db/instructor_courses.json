@@ -1,0 +1,22 @@
+{
+    "draft_courses": [],
+    "published_courses": [],
+    "course_templates": [
+      {
+        "id": "template1",
+        "title": "새 강좌",
+        "status": "draft",
+        "basic_info": {
+          "category": "",
+          "level": "",
+          "price": 0,
+          "description": "",
+          "thumbnail": ""
+        },
+        "curriculum": [],
+        "materials": [],
+        "requirements": [],
+        "objectives": []
+      }
+    ]
+  }

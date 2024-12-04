@@ -1,0 +1,149 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "홍길동",
+      "email": "hong@example.com", 
+      "password": "qwer1234",
+      "userType": "student",
+      "address": "서울시 강남구 테헤란로 123",
+      "phone": "010-1234-5678",
+      "enrolledCourses": [1, 3],
+      "completedCourses": [2],
+      "cart": [],
+      "learningProgress": {
+        "1": {
+          "completedLectures": ["1-1", "1-2"],
+          "completedQuizzes": [1],
+          "progress": 45
+        },
+        "3": {
+          "completedLectures": ["1-1"],
+          "completedQuizzes": [],
+          "progress": 15
+        }
+      },
+      "reviews": [
+        {
+          "courseId": 1,
+          "rating": 5,
+          "content": "강의가 매우 체계적이고 이해하기 쉬웠습니다.",
+          "createdAt": "2024-03-20T15:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "김강사",
+      "email": "kim.instructor@example.com",
+      "password": "qwer1234",
+      "userType": "instructor",
+      "address": "서울시 서초구 방배로 456",
+      "phone": "010-2345-6789",
+      "teachingCourses": [1],
+      "bio": "10년차 백엔드 개발자, 현직 네이버 리드 개발자",
+      "cart": []
+    },
+    {
+      "id": 3,
+      "name": "이보안",
+      "email": "lee.security@example.com",
+      "password": "qwer1234",
+      "userType": "instructor",
+      "address": "서울시 송파구 올림픽로 789",
+      "phone": "010-3456-7890",
+      "teachingCourses": [2],
+      "bio": "사이버 보안 전문가, 전직 국정원 모의해킹 담당",
+      "cart": []
+    },
+    {
+      "id": 4,
+      "name": "박웹디",
+      "email": "park.web@example.com",
+      "password": "qwer1234",
+      "userType": "instructor",
+      "address": "서울시 마포구 홍대로 321",
+      "phone": "010-4567-8901",
+      "teachingCourses": [3],
+      "bio": "프론트엔드 전문가, 구글 코리아 프론트엔드 개발자",
+      "cart": []
+    },
+    {
+      "id": 12,
+      "name": "김학생",
+      "email": "student1@example.com",
+      "password": "qwer1234",
+      "userType": "student",
+      "address": "경기도 성남시 분당구 판교로 123",
+      "phone": "010-5678-9012",
+      "enrolledCourses": [1, 2],
+      "completedCourses": [],
+      "cart": [3, 4],
+      "learningProgress": {
+        "1": {
+          "completedLectures": ["1-1"],
+          "completedQuizzes": [],
+          "progress": 20
+        },
+        "2": {
+          "completedLectures": ["1-1", "1-2"],
+          "completedQuizzes": [1],
+          "progress": 35
+        }
+      },
+      "reviews": []
+    },
+    {
+      "id": 13,
+      "name": "이학생",
+      "email": "student2@example.com",
+      "password": "qwer1234",
+      "userType": "student",
+      "address": "경기도 수원시 영통구 광교로 456",
+      "phone": "010-6789-0123",
+      "enrolledCourses": [3],
+      "completedCourses": [1, 2],
+      "cart": [4],
+      "learningProgress": {
+        "3": {
+          "completedLectures": ["1-1", "1-2"],
+          "completedQuizzes": [1],
+          "progress": 40
+        }
+      },
+      "reviews": [
+        {
+          "courseId": 1,
+          "rating": 4,
+          "content": "실무에 많은 도움이 되었습니다.",
+          "createdAt": "2024-03-15T10:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "name": "박학생",
+      "email": "student3@example.com",
+      "password": "qwer1234",
+      "userType": "student",
+      "address": "인천시 연수구 송도문화로 789",
+      "phone": "010-7890-1234",
+      "enrolledCourses": [4, 5],
+      "completedCourses": [3],
+      "cart": [1, 2],
+      "learningProgress": {
+        "4": {
+          "completedLectures": ["1-1", "1-2", "2-1"],
+          "completedQuizzes": [1, 2],
+          "progress": 65
+        },
+        "5": {
+          "completedLectures": ["1-1"],
+          "completedQuizzes": [],
+          "progress": 15
+        }
+      },
+      "reviews": []
+    }
+  ]
+}
