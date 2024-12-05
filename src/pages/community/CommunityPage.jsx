@@ -11,6 +11,31 @@ import { WriteModal } from './components/WriteModal';
 import { CommentSection } from './components/CommentSection';
 import { useCommunity } from '../../shared/hooks/UseCommunity';
 import { LoadingSpinner } from '../../shared/components/common/LoadingSpinner';
+import { FaDatabase, FaPalette, FaCode, FaShieldAlt } from 'react-icons/fa';
+
+const categoryIcons = {
+    'data': '/icons/data.png',
+    'design': '/icons/design.png',
+    'programming': '/icons/programming.png',
+    'security': '/icons/security.png'
+  };
+
+const CategoryIcon = ({ category }) => {
+    const iconPath = categoryIcons[category.toLowerCase()];
+    if (iconPath) {
+        return <img src={iconPath} alt={category} style={{width: '20px', height: '20px'}} />;
+    }
+    switch(category.toLowerCase()) {
+        case 'data':
+            return <FaDatabase />;
+        case 'design':
+            return <FaPalette />;
+        case 'security':
+            return <FaShieldAlt />;
+        default:
+            return <FaCode />;
+    }
+}
 
 const CommunityPage = () => {
   const {
@@ -150,7 +175,10 @@ const CommunityPage = () => {
             posts.map(post => (
               <PostCard key={post.id}>
                 <PostHeader>
-                  <CategoryTag>{post.category}</CategoryTag>
+                  <CategoryTag>
+                    <CategoryIcon category={post.category} />
+                    {post.category}
+                  </CategoryTag>
                   <PostTitle>{post.title}</PostTitle>
                 </PostHeader>
                 <PostContent>{post.content}</PostContent>
@@ -345,6 +373,9 @@ const CategoryTag = styled.span`
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
 const PostTitle = styled.h2`
