@@ -171,14 +171,13 @@ const CommunityPage = () => {
         <PostList>
           {loading ? (
             <LoadingSpinner />
-          ) : (
+          ) : error ? (
+            <div>Error: {error}</div>
+          ) : posts && posts.length > 0 ? (
             posts.map(post => (
               <PostCard key={post.id}>
                 <PostHeader>
-                  <CategoryTag>
-                    <CategoryIcon category={post.category} />
-                    {post.category}
-                  </CategoryTag>
+                  <CategoryTag>{post.category}</CategoryTag>
                   <PostTitle>{post.title}</PostTitle>
                 </PostHeader>
                 <PostContent>{post.content}</PostContent>
@@ -204,18 +203,22 @@ const CommunityPage = () => {
                 </PostFooter>
                 <CommentSection 
                   postId={post.id}
-                  comments={post.comments?.length ? post.comments : []}
+                  comments={post.comments || []}
                 />
               </PostCard>
             ))
+          ) : (
+            <div>게시글이 없습니다.</div>
           )}
         </PostList>
 
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
+        {!loading && posts && posts.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        )}
       </Container>
 
       <WriteModal
