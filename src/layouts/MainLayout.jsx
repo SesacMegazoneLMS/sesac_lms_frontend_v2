@@ -2,11 +2,36 @@ import { Outlet, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
 import { useNavigate } from 'react-router-dom';
+import { FiShoppingCart } from 'react-icons/fi';
+import styled from 'styled-components';
+
+const CartLink = styled(Link)`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const CartBadge = styled.span`
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #dc2626;
+  color: white;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
 
 function MainLayout() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
+  const { cartItems } = useSelector(state => state.cart);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -64,6 +89,12 @@ function MainLayout() {
               <Link to="/community" className="text-gray-600 hover:text-primary">
                 커뮤니티
               </Link>
+              <CartLink to="/cart" className="text-gray-600 hover:text-primary">
+                <FiShoppingCart size={20} />
+                {cartItems.length > 0 && (
+                  <CartBadge>{cartItems.length}</CartBadge>
+                )}
+              </CartLink>
               {user ? (
                 <div className="flex items-center space-x-4">
                   <Link to="/dashboard" className="text-gray-600 hover:text-primary">
