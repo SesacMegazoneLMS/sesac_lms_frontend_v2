@@ -1,0 +1,92 @@
+{
+    "userMappings": [
+      {
+        "email": "email@domain.com",
+        "roleType": "instructor",
+        "mockUserId": 2,
+        "name": "김강사",
+        "userType": "instructor",
+        "address": "서울시 서초구 방배로 456",
+        "phone": "010-2345-6789",
+        "teachingCourses": [1],
+        "bio": "10년차 백엔드 개발자, 현직 네이버 리드 개발자",
+        "profile_image": "/images/instructors/kim.jpg",
+        "expertise": ["Spring Boot", "Java", "MSA"],
+        "totalStudents": 1234,
+        "averageRating": 4.8,
+        "reviews": [
+          {
+            "courseId": 1,
+            "rating": 5,
+            "content": "강의가 매우 체계적이고 이해하기 쉬웠습니다.",
+            "createdAt": "2024-03-20T15:00:00Z"
+          }
+        ],
+        "earnings": {
+          "totalRevenue": 5000000,
+          "monthlyRevenue": 1200000,
+          "lastMonthRevenue": 980000
+        }
+      },
+      {
+        "email": "student@domain.com",
+        "roleType": "student",
+        "mockUserId": 12,
+        "name": "이학생",
+        "userType": "student",
+        "address": "서울시 강남구 테헤란로 123",
+        "phone": "010-1234-5678",
+        "enrolledCourses": [1, 3],
+        "completedCourses": [2],
+        "cart": [],
+        "learningProgress": {
+          "totalHours": 45,
+          "weeklyHours": 5,
+          "completedLectures": 23,
+          "totalQuizzes": 15,
+          "passedQuizzes": 12,
+          "certificates": [
+            {
+              "courseId": 2,
+              "title": "Spring Boot 완전 정복",
+              "completedAt": "2024-02-15T10:45:00Z",
+              "certificateUrl": "/certificates/user12/course2.pdf"
+            }
+          ],
+          "courseProgress": {
+            "1": {
+              "completedLectures": ["1-1", "1-2"],
+              "completedQuizzes": [1],
+              "progress": 45,
+              "lastAccessed": "2024-03-21T09:30:00Z"
+            },
+            "3": {
+              "completedLectures": ["1-1"],
+              "completedQuizzes": [],
+              "progress": 15,
+              "lastAccessed": "2024-03-20T14:20:00Z"
+            }
+          }
+        },
+        "preferences": {
+          "emailNotifications": true,
+          "language": "ko",
+          "timezone": "Asia/Seoul"
+        },
+        "achievements": [
+          {
+            "id": 1,
+            "title": "첫 강좌 완료",
+            "earnedAt": "2024-02-15T10:45:00Z"
+          },
+          {
+            "id": 2,
+            "title": "연속 학습 7일",
+            "earnedAt": "2024-03-01T00:00:00Z"
+          }
+        ]
+      }
+    ]
+  }
+
+  export default userMappings;

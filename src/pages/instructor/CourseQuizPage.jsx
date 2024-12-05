@@ -2,22 +2,110 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-function CourseQuizPage() {
-    const { courseId } = useParams();
+const MOCK_QUIZZES = [
+  {
+    id: 1,
+    title: 'React 기초 개념 퀴즈',
+    questions: [
+      {
+        id: 101,
+        question: 'React에서 상태 관리를 위해 사용하는 Hook은?',
+        options: ['useState', 'useEffect', 'useContext', 'useReducer'],
+        correctAnswer: 0
+      },
+      {
+        id: 102,
+        question: 'React 컴포넌트의 생명주기를 관리하는 Hook은?',
+        options: ['useState', 'useEffect', 'useContext', 'useRef'],
+        correctAnswer: 1
+      }
+    ]
+  },
+  {
+    id: 2,
+    title: 'React Hooks 심화 퀴즈',
+    questions: [
+      {
+        id: 201,
+        question: 'useCallback Hook의 주요 용도는?',
+        options: [
+          '함수의 메모이제이션',
+          '상태 관리',
+          'DOM 조작',
+          '비동기 처리'
+        ],
+        correctAnswer: 0
+      }
+    ]
+  },
+  {
+    id: 3,
+    title: 'React Router 퀴즈',
+    questions: [
+      {
+        id: 301,
+        question: 'React Router에서 동적 라우팅을 위해 사용하는 문법은?',
+        options: [
+          ':parameter',
+          '*parameter',
+          '?parameter',
+          '&parameter'
+        ],
+        correctAnswer: 0
+      }
+    ]
+  }
+];
+
+function CourseQuizPage({ courseId }) {
     const [courseData, setCourseData] = useState({
       title: '',
       quizzes: []
     });
   
     useEffect(() => {
-      const courses = JSON.parse(localStorage.getItem('published_courses') || '[]');
-      const course = courses.find(c => c.id === courseId);
-      if (course) {
-        setCourseData({
-          ...course,
-          quizzes: course.quizzes || []
-        });
-      }
+      const fetchQuizzes = () => {
+        try {
+          const savedQuizzes = JSON.parse(localStorage.getItem('published_courses') || '[]');
+          
+          if (!savedQuizzes.length) {
+            setCourseData({
+              title: '전체 퀴즈',
+              quizzes: MOCK_QUIZZES
+            });
+            return;
+          }
+
+          if (courseId) {
+            const course = savedQuizzes.find(c => c.id === courseId);
+            if (course) {
+              setCourseData({
+                ...course,
+                quizzes: course.quizzes || []
+              });
+            }
+          } else {
+            const allQuizzes = savedQuizzes.reduce((acc, course) => {
+              return [...acc, ...(course.quizzes || []).map(quiz => ({
+                ...quiz,
+                courseName: course.title
+              }))];
+            }, []);
+            setCourseData({
+              title: '전체 퀴즈',
+              quizzes: allQuizzes
+            });
+          }
+        } catch (error) {
+          console.error('퀴즈 데이터 로딩 중 오류:', error);
+          setCourseData({
+            title: '전체 퀴즈',
+            quizzes: MOCK_QUIZZES
+          });
+        }
+      };
+
+      fetchQuizzes();
     }, [courseId]);
 
 

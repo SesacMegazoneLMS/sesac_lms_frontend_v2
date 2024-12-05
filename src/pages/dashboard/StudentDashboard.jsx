@@ -1,16 +1,61 @@
 import { useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 
 function StudentDashboard() {
   const { user } = useSelector(state => state.auth);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [learningHistory, setLearningHistory] = useState([]);
   const [upcomingQuizzes, setUpcomingQuizzes] = useState([]);
-  const [certificates, setCertificates] = useState([]);
+
+  // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  useEffect(() => {
+    const loadStudentData = async () => {
+      try {
+        // courses.json에서 수강 중인 강좌 정보 가져오기
+        const coursesResponse = await fetch('/mock/db/courses.json');
+        const coursesData = await coursesResponse.json();
+        
+        // enrollments.json에서 사용자의 수강 정보 가져오기
+        const enrollmentsResponse = await fetch('/mock/db/enrollments.json');
+        const enrollmentsData = await enrollmentsResponse.json();
+        
+        // 현재 사용자의 수강 정보 필터링
+        const userEnrollments = enrollmentsData.enrollments.filter(
+          enrollment => enrollment.userId === user?.id
+        );
+        
+        // 수강 중인 강좌 정보 매핑
+        const userCourses = userEnrollments.map(enrollment => {
+          const courseInfo = coursesData.courses.find(
+            course => course.id === enrollment.courseId
+          );
+          return {
+            ...courseInfo,
+            progress: enrollment.progress,
+            lastAccessedLecture: enrollment.lastAccessedLecture
+          };
+        });
+        
+        setEnrolledCourses(userCourses);
+      } catch (error) {
+        console.error('Error loading student data:', error);
+      }
+    };
+
+    // user가 존재할 때만 데이터 로드
+    if (user?.id) {
+      loadStudentData();
+    }
+  }, [user?.id]); // user?.id로 의존성 변경
 
   return (
     <div className="space-y-6 p-6">
+      {/* 헤더 섹션 */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">안녕하세요, {user?.name}님!</h1>
         <div className="flex space-x-4">
@@ -101,6 +146,7 @@ function StudentDashboard() {
               ))}
             </div>
           </div>
+          
         </div>
       </div>
     </div>
