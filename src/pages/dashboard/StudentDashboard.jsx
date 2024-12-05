@@ -8,11 +8,6 @@ function StudentDashboard() {
   const [learningHistory, setLearningHistory] = useState([]);
   const [upcomingQuizzes, setUpcomingQuizzes] = useState([]);
 
-  // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
   useEffect(() => {
     const loadStudentData = async () => {
       try {
@@ -52,6 +47,11 @@ function StudentDashboard() {
       loadStudentData();
     }
   }, [user?.id]); // user?.id로 의존성 변경
+
+  // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="space-y-6 p-6">
