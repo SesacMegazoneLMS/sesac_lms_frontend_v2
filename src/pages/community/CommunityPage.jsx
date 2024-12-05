@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { AiOutlineHeart, AiOutlineEye, AiFillHeart } from 'react-icons/ai';
 import { BiComment, BiSearch, BiPencil } from 'react-icons/bi';
@@ -6,12 +6,41 @@ import { IoCloseOutline } from 'react-icons/io5';
 import { FiUser } from 'react-icons/fi';
 import { BsMegaphone, BsBookmark, BsBookmarkFill } from 'react-icons/bs';
 import { HiOutlineTag } from 'react-icons/hi';
-import communityData from '../../infrastructure/mock/db/community.json';
+import { Pagination } from '../../shared/components/common/Pagination';
+import { WriteModal } from './components/WriteModal';
+import { CommentSection } from './components/CommentSection';
+import { useCommunity } from '../../shared/hooks/UseCommunity';
+import { LoadingSpinner } from '../../shared/components/common/LoadingSpinner';
 
 const CommunityPage = () => {
+  const {
+    posts,
+    loading,
+    error,
+    currentPage,
+    totalPages,
+    fetchPosts,
+    createPost,
+    handleLike,
+    setCurrentPage
+  } = useCommunity();
+
+  const [showWriteModal, setShowWriteModal] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
   const [activeTab, setActiveTab] = useState('전체');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isBookmarked, setIsBookmarked] = useState({});
+  const [isLiked, setIsLiked] = useState({});
+  const [sortBy, setSortBy] = useState('latest');
+
+  useEffect(() => {
+    fetchPosts(currentPage, { 
+      category: activeTab === '전체' ? '' : activeTab,
+      search: searchTerm,
+      sort: sortBy
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, activeTab, searchTerm, sortBy]);
 
   const icons = {
     close: <IoCloseOutline size={20} />,
@@ -28,7 +57,7 @@ const CommunityPage = () => {
     bookmarkActive: <BsBookmarkFill size={16} color="#1971C2" />
   };
 
-  const tabs = ['전체', ...communityData.categories];
+  const tabs = ['전체', '공지사항', '질문', '자유주제', '스터디', '취업/이직'];
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -44,84 +73,129 @@ const CommunityPage = () => {
     return '방금 전';
   };
 
+  const getSortedPosts = () => {
+    return [...posts].sort((a, b) => {
+      switch(sortBy) {
+        case 'popular':
+          return b.views - a.views;
+        case 'mostLiked':
+          return b.likes - a.likes;
+        default:
+          return new Date(b.date) - new Date(a.date);
+      }
+    });
+  };
+
+  const handleBookmark = (postId) => {
+    setIsBookmarked(prev => ({
+      ...prev,
+      [postId]: !prev[postId]
+    }));
+  };
+
   return (
-    <Container className="max-w-7xl mx-auto px-4">
-      {showBanner && (
-        <Banner>
-          <BannerContent style={{ backgroundColor: '#E7F5FF', color: '#1971C2', border: '1px solid #A5D8FF', borderRadius: '4px', padding: '12px 16px' }}>
-            <IconWrapper style={{ color: '#1971C2' }}>{icons.notice}</IconWrapper>
-            커뮤니티 이용 규칙을 확인해주세요!
-            <CloseButton onClick={() => setShowBanner(false)} style={{ color: '#1971C2' }}>
-              {icons.close}
-            </CloseButton>
-          </BannerContent>
-        </Banner>
-      )}
+    <PageWrapper>
+      <Container>
+        {showBanner && (
+          <Banner>
+            <BannerContent style={{ backgroundColor: '#E7F5FF', color: '#1971C2', border: '1px solid #A5D8FF', borderRadius: '4px', padding: '12px 16px' }}>
+              <IconWrapper style={{ color: '#1971C2' }}>{icons.notice}</IconWrapper>
+              커뮤니티 이용 규칙을 확인해주세요!
+              <CloseButton onClick={() => setShowBanner(false)} style={{ color: '#1971C2' }}>
+                {icons.close}
+              </CloseButton>
+            </BannerContent>
+          </Banner>
+        )}
 
-      <Header>
-        <Title>커뮤니티</Title>
-        <SearchWrapper>
-          <SearchInput
-            placeholder="관심있는 내용을 검색해보세요"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <SearchIcon>{icons.search}</SearchIcon>
-        </SearchWrapper>
-      </Header>
+        <Header>
+          <SearchSection>
+            <SearchWrapper>
+              <SearchInput
+                placeholder="검색어를 입력하세요"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <SearchButton>{icons.search}</SearchButton>
+            </SearchWrapper>
+            <FilterWrapper>
+              <SortSelect onChange={(e) => setSortBy(e.target.value)}>
+                <option value="latest">최신순</option>
+                <option value="popular">조회순</option>
+                <option value="mostLiked">좋아요순</option>
+              </SortSelect>
+            </FilterWrapper>
+          </SearchSection>
+          <WriteButton>
+            {icons.write} 글쓰기
+          </WriteButton>
+        </Header>
 
-      <MainContent>
         <TabContainer>
           {tabs.map(tab => (
-            <Tab 
+            <TabButton
               key={tab}
               active={activeTab === tab}
               onClick={() => setActiveTab(tab)}
             >
               {tab}
-            </Tab>
+            </TabButton>
           ))}
         </TabContainer>
 
-        <WriteButtonWrapper>
-          <WriteButton>
-            {icons.write}
-            <span>글쓰기</span>
-          </WriteButton>
-        </WriteButtonWrapper>
-
         <PostList>
-          {communityData.posts.map(post => (
-            <PostItem key={post.id}>
-              <PostHeader>
-                <CategoryTag>{post.category}</CategoryTag>
-                <AuthorInfo>
-                  <IconWrapper>{icons.user}</IconWrapper>
-                  User {post.userId} · {formatDate(post.createdAt)}
-                </AuthorInfo>
-              </PostHeader>
-              
-              <PostTitle>{post.title}</PostTitle>
-              <PostContent>{post.content}</PostContent>
-              
-              <PostFooter>
-                <Stats>
-                  <StatItem>
-                    {icons.like} {post.likes}
-                  </StatItem>
-                  <StatItem>
-                    {icons.comment} {post.comments.length}
-                  </StatItem>
-                  <StatItem>
-                    {icons.view} {post.views}
-                  </StatItem>
-                </Stats>
-              </PostFooter>
-            </PostItem>
-          ))}
+          {loading ? (
+            <LoadingSpinner />
+          ) : (
+            posts.map(post => (
+              <PostCard key={post.id}>
+                <PostHeader>
+                  <CategoryTag>{post.category}</CategoryTag>
+                  <PostTitle>{post.title}</PostTitle>
+                </PostHeader>
+                <PostContent>{post.content}</PostContent>
+                <PostFooter>
+                  <AuthorSection>
+                    <AuthorAvatar>{icons.user}</AuthorAvatar>
+                    <AuthorName>{post.author}</AuthorName>
+                    <PostDate>{formatDate(post.date)}</PostDate>
+                  </AuthorSection>
+                  <InteractionSection>
+                    <InteractionButton onClick={() => handleLike(post.id)}>
+                      {isLiked[post.id] ? icons.likeActive : icons.like}
+                      <span>{post.likes}</span>
+                    </InteractionButton>
+                    <InteractionButton>
+                      {icons.comment}
+                      <span>{post.comments?.length || 0}</span>
+                    </InteractionButton>
+                    <BookmarkButton onClick={() => handleBookmark(post.id)}>
+                      {isBookmarked[post.id] ? icons.bookmarkActive : icons.bookmark}
+                    </BookmarkButton>
+                  </InteractionSection>
+                </PostFooter>
+                <CommentSection 
+                  postId={post.id}
+                  comments={post.comments?.length ? post.comments : []}
+                />
+              </PostCard>
+            ))
+          )}
         </PostList>
-      </MainContent>
-    </Container>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      </Container>
+
+      <WriteModal
+        show={showWriteModal}
+        onClose={() => setShowWriteModal(false)}
+        onSubmit={createPost}
+      />
+    </PageWrapper>
   );
 };
 
@@ -200,7 +274,7 @@ const TabContainer = styled.div`
   margin-bottom: 24px;
 `;
 
-const Tab = styled.button`
+const TabButton = styled.button`
   padding: 8px 16px;
   border: none;
   border-radius: 20px;
@@ -245,14 +319,15 @@ const PostList = styled.div`
   gap: 16px;
 `;
 
-const PostItem = styled.article`
-  padding: 24px;
-  border: 1px solid #e9ecef;
+const PostCard = styled.div`
+  background: white;
   border-radius: 8px;
-  transition: all 0.2s;
-  
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+
   &:hover {
-    border-color: #1971C2;
     transform: translateY(-2px);
   }
 `;
@@ -290,7 +365,7 @@ const PostFooter = styled.div`
   align-items: center;
 `;
 
-const AuthorInfo = styled.div`
+const AuthorSection = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
@@ -315,6 +390,112 @@ const IconWrapper = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
+`;
+
+const PageWrapper = styled.div`
+  background-color: var(--wwwinflearncom-athens-gray);
+  min-height: 100vh;
+  padding: 40px 0;
+`;
+
+const SearchSection = styled.div`
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex: 1;
+`;
+
+const SearchButton = styled.button`
+  background-color: var(--wwwinflearncom-semantic-button-background);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: var(--wwwinflearncom-semantic-button-hover);
+  }
+`;
+
+const FilterWrapper = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const SortSelect = styled.select`
+  background-color: var(--wwwinflearncom-semantic-button-background);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: var(--wwwinflearncom-semantic-button-hover);
+  }
+`;
+
+const AuthorAvatar = styled.div`
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #f1f3f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #868e96;
+`;
+
+const AuthorName = styled.span`
+  color: #495057;
+  font-size: 14px;
+`;
+
+const PostDate = styled.span`
+  color: #868e96;
+  font-size: 14px;
+`;
+
+const InteractionSection = styled.div`
+  display: flex;
+  gap: 16px;
+`;
+
+const InteractionButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  background-color: ${props => props.isLiked ? '#ff0000' : '#f8f9fa'};
+  color: ${props => props.isLiked ? 'white' : '#495057'};
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: ${props => props.isLiked ? '#cc0000' : '#e9ecef'};
+  }
+`;
+
+const BookmarkButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  background-color: ${props => props.isBookmarked ? '#1971C2' : '#f8f9fa'};
+  color: ${props => props.isBookmarked ? 'white' : '#495057'};
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: ${props => props.isBookmarked ? '#1864AB' : '#e9ecef'};
+  }
 `;
 
 export default CommunityPage;

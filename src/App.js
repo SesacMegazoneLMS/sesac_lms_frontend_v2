@@ -22,7 +22,7 @@ import FreeCourses from './pages/course/FreeCourses';
 import AuthCallback from './pages/auth/AuthCallback';
 import ConfirmEmail from './pages/auth/ConfirmEmail';
 import CommunityPage from './pages/community/CommunityPage';
-import styled from 'styled-components';
+
 
 function App() {
   return (
