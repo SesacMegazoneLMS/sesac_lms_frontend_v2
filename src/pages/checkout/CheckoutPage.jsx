@@ -2,28 +2,25 @@ import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { removeFromCart, clearCart } from '../../store/slices/cartSlice';
+import { clearCart } from '../../store/slices/cartSlice';
 import { apiEndpoints } from '../../infrastructure/api/endpoints';
 import { toast } from 'react-toastify';
-import CourseCard from '../../shared/components/CourseCard';
 
-function CartPage() {
+function CheckoutPage() {
   const { cartItems } = useSelector(state => state.cart);
   const { user } = useSelector(state => state.auth);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
+  const discountedPrice = totalPrice * 0.8; // 20% 할인
+
   useEffect(() => {
-    if (!user) {
-      toast.error('로그인이 필요한 서비스입니다.');
-      navigate('/login');
+    if (cartItems.length === 0) {
+      navigate('/cart');
       return;
     }
-  }, [user, navigate]);
 
-  const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
-
-  useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://cdn.iamport.kr/v1/iamport.js";
     script.async = true;
@@ -37,14 +34,14 @@ function CartPage() {
     return () => {
       document.body.removeChild(script);
     }
-  }, []);
+  }, [cartItems.length, navigate]);
 
   const handlePayment = async () => {
     try {
       const orderData = await apiEndpoints.cart.createOrder({
         studentId: user.id,
         items: cartItems,
-        totalAmount: totalPrice
+        totalAmount: discountedPrice
       });
 
       const { IMP } = window;
@@ -77,121 +74,105 @@ function CartPage() {
   };
 
   return (
-    <CartContainer>
-      <CartHeader>장바구니</CartHeader>
-      
-      {cartItems.length === 0 ? (
-        <EmptyCart>
-          <img src="/assets/icons/empty-cart.svg" alt="빈 장바구니" />
-          <p>장바구니가 비어 있습니다.</p>
-        </EmptyCart>
-      ) : (
-        <CartContent>
-          <CartItemList>
-            {cartItems.map(course => (
-              <CourseWrapper key={course.id}>
-                <CourseCard 
-                  course={course}
-                  type="cart"
-                />
-                <RemoveButton onClick={() => dispatch(removeFromCart(course.id))}>
-                  <TrashIcon />
-                  삭제
-                </RemoveButton>
-              </CourseWrapper>
-            ))}
-          </CartItemList>
+    <CheckoutContainer>
+      <CheckoutHeader>결제하기</CheckoutHeader>
+      <CheckoutContent>
+        <OrderDetails>
+          <SectionTitle>주문 내역</SectionTitle>
+          {cartItems.map(course => (
+            <CourseItem key={course.id}>
+              <CourseTitle>{course.title}</CourseTitle>
+              <CoursePrice>₩{course.price.toLocaleString()}</CoursePrice>
+            </CourseItem>
+          ))}
+        </OrderDetails>
 
-          <OrderSummary>
-            <SummaryTitle>주문 요약</SummaryTitle>
-            <PriceDetails>
-              <PriceRow>
-                <span>상품 금액</span>
-                <span>₩{totalPrice.toLocaleString()}</span>
-              </PriceRow>
-              <PriceRow>
-                <span>할인 금액</span>
-                <DiscountPrice>-₩{(totalPrice * 0.2).toLocaleString()}</DiscountPrice>
-              </PriceRow>
-              <TotalRow>
-                <span>총 결제 금액</span>
-                <TotalPrice>₩{totalPrice.toLocaleString()}</TotalPrice>
-              </TotalRow>
-            </PriceDetails>
-            <PaymentButton onClick={handlePayment}>
-              {cartItems.length}개 강좌 결제하기
-            </PaymentButton>
-          </OrderSummary>
-        </CartContent>
-      )}
-    </CartContainer>
+        <PaymentSummary>
+          <SectionTitle>결제 정보</SectionTitle>
+          <PriceDetails>
+            <PriceRow>
+              <span>상품 금액</span>
+              <span>₩{totalPrice.toLocaleString()}</span>
+            </PriceRow>
+            <PriceRow>
+              <span>할인 금액</span>
+              <DiscountPrice>-₩{(totalPrice * 0.2).toLocaleString()}</DiscountPrice>
+            </PriceRow>
+            <TotalRow>
+              <span>총 결제 금액</span>
+              <TotalPrice>₩{discountedPrice.toLocaleString()}</TotalPrice>
+            </TotalRow>
+          </PriceDetails>
+          <PaymentButton onClick={handlePayment}>
+            {cartItems.length}개 강좌 결제하기
+          </PaymentButton>
+        </PaymentSummary>
+      </CheckoutContent>
+    </CheckoutContainer>
   );
 }
 
 // Styled Components
-const CartContainer = styled.div`
-  max-width: 1200px;
+const CheckoutContainer = styled.div`
+  max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
 `;
 
-const CartHeader = styled.h1`
+const CheckoutHeader = styled.h1`
   font-size: 1.5rem;
   font-weight: bold;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 `;
 
-const CartContent = styled.div`
+const CheckoutContent = styled.div`
   display: grid;
   grid-template-columns: 1fr 300px;
   gap: 2rem;
 `;
 
-const CartItemList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const CourseWrapper = styled.div`
-  position: relative;
+const OrderDetails = styled.div`
   background: white;
+  padding: 1.5rem;
   border-radius: 0.5rem;
-  overflow: hidden;
 `;
 
-const RemoveButton = styled.button`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: #fff;
-  color: #1e40af;
-  padding: 0.5rem;
-  border-radius: 9999px;
+const SectionTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+`;
+
+const CourseItem = styled.div`
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  z-index: 10;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e5e7eb;
   
-  &:hover {
-    background: #dbeafe;
+  &:last-child {
+    border-bottom: none;
   }
 `;
 
-const OrderSummary = styled.div`
+const CourseTitle = styled.h3`
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1f2937;
+`;
+
+const CoursePrice = styled.span`
+  font-weight: 600;
+  color: #1e40af;
+`;
+
+const PaymentSummary = styled.div`
   background: white;
   padding: 1.5rem;
   border-radius: 0.5rem;
   height: fit-content;
   position: sticky;
   top: 2rem;
-`;
-
-const SummaryTitle = styled.h2`
-  font-size: 1.25rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
 `;
 
 const PriceDetails = styled.div`
@@ -221,6 +202,7 @@ const DiscountPrice = styled.span`
 const TotalPrice = styled.span`
   color: #1e40af;
   font-size: 1.25rem;
+  font-weight: bold;
 `;
 
 const PaymentButton = styled.button`
@@ -237,24 +219,4 @@ const PaymentButton = styled.button`
   }
 `;
 
-const EmptyCart = styled.div`
-  text-align: center;
-  padding: 3rem;
-  
-  img {
-    width: 120px;
-    margin-bottom: 1rem;
-  }
-  
-  p {
-    color: #6b7280;
-  }
-`;
-
-const TrashIcon = styled.span`
-  &:before {
-    content: "🗑";
-  }
-`;
-
-export default CartPage;
+export default CheckoutPage;
