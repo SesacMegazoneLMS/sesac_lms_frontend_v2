@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { CourseCard } from './CourseCard';
+import { CourseCard } from '../../shared/components/CourseCard';
 import { StatsCard } from './StatsCard';
 import { QuizCard } from './QuizCard';
 import { CourseSection } from './CourseSection';

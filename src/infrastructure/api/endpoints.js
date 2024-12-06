@@ -1,53 +1,71 @@
 import { api } from './axios.config';
-// S3 Mock Data 엔드포인트
-const MOCK_DATA = {
-  COURSES: '/data/courses.json',
-  USERS: '/data/users.json',
-  ORDERS: '/data/orders.json'
+
+export const API_ENDPOINTS = {
+  COURSES: '/courses.json',
+  USERS: '/users.json',
+  ORDERS: '/orders.json',
+  CART: '/cart.json',
+  ROADMAPS: '/roadmaps.json',
+  COMMUNITY: '/community.json'
 };
 
-// API 함수들
 export const apiEndpoints = {
-  // 강좌 관련
-  courses: {
-    getAll: () => api.get(MOCK_DATA.COURSES),
-    getById: async (courseId) => {
-      const courses = await api.get(MOCK_DATA.COURSES);
-      return courses.find(course => course.id === courseId);
-    }
-  },
-
-  // 장바구니 관련 (Mock)
   cart: {
+    getCart: async (userId) => {
+      const response = await api.get(API_ENDPOINTS.CART);
+      const cartData = response.data?.cart || {};
+      return cartData.orders?.find(order => order.userId === userId) || null;
+    },
+    
     createOrder: async (orderData) => {
-      // 실제 API 대신 Mock 응답
-      return {
-        orderId: `ORDER_${Date.now()}`,
-        merchantUid: `merchant_${Date.now()}`,
-        totalAmount: orderData.totalAmount,
-        items: orderData.items,
-        status: 'PENDING'
-      };
+      try {
+        const response = await api.get(API_ENDPOINTS.CART);
+        const cartData = response.data?.cart || {};
+        const orders = cartData.orders || [];
+        
+        const newOrder = {
+          orderId: `ORD-${Date.now()}`,
+          merchantUid: `MERCHANT-${Date.now()}`,
+          userId: orderData.studentId,
+          items: orderData.items,
+          totalAmount: orderData.totalAmount,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        };
+
+        return newOrder;
+      } catch (error) {
+        console.error('주문 생성 실패:', error);
+        throw error;
+      }
     },
 
     processPayment: async (paymentData) => {
-      // 결제 성공 Mock 응답
-      return {
-        success: true,
-        paymentId: `PAY_${Date.now()}`,
-        orderId: paymentData.orderId,
-        amount: paymentData.amount,
-        status: 'COMPLETED'
-      };
-    }
-  },
+      try {
+        const response = await api.get(API_ENDPOINTS.CART);
+        const cartData = response.data?.cart || {};
+        const transactions = cartData.transactions || [];
 
-  // 사용자 관련
-  users: {
-    getEnrolledCourses: async (userId) => {
-      const users = await api.get(MOCK_DATA.USERS);
-      const user = users.find(u => u.id === userId);
-      return user?.enrolledCourses || [];
+        const newTransaction = {
+          transactionId: `TRX-${Date.now()}`,
+          orderId: paymentData.orderId,
+          paymentMethod: 'kakaopay',
+          amount: paymentData.amount,
+          status: 'completed',
+          paidAt: new Date().toISOString()
+        };
+
+        return newTransaction;
+      } catch (error) {
+        console.error('결제 처리 실패:', error);
+        throw error;
+      }
+    },
+
+    getOrderHistory: async (userId) => {
+      const response = await api.get(API_ENDPOINTS.CART);
+      const cartData = response.data?.cart || {};
+      return cartData.orders?.filter(order => order.userId === userId) || [];
     }
   }
 };
