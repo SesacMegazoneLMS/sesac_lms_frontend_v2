@@ -7,8 +7,8 @@ import { toast } from 'react-toastify';
 import { CognitoUser, CognitoUserPool } from 'amazon-cognito-identity-js';
 
 const userPool = new CognitoUserPool({
-  UserPoolId: "ap-northeast-2_78HNDcTxY",
-  ClientId: "4v0l18pe5gjvlv6jdmvarf5dck"
+  UserPoolId: "ap-northeast-2_ow5oyt4jA",
+  ClientId: "6tuhkvilko0ea253l36d4n3uec"
 });
 
 function LoginPage() {
