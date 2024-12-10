@@ -23,6 +23,7 @@ import AuthCallback from './pages/auth/AuthCallback';
 import ConfirmEmail from './pages/auth/ConfirmEmail';
 import CommunityPage from './pages/community/CommunityPage';
 import styled from 'styled-components';
+import UploadTest from './pages/UploadTest';
 
 function App() {
   return (
@@ -39,7 +40,7 @@ function App() {
             <Route path="cart" element={<CartPage />} />
             <Route path="roadmaps" element={<RoadmapsPage />} />
             <Route path="community" element={<CommunityPage />} />
-            
+
             <Route path="instructor">
               <Route path="course/create" element={<CourseCreatePage />} />
               <Route path="course/:id/edit" element={<CourseManagementPage />} />
@@ -47,13 +48,14 @@ function App() {
               <Route path="/instructor/course/:courseId/quiz" element={<CourseQuizPage />} />
             </Route>
           </Route>
-          
+
           <Route path="/auth" element={<AuthLayout />}>
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
             <Route path="callback" element={<AuthCallback />} />
             <Route path="confirm-email" element={<ConfirmEmail />} />
           </Route>
+          <Route path="/upload" element={<UploadTest />} />
         </Routes>
       </Router>
     </Provider>
