@@ -10,17 +10,44 @@ function InstructorMyPage() {
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    bio: user?.bio || '',
-    expertise: user?.expertise || [],
-    education: user?.education || [],
-    experience: user?.experience || [],
-    socialLinks: user?.socialLinks || {
-      website: '',
-      linkedin: '',
-      github: ''
+    bio: user?.introduction || '', // 백엔드: introduction -> 프론트: bio
+    expertise: user?.techStack || [], // 백엔드: techStack -> 프론트: expertise
+    socialLinks: {
+      website: user?.websiteUrl || '', // 백엔드: websiteUrl -> 프론트: socialLinks.website
+      linkedin: user?.linkedinUrl || '', // 백엔드: linkedinUrl -> 프론트: socialLinks.linkedin
+      github: user?.githubUrl || '', // 백엔드: githubUrl -> 프론트: socialLinks.github
     },
-    profileImage: user?.profileImage || '/default-avatar.png'
+    profileImage: user?.profileImgUrl || '/default-avatar.png' // 백엔드: profileImgUrl -> 프론트: profileImage
   });
+
+  // 백엔드 응답을 프론트엔드 형식으로 변환하는 함수
+  const transformApiResponse = (apiResponse) => {
+    const { profile } = apiResponse;
+    return {
+      name: user?.name || '',
+      email: user?.email || '',
+      bio: profile.introduction,
+      expertise: profile.techStack,
+      socialLinks: {
+        website: profile.websiteUrl,
+        linkedin: profile.linkedinUrl,
+        github: profile.githubUrl
+      },
+      profileImage: profile.profileImgUrl || '/default-avatar.png'
+    };
+  };
+
+  // 프론트엔드 데이터를 백엔드 형식으로 변환하는 함수
+  const transformToApiFormat = (frontendData) => {
+    return {
+      introduction: frontendData.bio,
+      techStack: frontendData.expertise,
+      websiteUrl: frontendData.socialLinks.website,
+      linkedinUrl: frontendData.socialLinks.linkedin,
+      githubUrl: frontendData.socialLinks.github,
+      profileImgUrl: frontendData.profileImage
+    };
+  };
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -38,13 +65,53 @@ function InstructorMyPage() {
 
   const handleSaveProfile = async () => {
     try {
-      // TODO: API 연동 시 실제 저장 로직 구현
-      toast.success('프로필이 저장되었습니다.');
-      setIsEditing(false);
+      const apiData = transformToApiFormat(profileData);
+      const response = await fetch('/api/instructor/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(apiData)
+      });
+
+      const data = await response.json();
+
+      if (data.statusCode === 'OK') {
+        const transformedData = transformApiResponse(data);
+        setProfileData(transformedData);
+        toast.success('프로필이 저장되었습니다.');
+        setIsEditing(false);
+      } else {
+        throw new Error(data.message || '프로필 저장에 실패했습니다.');
+      }
     } catch (error) {
-      toast.error('프로필 저장에 실패했습니다.');
+      toast.error(error.message);
     }
   };
+
+  // 프로필 데이터 가져오기
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch('/api/instructor/profile', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        const data = await response.json();
+
+        if (data.statusCode === 'OK') {
+          const transformedData = transformApiResponse(data);
+          setProfileData(transformedData);
+        }
+      } catch (error) {
+        toast.error('프로필 정보를 불러오는데 실패했습니다.');
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   return (
     <div className="max-w-3xl mx-auto p-6">
@@ -102,14 +169,14 @@ function InstructorMyPage() {
                   <input
                     type="text"
                     value={profileData.name}
-                    onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                     className="text-2xl font-bold w-full px-3 py-2 border rounded"
                     placeholder="이름을 입력하세요"
                   />
                   <input
                     type="email"
                     value={profileData.email}
-                    onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                    onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                     className="w-full px-3 py-2 border rounded text-gray-500"
                     placeholder="이메일을 입력하세요"
                     disabled
@@ -129,7 +196,7 @@ function InstructorMyPage() {
               {isEditing ? (
                 <textarea
                   value={profileData.bio}
-                  onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                  onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
                   className="w-full px-3 py-2 border rounded"
                   rows={4}
                   placeholder="자기소개를 입력해주세요"
@@ -153,7 +220,7 @@ function InstructorMyPage() {
                           onChange={(e) => {
                             const newExpertise = [...profileData.expertise];
                             newExpertise[index] = e.target.value;
-                            setProfileData({...profileData, expertise: newExpertise});
+                            setProfileData({ ...profileData, expertise: newExpertise });
                           }}
                           className="bg-transparent w-24"
                           placeholder="기술명"
@@ -161,7 +228,7 @@ function InstructorMyPage() {
                         <button
                           onClick={() => {
                             const newExpertise = profileData.expertise.filter((_, i) => i !== index);
-                            setProfileData({...profileData, expertise: newExpertise});
+                            setProfileData({ ...profileData, expertise: newExpertise });
                           }}
                           className="ml-2 text-red-500 hover:text-red-700"
                         >

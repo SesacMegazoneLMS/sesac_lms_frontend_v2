@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { 
-  FiUsers, FiBookOpen, FiDollarSign, FiStar, 
-  FiTrendingUp, FiActivity, FiMessageCircle, FiPlus, FiEdit2, FiSave, FiUpload 
+import {
+  FiUsers, FiBookOpen, FiDollarSign, FiStar,
+  FiTrendingUp, FiActivity, FiMessageCircle, FiPlus, FiEdit2, FiSave, FiUpload
 } from 'react-icons/fi';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import toast, { Toaster, useToasterStore } from 'react-hot-toast';
 import InstructorMyPage from '../instructor/InstructorMyPage';
 import CourseQuizPage from '../instructor/CourseQuizPage';
+import ProfilePage from '../profile/ProfilePage';
+
 
 function InstructorDashboard() {
   const { user } = useSelector(state => state.auth);
@@ -30,9 +32,9 @@ function InstructorDashboard() {
   const [quizzes, setQuizzes] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: user?.name || '',
+    name: user?.name || "Default Profile",
     email: user?.email || '',
-    bio: user?.bio || '',
+    bio: user?.bio || '강사 소개를 입력해주세요',
     expertise: user?.expertise || [],
     education: user?.education || [],
     experience: user?.experience || [],
@@ -41,7 +43,7 @@ function InstructorDashboard() {
       linkedin: '',
       github: ''
     },
-    profileImage: user?.profileImage || '/default-avatar.png'
+    profileImage: user?.profileImage || '/saesac.png'
   });
 
   const tabs = [
@@ -66,11 +68,11 @@ function InstructorDashboard() {
         };
 
         const mockCourses = [
-          { 
-            id: 1, 
-            title: "React 완벽 가이드", 
-            students: 45, 
-            rating: 4.8, 
+          {
+            id: 1,
+            title: "React 완벽 가이드",
+            students: 45,
+            rating: 4.8,
             progress: 100,
             lastUpdated: "2024-03-20",
             income: 1200000
@@ -79,10 +81,10 @@ function InstructorDashboard() {
         ];
 
         const mockEnrollments = [
-          { 
-            id: 1, 
-            studentName: "김철수", 
-            courseName: "React 완벽 가이드", 
+          {
+            id: 1,
+            studentName: "김철수",
+            courseName: "React 완벽 가이드",
             date: "2024-03-20",
             profileImage: "/default-avatar.png"
           },
@@ -148,45 +150,144 @@ function InstructorDashboard() {
       {/* 강사 프로필 섹션 */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex items-center space-x-4">
-          <img 
-            src={user.profileImage || "/default-avatar.png"} 
-            alt={user.name}
+          <img
+            src={profileData.profileImage} // 기본 프로필 이미지 설정
+            alt={profileData.name}
             className="w-16 h-16 rounded-full"
           />
           <div>
-            <h1 className="text-2xl font-bold">{user.name}</h1>
-            <p className="text-gray-600">{user.bio || "강사 소개를 입력해주세요"}</p>
+            <h1 className="text-2xl font-bold">
+              {profileData.name} {/* 이름이 없을 경우 기본 텍스트 */}
+            </h1>
+            <p className="text-gray-600">{profileData.bio}</p>
           </div>
-          <Link 
-            to="/instructor/profile" 
+          <Link
+            to="/instructor/profile"
             className="ml-auto text-primary hover:text-primary-dark"
           >
             프로필 수정
           </Link>
         </div>
+
+        {/* 추가 정보: 전문 분야, 소셜 링크 */}
+        <div className="mt-6 space-y-4">
+          {/* 전문 분야 */}
+          <div>
+            <h2 className="text-lg font-semibold">전문 분야</h2>
+            <div className="flex flex-wrap gap-2">
+              {profileData.expertise.length > 0 ? (
+                profileData.expertise.map((skill, index) => (
+                  <span
+                    key={index}
+                    className="bg-gray-100 rounded-full px-3 py-1 text-sm"
+                  >
+                    {skill}
+                  </span>
+                ))
+              ) : (
+                <p className="text-gray-500">전문 분야가 아직 등록되지 않았습니다.</p>
+              )}
+            </div>
+          </div>
+
+          {/* 소셜 링크 */}
+          <div>
+            <h2 className="text-lg font-semibold mb-2">소셜 링크</h2>
+            <div className="space-y-3">
+              {/* Website */}
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 flex-shrink-0 flex items-center justify-center">
+                  🌐 {/* Web Site 아이콘 */}
+                </span>
+                <span className="font-semibold w-24">Web Site</span>
+                {profileData.socialLinks.website ? (
+                  <a
+                    href={profileData.socialLinks.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary-dark flex-1 truncate"
+                  >
+                    {profileData.socialLinks.website}
+                  </a>
+                ) : (
+                  <span className="text-gray-400 flex-1">https://www.my-website.com</span>
+                )}
+              </div>
+
+              {/* LinkedIn */}
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 flex-shrink-0 flex items-center justify-center">
+                  <img
+                    src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linkedin/linkedin-original.svg"
+                    alt="LinkedIn Icon"
+                    className="w-5 h-5"
+                  />
+                </span>
+                <span className="font-semibold w-24">LinkedIn</span>
+                {profileData.socialLinks.linkedin ? (
+                  <a
+                    href={profileData.socialLinks.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary-dark flex-1 truncate"
+                  >
+                    {profileData.socialLinks.linkedin}
+                  </a>
+                ) : (
+                  <span className="text-gray-400 flex-1">https://linkedin.com/example</span>
+                )}
+              </div>
+
+              {/* GitHub */}
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 flex-shrink-0 flex items-center justify-center" >
+                  <img
+                    src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg"
+                    alt="GitHub Icon"
+                    className="w-5 h-5"
+                  />
+                </span>
+                <span className="font-semibold w-24">GitHub</span>
+                {profileData.socialLinks.github ? (
+                  <a
+                    href={profileData.socialLinks.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary-dark flex-1 truncate"
+                  >
+                    {profileData.socialLinks.github}
+                  </a>
+                ) : (
+                  <span className="text-gray-400 flex-1">https://github.com/example</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       {/* 통계 카드 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="총 수강생" 
+        <StatCard
+          title="총 수강생"
           value={`${stats.totalStudents}명`}
           icon={<FiUsers />}
           trend="+12% 증가"
         />
-        <StatCard 
+        <StatCard
           title="운영 중인 강좌"
           value={`${stats.totalCourses}개`}
           icon={<FiBookOpen />}
         />
-        <StatCard 
-          title="이번 달 수익" 
+        <StatCard
+          title="이번 달 수익"
           value={`${stats.monthlyRevenue.toLocaleString()}원`}
           icon={<FiDollarSign />}
           trend="+8% 증가"
         />
-        <StatCard 
-          title="평균 평점" 
+        <StatCard
+          title="평균 평점"
           value={stats.averageRating.toFixed(1)}
           icon={<FiStar />}
           trend="+0.2 상승"
@@ -202,10 +303,10 @@ function InstructorDashboard() {
               <XAxis dataKey="month" />
               <YAxis />
               <Tooltip />
-              <Line 
-                type="monotone" 
-                dataKey="revenue" 
-                stroke="#4F46E5" 
+              <Line
+                type="monotone"
+                dataKey="revenue"
+                stroke="#4F46E5"
                 strokeWidth={2}
               />
             </LineChart>
@@ -217,8 +318,8 @@ function InstructorDashboard() {
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">최근 강좌 현황</h2>
-          <Link 
-            to="/instructor/courses" 
+          <Link
+            to="/instructor/courses"
             className="text-primary hover:text-primary-dark"
           >
             전체보기
@@ -252,7 +353,7 @@ function InstructorDashboard() {
               {recentCourses.map(course => (
                 <tr key={course.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Link 
+                    <Link
                       to={`/instructor/courses/${course.id}`}
                       className="text-primary hover:text-primary-dark"
                     >
@@ -273,8 +374,8 @@ function InstructorDashboard() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full" 
+                      <div
+                        className="bg-primary h-2 rounded-full"
                         style={{ width: `${course.progress}%` }}
                       />
                     </div>
@@ -297,8 +398,8 @@ function InstructorDashboard() {
           <div className="space-y-4">
             {recentEnrollments.map(enrollment => (
               <div key={enrollment.id} className="flex items-center space-x-4">
-                <img 
-                  src={enrollment.profileImage} 
+                <img
+                  src={enrollment.profileImage}
                   alt={enrollment.studentName}
                   className="w-10 h-10 rounded-full"
                 />
@@ -413,7 +514,7 @@ function InstructorDashboard() {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">퀴즈 관리</h2>
       </div>
-      
+
       {/* CourseQuizPage 컴포넌트 재사용 */}
       <CourseQuizPage />
     </div>
@@ -444,7 +545,7 @@ function InstructorDashboard() {
   };
 
   const renderProfileContent = () => (
-    <InstructorMyPage />
+    <ProfilePage />
   );
 
   return (
@@ -456,11 +557,10 @@ function InstructorDashboard() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`pb-4 px-2 ${
-                activeTab === tab.id
-                  ? 'border-b-2 border-primary text-primary font-medium'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`pb-4 px-2 ${activeTab === tab.id
+                ? 'border-b-2 border-primary text-primary font-medium'
+                : 'text-gray-500 hover:text-gray-700'
+                }`}
             >
               {tab.label}
             </button>

@@ -22,7 +22,7 @@ import FreeCourses from './pages/course/FreeCourses';
 import AuthCallback from './pages/auth/AuthCallback';
 import ConfirmEmail from './pages/auth/ConfirmEmail';
 import CommunityPage from './pages/community/CommunityPage';
-
+import InstructorMyPage from './pages/instructor/InstructorMyPage'
 
 function App() {
   return (
@@ -39,20 +39,22 @@ function App() {
             <Route path="cart" element={<CartPage />} />
             <Route path="roadmaps" element={<RoadmapsPage />} />
             <Route path="community" element={<CommunityPage />} />
-            
+
             <Route path="instructor">
               <Route path="course/create" element={<CourseCreatePage />} />
               <Route path="course/:id/edit" element={<CourseManagementPage />} />
               <Route path="/instructor/course/:courseId/content" element={<CourseContentPage />} />
               <Route path="/instructor/course/:courseId/quiz" element={<CourseQuizPage />} />
+              <Route path="/instructor/profile" element={<InstructorMyPage />} />
             </Route>
           </Route>
-          
+
           <Route path="/auth" element={<AuthLayout />}>
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
             <Route path="callback" element={<AuthCallback />} />
             <Route path="confirm-email" element={<ConfirmEmail />} />
+
           </Route>
         </Routes>
       </Router>
