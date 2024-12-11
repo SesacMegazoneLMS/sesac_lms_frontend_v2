@@ -1,27 +1,25 @@
-import axios from 'axios';
-import communityData from '../mock/db/community.json';
-
-const API_URL = process.env.REACT_APP_API_URL || '';
+import { api } from '../api/axios.config';
+import { API_ENDPOINTS } from '../api/endpoints';
 
 class CommunityService {
   async getPosts(page = 1, filters = {}) {
-    // 개발 환경에서는 mock 데이터 사용
-    if (process.env.NODE_ENV === 'development') {
+    try {
+      const response = await api.get(API_ENDPOINTS.COMMUNITY);
+      const posts = response.data?.posts || [];
+      
+      const filteredPosts = this.filterPosts(posts, filters);
       const startIndex = (page - 1) * 10;
       const endIndex = startIndex + 10;
-      const filteredPosts = this.filterPosts(communityData.posts, filters);
       
       return {
         data: filteredPosts.slice(startIndex, endIndex),
-        total: filteredPosts.length
+        total: filteredPosts.length,
+        categories: response.data?.categories || []
       };
+    } catch (error) {
+      console.error('게시글 목록 조회 실패:', error);
+      return { data: [], total: 0, categories: [] };
     }
-
-    // 프로덕션 환경에서는 실제 API 호출
-    const response = await axios.get(`${API_URL}/api/community/posts`, {
-      params: { page, ...filters }
-    });
-    return response.data;
   }
 
   filterPosts(posts, filters) {
@@ -30,60 +28,55 @@ class CommunityService {
         return post.category === filters.category;
       }
       if (filters.search) {
-        return post.title.includes(filters.search) || 
-               post.content.includes(filters.search);
+        const searchLower = filters.search.toLowerCase();
+        return post.title.toLowerCase().includes(searchLower) || 
+               post.content.toLowerCase().includes(searchLower);
       }
       return true;
     });
   }
 
   async createPost(postData) {
-    if (process.env.NODE_ENV === 'development') {
-      // Mock implementation
-      return {
-        success: true,
-        data: {
-          id: Date.now(),
-          ...postData,
-          createdAt: new Date().toISOString(),
-          likes: 0,
-          views: 0,
-          comments: []
-        }
+    try {
+      const response = await api.get(API_ENDPOINTS.COMMUNITY);
+      const posts = response.data?.posts || [];
+      
+      const newPost = {
+        id: posts.length + 1,
+        ...postData,
+        createdAt: new Date().toISOString(),
+        likes: 0,
+        views: 0,
+        comments: []
       };
+      
+      return { success: true, data: newPost };
+    } catch (error) {
+      console.error('게시글 작성 실패:', error);
+      throw error;
     }
-
-    const response = await axios.post(`${API_URL}/api/community/posts`, postData);
-    return response.data;
-  }
-
-  async likePost(postId) {
-    if (process.env.NODE_ENV === 'development') {
-      return { success: true };
-    }
-
-    const response = await axios.post(`${API_URL}/api/community/posts/${postId}/like`);
-    return response.data;
   }
 
   async addComment(postId, commentData) {
-    if (process.env.NODE_ENV === 'development') {
-      return {
-        success: true,
-        data: {
-          id: Date.now(),
-          ...commentData,
-          createdAt: new Date().toISOString(),
-          likes: 0
-        }
+    try {
+      const response = await api.get(API_ENDPOINTS.COMMUNITY);
+      const posts = response.data?.posts || [];
+      const post = posts.find(p => p.id === postId);
+      
+      if (!post) throw new Error('게시글을 찾을 수 없습니다.');
+      
+      const newComment = {
+        id: (post.comments?.length || 0) + 1,
+        ...commentData,
+        createdAt: new Date().toISOString(),
+        likes: 0
       };
+      
+      return { success: true, data: newComment };
+    } catch (error) {
+      console.error('댓글 작성 실패:', error);
+      throw error;
     }
-
-    const response = await axios.post(
-      `${API_URL}/api/community/posts/${postId}/comments`,
-      commentData
-    );
-    return response.data;
   }
 }
 

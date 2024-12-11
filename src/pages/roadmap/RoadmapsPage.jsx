@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import RoadmapCard from '../../shared/components/RoadmapCard';
-import roadmapsData from '../../infrastructure/mock/db/roadmaps.json';
+import { getRoadmaps } from '../../infrastructure/services/CourseService';
 
 function RoadmapsPage() {
   const [roadmaps, setRoadmaps] = useState([]);
@@ -10,7 +10,11 @@ function RoadmapsPage() {
   });
 
   useEffect(() => {
-    setRoadmaps(roadmapsData.roadmaps);
+    const fetchRoadmaps = async () => {
+      const data = await getRoadmaps();
+      setRoadmaps(data);
+    };
+    fetchRoadmaps();
   }, []);
 
   const levels = [

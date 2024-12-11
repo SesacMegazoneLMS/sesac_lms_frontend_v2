@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getCourses } from '../../infrastructure/services/CourseService';
+import { getCourses, getRoadmaps } from '../../infrastructure/services/CourseService';
 import CourseCard from '../../shared/components/CourseCard';
 
 function FreeCourses() {
