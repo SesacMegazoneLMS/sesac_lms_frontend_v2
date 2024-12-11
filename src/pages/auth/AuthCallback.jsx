@@ -14,7 +14,7 @@ function AuthCallback() {
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
         const userType = localStorage.getItem('userType') || 'student';
-        
+
         if (code) {
           const tokenEndpoint = `https://ap-northeast-2cj4nax3ku.auth.ap-northeast-2.amazoncognito.com/oauth2/token`;
           const response = await fetch(tokenEndpoint, {
@@ -35,15 +35,27 @@ function AuthCallback() {
           }
 
           const data = await response.json();
-          
+          const idToken = data.idToken;
+          const profileResponse = await fetch(
+            `${process.env.REACT_APP_BACKEND_API_ENDPOINT_URL}/api/users/profile/`,
+            {
+              headers: {
+                Authorization: `Bearer ${idToken}`
+              }
+            }
+          );
+          if (!profileResponse.ok) throw new Error('사용자 정보 가져오기 실패');
+
+          const profileData = await profileResponse.json();
+
           // ID 토큰에서 사용자 정보 추출
           const payload = JSON.parse(atob(data.id_token.split('.')[1]));
-          
+
           // Cognito 사용자 속성에서 userType 확인
           const cognitoUserType = payload['custom:userType'] || userType;
 
           console.log('Cognito User Type:', cognitoUserType);
-          
+
           const user = {
             id: payload.sub,
             email: payload.email,
@@ -55,19 +67,19 @@ function AuthCallback() {
           };
 
           console.log('User Object:', user);
-          
+
           // 토큰들을 localStorage에 저장
           localStorage.setItem('accessToken', data.access_token);
           localStorage.setItem('idToken', data.id_token);
           localStorage.setItem('refreshToken', data.refresh_token);
-          
+
           dispatch(loginSuccess(user));
           toast.success('구글 로그인 성공');
-          
+
           // 이전 페이지로 돌아가기
           const prevPage = localStorage.getItem('preLoginPage') || '/dashboard';
           navigate(prevPage);
-          
+
           // 임시 저장된 데이터 삭제
           localStorage.removeItem('preLoginPage');
           localStorage.removeItem('userType');
