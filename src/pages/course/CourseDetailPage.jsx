@@ -21,7 +21,7 @@ function CourseDetailPage() {
         setCourse(data);
         // 관련 로드맵 찾기
         const roadmapsData = await apiEndpoints.roadmaps.getAll();
-        const related = roadmapsData.filter(roadmap => 
+        const related = roadmapsData.filter(roadmap =>
           roadmap.courses.includes(parseInt(id))
         );
         setRelatedRoadmaps(related);
@@ -34,9 +34,9 @@ function CourseDetailPage() {
 
   const handleAddToCart = () => {
     if (!course) return;
-    
+
     dispatch(addToCart({
-      id: course.id,
+      courseId: course.id,
       title: course.title,
       instructor: course.instructor,
       price: course.price,

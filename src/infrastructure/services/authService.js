@@ -24,7 +24,7 @@ export const authService = {
           const idToken = result.getIdToken().getJwtToken();
           const refreshToken = result.getRefreshToken().getToken();
           const userAttributes = result.getIdToken().payload;
-          
+
           const cognitoUserType = userAttributes['custom:userType'];
           if (!cognitoUserType) {
             reject(new Error('사용자 유형이 없습니다.'));

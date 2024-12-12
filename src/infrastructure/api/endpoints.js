@@ -6,7 +6,8 @@ export const API_ENDPOINTS = {
   ORDERS: '/orders.json',
   CART: '/cart.json',
   ROADMAPS: '/roadmaps.json',
-  COMMUNITY: '/community.json'
+  COMMUNITY: '/community.json',
+  PAYMENTS: '/payments.json'
 };
 
 export const apiEndpoints = {
@@ -15,57 +16,75 @@ export const apiEndpoints = {
       const response = await api.get(API_ENDPOINTS.CART);
       const cartData = response.data?.cart || {};
       return cartData.orders?.find(order => order.userId === userId) || null;
-    },
-    
-    createOrder: async (orderData) => {
-      try {
-        const response = await api.get(API_ENDPOINTS.CART);
-        const cartData = response.data?.cart || {};
-        const orders = cartData.orders || [];
-        
-        const newOrder = {
-          orderId: `ORD-${Date.now()}`,
-          merchantUid: `MERCHANT-${Date.now()}`,
-          userId: orderData.studentId,
-          items: orderData.items,
-          totalAmount: orderData.totalAmount,
-          status: 'pending',
-          createdAt: new Date().toISOString()
-        };
+    }
+  },
 
-        return newOrder;
+  payment: {
+    createOrder: async (orderData) => {
+
+      console.log("orderData: ", orderData)
+
+      try {
+        const response = await api.post(`${process.env.REACT_APP_PAYMENT_API_URL}/api/orders`, {
+          courses: orderData.courses,
+          totalAmount: orderData.totalAmount
+        });
+        // const cartData = response.data?.cart || {};
+        // const orders = cartData.orders || [];
+        return response.data
+
+        // const newOrder = {
+        //   orderId: `ORD-${Date.now()}`,
+        //   merchantUid: `MERCHANT-${Date.now()}`,
+        //   userId: orderData.studentId,
+        //   items: orderData.items,
+        //   totalAmount: orderData.totalAmount,
+        //   status: 'pending',
+        //   createdAt: new Date().toISOString()
+        // };
+
+        // return newOrder;
       } catch (error) {
         console.error('주문 생성 실패:', error);
         throw error;
       }
     },
 
-    processPayment: async (paymentData) => {
+    verifyPayment: async (paymentData) => {
       try {
-        const response = await api.get(API_ENDPOINTS.CART);
-        const cartData = response.data?.cart || {};
-        const transactions = cartData.transactions || [];
-
-        const newTransaction = {
-          transactionId: `TRX-${Date.now()}`,
-          orderId: paymentData.orderId,
-          paymentMethod: 'kakaopay',
+        const response = await api.post(`${process.env.REACT_APP_PAYMENT_API_URL}/api/payments/verify`, {
+          impUid: paymentData.impUid,
+          merchantUid: paymentData.merchantUid,
+          buyerName: paymentData.buyerName,
           amount: paymentData.amount,
-          status: 'completed',
-          paidAt: new Date().toISOString()
-        };
+          status: paymentData.status,
+          payMethod: paymentData.payMethod
 
-        return newTransaction;
+        });
+        // const cartData = response.data?.cart || {};
+        // const transactions = cartData.transactions || [];
+        return response.data;
+
+        // const newTransaction = {
+        //   transactionId: `TRX-${Date.now()}`,
+        //   orderId: paymentData.orderId,
+        //   paymentMethod: 'kakaopay',
+        //   amount: paymentData.amount,
+        //   status: 'completed',
+        //   paidAt: new Date().toISOString()
+        // };
+
+        // return newTransaction;
       } catch (error) {
-        console.error('결제 처리 실패:', error);
+        console.error('결제 검증 실패:', error);
         throw error;
       }
-    },
-
-    getOrderHistory: async (userId) => {
-      const response = await api.get(API_ENDPOINTS.CART);
-      const cartData = response.data?.cart || {};
-      return cartData.orders?.filter(order => order.userId === userId) || [];
     }
+  },
+
+  getOrderHistory: async (userId) => {
+    const response = await api.get(API_ENDPOINTS.CART);
+    const cartData = response.data?.cart || {};
+    return cartData.orders?.filter(order => order.userId === userId) || [];
   }
 };
