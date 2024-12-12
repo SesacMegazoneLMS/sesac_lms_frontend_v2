@@ -15,7 +15,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error } = useSelector(state => state.auth);
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -45,33 +45,33 @@ function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     dispatch(loginStart());
-    
+
     try {
       const user = await authService.login(
-        formData.email, 
+        formData.email,
         formData.password,
         formData.userType
       );
-      
+
       // 디버깅을 위한 로그 추가
       console.log('User Attributes:', user);
       console.log('UserType from Cognito:', user.role);
       console.log('Requested UserType:', formData.userType);
-      
+
       // user 객체를 그대로 사용
       localStorage.setItem('accessToken', user.token);
-      localStorage.setItem('idToken', user.idToken); 
+      localStorage.setItem('idToken', user.idToken);
       localStorage.setItem('refreshToken', user.refreshToken);
 
       dispatch(loginSuccess(user));
-      
+
       toast.success('로그인에 성공했습니다.');
       navigate('/dashboard');
     } catch (err) {
       if (err.code === 'UserNotConfirmedException') {
         toast.info('이메일 인증이 필요합니다.');
-        navigate('/auth/confirm-email', { 
-          state: { email: formData.email } 
+        navigate('/auth/confirm-email', {
+          state: { email: formData.email }
         });
       } else {
         const errorMessage = err.message || '로그인에 실패했습니다.';
@@ -84,13 +84,13 @@ function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       const googleAuthUrl = `https://accounts.google.com/o/oauth2/auth?client_id=785935071013-ms26qfbn4tiu4kui0leu7la8m3f18v5h.apps.googleusercontent.com&redirect_uri=https://ap-northeast-2cj4nax3ku.auth.ap-northeast-2.amazoncognito.com/oauth2/idpresponse&response_type=code&scope=email profile`;
-      
+
       // 현재 URL을 state로 저장
       localStorage.setItem('preLoginPage', window.location.pathname);
-      
+
       // 사용자 유형도 저장
       localStorage.setItem('userType', formData.userType);
-      
+
       window.location.href = googleAuthUrl;
     } catch (error) {
       toast.error('Google 로그인에 실패했습니다.');
@@ -116,7 +116,7 @@ function LoginPage() {
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
               value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
           </div>
 
@@ -129,7 +129,7 @@ function LoginPage() {
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
               value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             />
           </div>
 
@@ -140,7 +140,7 @@ function LoginPage() {
             <select
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
               value={formData.userType}
-              onChange={(e) => setFormData({...formData, userType: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, userType: e.target.value })}
             >
               <option value="student">학생</option>
               <option value="instructor">강사</option>
@@ -164,7 +164,7 @@ function LoginPage() {
               </Link>
             </div>
             <div className="text-sm">
-              <button 
+              <button
                 type="button"
                 onClick={() => handleForgotPassword(formData.email)}
                 className="font-medium text-primary hover:text-primary-dark"
@@ -193,7 +193,7 @@ function LoginPage() {
               <img className="h-5 w-5" src="/icons/naver.png" alt="Naver" />
               <span className="ml-2">네이버로 시작하기</span>
             </button>
-            <button 
+            <button
               onClick={handleGoogleLogin}
               type="button"
               className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
