@@ -10,6 +10,7 @@ import toast, { Toaster, useToasterStore } from 'react-hot-toast';
 import InstructorMyPage from '../instructor/InstructorMyPage';
 import CourseQuizPage from '../instructor/CourseQuizPage';
 import ProfilePage from '../profile/ProfilePage';
+import axios from "axios";
 
 
 function InstructorDashboard() {
@@ -54,6 +55,20 @@ function InstructorDashboard() {
   ];
 
   //내 강좌 목록 api
+  //gnuke
+  const requestMyCourses = async (page = 1, size = 5) => {
+    try {
+      const res = await axios.get(`http://localhost:8081/api/courses/instructor/me?page=${page}&size=${size}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("idToken")}`
+        }
+      });
+      setRecentCourses(res.data.myCourseList);
+    } catch (error) {
+      console.error(error);
+      // 에러 처리 로직 추가 가능
+    }
+  }
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -119,11 +134,12 @@ function InstructorDashboard() {
         ];
 
         setStats(mockStats);
-        setRecentCourses(mockCourses); // api로 내강좌 목록 가져와야함
         setRecentEnrollments(mockEnrollments);
         setRecentReviews(mockReviews);
         setRevenueData(mockRevenueData);
         setQuizzes(mockQuizzes);
+
+        requestMyCourses();
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -327,52 +343,48 @@ function InstructorDashboard() {
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   평점
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  수익
-                </th>
+                {/*<th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">*/}
+                {/*  수익*/}
+                {/*</th>*/}
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   진행률
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  최근 업데이트
-                </th>
+                {/*<th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">*/}
+                {/*  최근 업데이트*/}
+                {/*</th>*/}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {recentCourses.map(course => (
-                <tr key={course.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Link
-                      to={`/instructor/courses/${course.id}`}
-                      className="text-primary hover:text-primary-dark"
-                    >
+                  <tr key={course.id} className="cursor-pointer hover:bg-gray-100"
+                      onClick={() => window.location.href = `/instructor/course/${course.id}/content`}>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {course.title}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4 text-center whitespace-nowrap">
-                    {course.students}명
-                  </td>
-                  <td className="px-6 py-4 text-center whitespace-nowrap">
-                    <div className="flex items-center justify-center">
-                      <FiStar className="text-yellow-400 mr-1" />
-                      {course.rating}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-center whitespace-nowrap">
-                    {course.income.toLocaleString()}원
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full"
-                        style={{ width: `${course.progress}%` }}
-                      />
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-500">
-                    {course.lastUpdated}
-                  </td>
-                </tr>
+                    </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                      {course.students}명
+                    </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center">
+                        <FiStar className="text-yellow-400 mr-1"/>
+                        {course.rating}
+                      </div>
+                    </td>
+                    {/*<td className="px-6 py-4 text-center whitespace-nowrap">*/}
+                    {/*  {course.income.toLocaleString()}원*/}
+                    {/*</td>*/}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                            className="bg-primary h-2 rounded-full"
+                            style={{width: `${course.progress}%`}}
+                        />
+                      </div>
+                    </td>
+                    {/*<td className="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-500">*/}
+                    {/*  {course.lastUpdated}*/}
+                    {/*</td>*/}
+                  </tr>
               ))}
             </tbody>
           </table>
@@ -429,91 +441,75 @@ function InstructorDashboard() {
   );
 
 
-  //gnuke
-  const checkId = () => {
-    console.log("내 토큰 : " + localStorage.getItem("idToken"))
-  }
 
-  // const requestMyCourses = async () => {
-  //   const res = await axios.get("http://localhost:8081/api/courses/instructor/me",
-  //       {
-  //         headers: {
-  //          Authorization: `Bearer ${localStorage.getItem("idToken")}`
-  //         }
-  //       },)
-  //      
-  // }
 
   const renderCoursesContent = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">강좌 관리</h2>
-        <Link
-          to="/instructor/course/create"
-          className="bg-primary text-white px-4 py-2 rounded-lg flex items-center"
-        >
-          <FiPlus className="mr-2" />
-          새 강좌 만들기
-        </Link>
-      </div>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">강좌 관리</h2>
+          <Link
+              to="/instructor/course/create"
+              className="bg-primary text-white px-4 py-2 rounded-lg flex items-center"
+          >
+            <FiPlus className="mr-2"/>
+            새 강좌 만들기
+          </Link>
+        </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full">
-          <thead className="bg-gray-50">
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">강좌명</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">수강생</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">평점</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">관리</th>
             </tr>
-          </thead>
-          <tbody>
+            </thead>
+            <tbody>
             {recentCourses.map(course => (
-              <tr key={course.id} className="border-b">
-                <td className="px-6 py-4">{course.title}</td>
-                <td className="px-6 py-4 text-center">{course.students}명</td>
-                <td className="px-6 py-4 text-center">
-                  <div className="flex items-center justify-center">
-                    <FiStar className="text-yellow-400 mr-1" />
-                    {course.rating}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <div className="flex justify-center space-x-2">
-                    <Link
-                      to={`/instructor/course/${course.id}/edit`}
-                      className="text-primary hover:text-primary-dark"
-                    >
-                      수정
-                    </Link>
-                    <Link
-                      to={`/instructor/course/${course.id}/content`}
-                      className="text-gray-600 hover:text-gray-800"
-                    >
-                      콘텐츠
-                    </Link>
-                    <Link
-                      to={`/instructor/course/${course.id}/quiz`}
-                      className="text-gray-600 hover:text-gray-800"
-                    >
-                      퀴즈
-                    </Link>
-                  </div>
-                </td>
-              </tr>
+                <tr key={course.id} className="cursor-pointer hover:bg-gray-100"
+                    onClick={() => window.location.href = `/instructor/course/${course.id}/content`}>
+                  <td className="px-6 py-4">{course.title}</td>
+                  <td className="px-6 py-4 text-center">{course.students}명</td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex items-center justify-center">
+                      <FiStar className="text-yellow-400 mr-1"/>
+                      {course.averageRating}점
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex justify-center space-x-2">
+                      <Link
+                          to={`/instructor/course/${course.id}/edit`}
+                          className="text-primary hover:text-primary-dark"
+                      >
+                        수정
+                      </Link>
+                      <Link
+                          to={`/instructor/course/${course.id}/content`}
+                          className="text-gray-600 hover:text-gray-800"
+                      >
+                        콘텐츠
+                      </Link>
+                      <Link
+                          to={`/instructor/course/${course.id}/quiz`}
+                          className="text-gray-600 hover:text-gray-800"
+                      >
+                        퀴즈
+                      </Link>
+                    </div>
+                  </td>
+                </tr>
             ))}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
-      
-      <div>
-        내 아이디 확인 버튼 : <button onClick={checkId}>check</button>
-      </div>
-    </div>
   );
 
   const renderQuizzesContent = () => (
-    <div className="space-y-6">
+      <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">퀴즈 관리</h2>
       </div>

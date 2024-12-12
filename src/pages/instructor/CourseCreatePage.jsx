@@ -75,7 +75,6 @@ function CourseCreatePage() {
               },
           });
         const courseId = res.data.courseId;
-        console.log("/instructor/course/" + courseId +"/edit")
         alert(res.data.message);
 
         navigate(`/instructor/course/${courseId}/content`);
