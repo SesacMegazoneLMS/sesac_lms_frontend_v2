@@ -51,42 +51,53 @@ function LoginPage() {
     e.preventDefault();
     dispatch(loginStart());
 
-    const loginResponse = await axios.post(
-      "https://ivdkhjbzl1.execute-api.ap-northeast-2.amazonaws.com/lms/auth/login",
-      { email: formData.email, password: formData.password }
-    );
+    try {
+      const loginResponse = await axios.post(
+        `${process.env.REACT_APP_AUTH_URI}/auth/login`,
+        { email: formData.email, password: formData.password }
+      );
 
-    localStorage.setItem("accessToken", loginResponse.data.tokens.accessToken);
-    localStorage.setItem("idToken", loginResponse.data.tokens.idToken);
-    localStorage.setItem(
-      "refreshToken",
-      loginResponse.data.tokens.refreshToken
-    );
+      const { accessToken, idToken, refreshToken } = loginResponse.data.tokens;
 
-    const userInfoResponse = await axios.get(
-      "http://alb-ecs-lms-2015700642.ap-northeast-2.elb.amazonaws.com/api/users/profile/",
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${loginResponse.data.tokens.idToken}`,
-        },
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("idToken", idToken);
+      localStorage.setItem("refreshToken", refreshToken);
+
+      const userInfoResponse = await axios.get(
+        `${process.env.REACT_APP_API_URI}/users/profile/`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+        }
+      );
+
+      const { email, nickname, role } = userInfoResponse.data.user;
+
+      dispatch(
+        loginSuccess({
+          // id, accesstoken, refresh, idt
+          email: email,
+          name: nickname,
+          role: role,
+        })
+      );
+
+      toast.success("로그인에 성공했습니다.");
+      navigate("/dashboard");
+    } catch (err) {
+      if (err.response.data.type === "UserNotConfirmedException") {
+        toast.info("이메일 인증이 필요합니다.");
+        navigate("/auth/confirm-email", {
+          state: { email: formData.email },
+        });
+      } else {
+        const errorMessage = err.message || "로그인에 실패했습니다.";
+        dispatch(loginFailure(errorMessage));
+        toast.error(errorMessage);
       }
-    );
-
-    dispatch(
-      loginSuccess({
-        id: "c4685ddc-4021-7063-ba49-0f267f0b2866",
-        email: userInfoResponse.data.user.email,
-        name: userInfoResponse.data.user.nickname,
-        role: userInfoResponse.data.user.userType,
-        accessToken: loginResponse.data.tokens.accessToken,
-        idToken: loginResponse.data.tokens.idToken,
-        refreshToken: loginResponse.data.tokens.refreshToken,
-      })
-    );
-
-    toast.success("로그인에 성공했습니다.");
-    navigate("/dashboard");
+    }
 
     // try {
     //   const user = await authService.login(
@@ -137,8 +148,11 @@ function LoginPage() {
     } catch (error) {
       toast.error("Google 로그인에 실패했습니다.");
       console.error("Google login error:", error);
+      dispatch(loginFailure(errorMessage));
     }
   };
+
+  const handleKakaoLogin = async () => {};
 
   return (
     <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
