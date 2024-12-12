@@ -6,34 +6,28 @@ import {
   loginSuccess,
   loginFailure,
 } from "../../store/slices/authSlice";
-import { authService } from "../../infrastructure/services/authService";
 import { toast } from "react-toastify";
 import { CognitoUser, CognitoUserPool } from "amazon-cognito-identity-js";
 import axios from "axios";
-
 const userPool = new CognitoUserPool({
   UserPoolId: "ap-northeast-2_ow5oyt4jA",
   ClientId: "6tuhkvilko0ea253l36d4n3uec",
 });
-
 function LoginPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
-
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     userType: "student",
   });
-
   const handleForgotPassword = async (email) => {
     try {
       const cognitoUser = new CognitoUser({
         Username: email,
         Pool: userPool,
       });
-
       cognitoUser.forgotPassword({
         onSuccess: () => {
           toast.success("비밀번호 재설정 링크가 이메일로 전송되었습니다.");
@@ -46,23 +40,19 @@ function LoginPage() {
       toast.error("비밀번호 재설정 중 오류가 발생했습니다.");
     }
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     dispatch(loginStart());
-
     try {
       const loginResponse = await axios.post(
         `${process.env.REACT_APP_AUTH_URI}/auth/login`,
         { email: formData.email, password: formData.password }
       );
-
       const { accessToken, idToken, refreshToken } = loginResponse.data.tokens;
-
+      const { sub } = loginResponse.data.user.userAttributes;
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("idToken", idToken);
       localStorage.setItem("refreshToken", refreshToken);
-
       const userInfoResponse = await axios.get(
         `${process.env.REACT_APP_API_URI}/users/profile/`,
         {
@@ -72,18 +62,14 @@ function LoginPage() {
           },
         }
       );
-
-      const { email, nickname, role } = userInfoResponse.data.user;
-
+      const { email, nickname, userType } = userInfoResponse.data.user;
       dispatch(
         loginSuccess({
-          // id, accesstoken, refresh, idt
           email: email,
           name: nickname,
-          role: role,
+          role: userType.toLowerCase(),
         })
       );
-
       toast.success("로그인에 성공했습니다.");
       navigate("/dashboard");
     } catch (err) {
@@ -98,52 +84,15 @@ function LoginPage() {
         toast.error(errorMessage);
       }
     }
-
-    // try {
-    //   const user = await authService.login(
-    //     formData.email,
-    //     formData.password,
-    //     formData.userType
-    //   );
-
-    //   // 디버깅을 위한 로그 추가
-    //   console.log("User Attributes:", user);
-    //   console.log("UserType from Cognito:", user.role);
-    //   console.log("Requested UserType:", formData.userType);
-
-    //   // user 객체를 그대로 사용
-    //   localStorage.setItem("accessToken", user.token);
-    //   localStorage.setItem("idToken", user.idToken);
-    //   localStorage.setItem("refreshToken", user.refreshToken);
-
-    //   dispatch(loginSuccess(user));
-
-    //   toast.success("로그인에 성공했습니다.");
-    //   navigate("/dashboard");
-    // } catch (err) {
-    //   if (err.code === "UserNotConfirmedException") {
-    //     toast.info("이메일 인증이 필요합니다.");
-    //     navigate("/auth/confirm-email", {
-    //       state: { email: formData.email },
-    //     });
-    //   } else {
-    //     const errorMessage = err.message || "로그인에 실패했습니다.";
-    //     dispatch(loginFailure(errorMessage));
-    //     toast.error(errorMessage);
-    //   }
-    // }
   };
 
   const handleGoogleLogin = async () => {
     try {
       const googleAuthUrl = `https://accounts.google.com/o/oauth2/auth?client_id=785935071013-ms26qfbn4tiu4kui0leu7la8m3f18v5h.apps.googleusercontent.com&redirect_uri=https://ap-northeast-2cj4nax3ku.auth.ap-northeast-2.amazoncognito.com/oauth2/idpresponse&response_type=code&scope=email profile`;
-
       // 현재 URL을 state로 저장
       localStorage.setItem("preLoginPage", window.location.pathname);
-
       // 사용자 유형도 저장
       localStorage.setItem("userType", formData.userType);
-
       window.location.href = googleAuthUrl;
     } catch (error) {
       toast.error("Google 로그인에 실패했습니다.");
@@ -153,7 +102,6 @@ function LoginPage() {
   };
 
   const handleKakaoLogin = async () => {};
-
   return (
     <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
@@ -177,7 +125,6 @@ function LoginPage() {
               }
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700">
               비밀번호
@@ -192,7 +139,6 @@ function LoginPage() {
               }
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700">
               사용자 유형
@@ -208,7 +154,6 @@ function LoginPage() {
               <option value="instructor">강사</option>
             </select>
           </div>
-
           <div>
             <button
               type="submit"
@@ -218,7 +163,6 @@ function LoginPage() {
               {loading ? "로그인 중..." : "로그인"}
             </button>
           </div>
-
           <div className="flex items-center justify-between">
             <div className="text-sm">
               <Link
@@ -239,7 +183,6 @@ function LoginPage() {
             </div>
           </div>
         </form>
-
         <div className="mt-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
