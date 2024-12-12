@@ -22,7 +22,7 @@ import FreeCourses from './pages/course/FreeCourses';
 import AuthCallback from './pages/auth/AuthCallback';
 import ConfirmEmail from './pages/auth/ConfirmEmail';
 import CommunityPage from './pages/community/CommunityPage';
-import CheckoutPage from './pages/checkout/CheckoutPage';
+
 
 function App() {
   return (
@@ -39,7 +39,7 @@ function App() {
             <Route path="cart" element={<CartPage />} />
             <Route path="roadmaps" element={<RoadmapsPage />} />
             <Route path="community" element={<CommunityPage />} />
-            <Route path="checkout" element={<CheckoutPage />} />
+
             <Route path="instructor">
               <Route path="course/create" element={<CourseCreatePage />} />
               <Route path="course/:id/edit" element={<CourseManagementPage />} />

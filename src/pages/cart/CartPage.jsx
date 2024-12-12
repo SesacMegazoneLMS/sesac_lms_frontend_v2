@@ -23,7 +23,7 @@ function CartPage() {
   }, [user, navigate]);
 
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
-
+  const discountedPrice = totalPrice * 0.8; // 20% 할인
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://cdn.iamport.kr/v1/iamport.js";
