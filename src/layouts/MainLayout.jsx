@@ -38,10 +38,6 @@ function MainLayout() {
     navigate('/auth/login');
   };
 
-  const isLoggedIn = localStorage.getItem('accessToken') !== null &&
-    localStorage.getItem('idToken') !== null &&
-    localStorage.getItem('refreshToken') !== null;
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 상단 프로모션 배너 */}
@@ -55,11 +51,11 @@ function MainLayout() {
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
-            <img
-              src="/saesac.png"
-              alt="새싹 LMS"
-              className="h-12 w-auto object-contain"
-              style={{ aspectRatio: 'auto' }}
+              <img 
+                src="/saesac.png" 
+                alt="새싹 LMS" 
+                className="h-12 w-auto object-contain"
+                style={{ aspectRatio: 'auto' }}
             />
             {/* 로고 영역 */}
             <div className="flex items-center">
@@ -99,22 +95,21 @@ function MainLayout() {
                   <CartBadge>{cartItems.length}</CartBadge>
                 )}
               </CartLink>
-              {isLoggedIn ? (
-                <div className="flex items-center space-x-4">
-                  <Link to="/dashboard" className="text-gray-600 hover:text-primary">
-                    마이페이지
-                  </Link>
-                  <span className="text-gray-700">사용자님</span>
-                  {/*<span className="text-gray-700">{user.name}님</span>*/}
-                  <button
-                    onClick={handleLogout}
-                    className="px-4 py-2 text-white bg-primary rounded-md hover:bg-primary-dark"
-                  >
-                    로그아웃
-                  </button>
-                </div>
+              {user ? (
+                  <div className="flex items-center space-x-4">
+                    <Link to="/dashboard" className="text-gray-600 hover:text-primary">
+                      마이페이지
+                    </Link>
+                    <span className="text-gray-700">{user.name}님</span>
+                    <button
+                        onClick={handleLogout}
+                        className="px-4 py-2 text-white bg-primary rounded-md hover:bg-primary-dark"
+                    >
+                      로그아웃
+                    </button>
+                  </div>
               ) : (
-                <Link to="/auth/login">
+                  <Link to="/auth/login">
                   <button className="px-4 py-2 text-white bg-primary rounded-md hover:bg-primary-dark">
                     로그인
                   </button>
@@ -195,39 +190,39 @@ function MainLayout() {
                   <p>점심시간 13:00 ~ 14:00</p>
                 </div>
                 <div className="flex space-x-4 items-center">
-                  <a
-                    href="https://facebook.com"
+                  <a 
+                    href="https://facebook.com" 
                     className="social-icon"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <img
+                    <img 
                       src="/icons/facebook.png"
-                      alt="Facebook"
+                      alt="Facebook" 
                       className="w-6 h-6 hover:opacity-80 transition-opacity"
                     />
                   </a>
-                  <a
-                    href="https://twitter.com"
+                  <a 
+                    href="https://twitter.com" 
                     className="social-icon"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <img
+                    <img 
                       src="/icons/twitter.png"
-                      alt="Twitter"
+                      alt="Twitter" 
                       className="w-6 h-6 hover:opacity-80 transition-opacity"
                     />
                   </a>
-                  <a
-                    href="https://instagram.com"
+                  <a 
+                    href="https://instagram.com" 
                     className="social-icon"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <img
-                      src="/icons/instagram.png"
-                      alt="Instagram"
+                    <img 
+                      src="/icons/instagram.png" 
+                      alt="Instagram" 
                       className="w-6 h-6 hover:opacity-80 transition-opacity"
                     />
                   </a>

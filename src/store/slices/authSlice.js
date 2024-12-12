@@ -32,8 +32,10 @@ const authSlice = createSlice({
       state.error = action.payload;
       state.isAuthenticated = false;
     },
-    logout: (state) => {
-      return initialState;
+    logout: () => {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("idToken");
+        localStorage.removeItem("refreshToken");
     },
     updateUserProfile: (state, action) => {
       state.user = {

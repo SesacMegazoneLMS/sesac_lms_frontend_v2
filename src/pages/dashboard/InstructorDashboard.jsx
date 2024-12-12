@@ -53,6 +53,8 @@ function InstructorDashboard() {
     { id: 'profile', label: '프로필 관리' }  // 새로운 탭 추가
   ];
 
+  //내 강좌 목록 api
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -66,19 +68,6 @@ function InstructorDashboard() {
           averageRating: 4.5,
           completionRate: 78
         };
-
-        const mockCourses = [
-          {
-            id: 1,
-            title: "React 완벽 가이드",
-            students: 45,
-            rating: 4.8,
-            progress: 100,
-            lastUpdated: "2024-03-20",
-            income: 1200000
-          },
-          // ... 더 많은 강좌 데이터
-        ];
 
         const mockEnrollments = [
           {
@@ -130,7 +119,7 @@ function InstructorDashboard() {
         ];
 
         setStats(mockStats);
-        setRecentCourses(mockCourses);
+        setRecentCourses(mockCourses); // api로 내강좌 목록 가져와야함
         setRecentEnrollments(mockEnrollments);
         setRecentReviews(mockReviews);
         setRevenueData(mockRevenueData);
@@ -439,6 +428,22 @@ function InstructorDashboard() {
     </div>
   );
 
+
+  //gnuke
+  const checkId = () => {
+    console.log("내 토큰 : " + localStorage.getItem("idToken"))
+  }
+
+  // const requestMyCourses = async () => {
+  //   const res = await axios.get("http://localhost:8081/api/courses/instructor/me",
+  //       {
+  //         headers: {
+  //          Authorization: `Bearer ${localStorage.getItem("idToken")}`
+  //         }
+  //       },)
+  //      
+  // }
+
   const renderCoursesContent = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -457,7 +462,6 @@ function InstructorDashboard() {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">강좌명</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">상태</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">수강생</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">평점</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">관리</th>
@@ -467,11 +471,6 @@ function InstructorDashboard() {
             {recentCourses.map(course => (
               <tr key={course.id} className="border-b">
                 <td className="px-6 py-4">{course.title}</td>
-                <td className="px-6 py-4 text-center">
-                  <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                    공개
-                  </span>
-                </td>
                 <td className="px-6 py-4 text-center">{course.students}명</td>
                 <td className="px-6 py-4 text-center">
                   <div className="flex items-center justify-center">
@@ -505,6 +504,10 @@ function InstructorDashboard() {
             ))}
           </tbody>
         </table>
+      </div>
+      
+      <div>
+        내 아이디 확인 버튼 : <button onClick={checkId}>check</button>
       </div>
     </div>
   );
