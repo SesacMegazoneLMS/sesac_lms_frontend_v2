@@ -19,7 +19,7 @@ const AuthCallback2 = () => {
 
         // Lambda 함수 호출하여 토큰 교환
         const response = await axios.post(
-          "https://ivdkhjbzl1.execute-api.ap-northeast-2.amazonaws.com/lms/auth/exchange-code",
+          `https://ivdkhjbzl1.execute-api.ap-northeast-2.amazonaws.com/lms/auth/exchange-code`,
           { code },
           { headers: { "Content-Type": "application/json" } }
         );
