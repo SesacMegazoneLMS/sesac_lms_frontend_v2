@@ -42,11 +42,40 @@ const CourseContentPage = () => {
     }
   };
 
-  // 비디오 업로드 함수
-  const uploadVideo = async (file, lectureId) => {
+  // 새 강의 생성
+  const handleCreateLecture = async () => {
+    if (!newLecture.title.trim()) {
+      toast.warning('강의 제목을 입력해주세요.');
+      return;
+    }
+
+    if (!selectedFile) {
+      toast.warning('영상 파일을 선택해주세요.');
+      return;
+    }
+
     try {
       setIsUploading(true);
-      let sourceS3Key = `${Date.now()}-${file.name}`;
+
+      // 1. 강의 생성 (videoKey는 null로 시작)
+      const createLectureResponse = await axios.post(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/lectures`,
+        {
+          courseId: parseInt(courseId),
+          title: newLecture.title,
+          orderIndex: courseData.lectures.length + 1,
+          status: 'PROCESSING',
+          videoKey: null
+        },
+        {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('idToken')}` }
+        }
+      );
+
+      const lectureId = createLectureResponse.data.id;
+
+      // 2. 비디오 업로드 준비
+      const sourceS3Key = `${Date.now()}-${selectedFile.name}`;
 
       // 비디오 길이 추출
       const duration = await new Promise((resolve) => {
@@ -56,12 +85,12 @@ const CourseContentPage = () => {
           window.URL.revokeObjectURL(video.src);
           resolve(video.duration);
         };
-        video.src = URL.createObjectURL(file);
+        video.src = URL.createObjectURL(selectedFile);
       });
 
       const formattedDuration = new Date(duration * 1000).toISOString().substring(11, 19);
 
-      // S3 업로드
+      // 3. S3 업로드
       const s3Client = new S3Client({
         region: "ap-northeast-2",
         credentials: fromCognitoIdentityPool({
@@ -76,57 +105,58 @@ const CourseContentPage = () => {
       await s3Client.send(new PutObjectCommand({
         Bucket: "hip-media-input",
         Key: sourceS3Key,
-        Body: file,
-        ContentType: file.type
+        Body: selectedFile,
+        ContentType: selectedFile.type
       }));
 
+      // 4. 비디오 정보 업데이트
       const videoKey = sourceS3Key.split('.')[0] + "/" + sourceS3Key.split('.')[0] + ".m3u8";
+      await axios.post(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/lectures/video/complete`,
+        {
+          lectureId: lectureId,
+          videoKey: videoKey,
+          status: 'COMPLETED',
+          duration: formattedDuration
+        },
+        {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('idToken')}` }
+        }
+      );
 
-      // 비디오 정보 업데이트
-      await axios.post(`${process.env.REACT_APP_BACKEND_API_URL}/api/lectures/video/complete`, {
-        lectureId,
-        videoKey,
-        status: 'COMPLETED',
-        duration: formattedDuration
-      }, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('idToken')}` }
-      });
+      // 5. 성공 처리
+      await fetchCourseData();
+      setNewLecture({ title: '' });
+      setSelectedFile(null);
+      toast.success('강의가 성공적으로 생성되었습니다.');
 
-      toast.success('영상 업로드가 완료되었습니다.');
     } catch (error) {
-      toast.error('영상 업로드에 실패했습니다.');
-      throw error;
+      console.error('Error:', error);
+      toast.error('강의 생성 실패: ' + (error.response?.data?.message || error.message));
     } finally {
       setIsUploading(false);
     }
   };
 
-  // 새 강의 생성
-  const handleCreateLecture = async () => {
-    if (!newLecture.title.trim()) {
-      toast.warning('강의 제목을 입력해주세요.');
+  // 강의 삭제 함수 추가
+  const handleDeleteLecture = async (lectureId) => {
+    if (!window.confirm('정말 이 강의를 삭제하시겠습니까?')) {
       return;
     }
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_API_URL}/api/lectures`, {
-        title: newLecture.title,
-        orderIndex: courseData.lectures.length + 1,
-        status: 'PENDING'
-      }, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('idToken')}` }
-      });
+      await axios.delete(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/lectures/${lectureId}`,
+        {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('idToken')}` }
+        }
+      );
 
-      if (selectedFile) {
-        await uploadVideo(selectedFile, response.data.id);
-      }
-
-      await fetchCourseData();
-      setNewLecture({ title: '' });
-      setSelectedFile(null);
-      toast.success('새 강의가 생성되었습니다.');
+      toast.success('강의가 삭제되었습니다.');
+      await fetchCourseData(); // 강의 목록 새로고침
     } catch (error) {
-      toast.error('강의 생성에 실패했습니다.');
+      console.error('Error deleting lecture:', error);
+      toast.error('강의 삭제에 실패했습니다: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -192,8 +222,16 @@ const CourseContentPage = () => {
                   </span>
                   <span className="font-medium">{lecture.title}</span>
                 </div>
-                <div className="text-sm text-gray-500">
-                  {lecture.status === 'COMPLETED' ? '업로드 완료' : '처리 중'}
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-gray-500">
+                    {lecture.status === 'COMPLETED' ? '업로드 완료' : '처리 중'}
+                  </div>
+                  <button
+                    onClick={() => handleDeleteLecture(lecture.id)}
+                    className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                  >
+                    삭제
+                  </button>
                 </div>
               </div>
             </div>
