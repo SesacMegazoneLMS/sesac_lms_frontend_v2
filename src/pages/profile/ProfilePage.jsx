@@ -28,7 +28,7 @@ function ProfilePage() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">프로필 관리</h1>
-        
+
         <div className="bg-white rounded-lg shadow p-6">
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
@@ -38,18 +38,18 @@ function ProfilePage() {
                   type="text"
                   disabled={!isEditing}
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700">주소</label>
                 <input
                   type="text"
                   disabled={!isEditing}
                   value={formData.address}
-                  onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                 />
               </div>
@@ -60,7 +60,7 @@ function ProfilePage() {
                   type="tel"
                   disabled={!isEditing}
                   value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                 />
               </div>
@@ -72,8 +72,8 @@ function ProfilePage() {
                   <button type="submit" className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark">
                     저장
                   </button>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setIsEditing(false)}
                     className="border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50"
                   >
@@ -81,7 +81,7 @@ function ProfilePage() {
                   </button>
                 </>
               ) : (
-                <button 
+                <button
                   type="button"
                   onClick={() => setIsEditing(true)}
                   className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark"

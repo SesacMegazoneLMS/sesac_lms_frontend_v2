@@ -9,7 +9,7 @@ function DashboardPage() {
 
   // 로그인하지 않은 경우
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // role이 instructor인 경우 InstructorDashboard 렌더링
