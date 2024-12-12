@@ -28,7 +28,7 @@ const CourseContentPage = () => {
   // 강의 목록 조회
   const fetchCourseData = async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/lectures`, {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_API_URL}/api/lectures/course/${courseId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('idToken')}`
         }
@@ -83,7 +83,7 @@ const CourseContentPage = () => {
       const videoKey = sourceS3Key.split('.')[0] + "/" + sourceS3Key.split('.')[0] + ".m3u8";
 
       // 비디오 정보 업데이트
-      await axios.post('/api/lectures/video/complete', {
+      await axios.post(`${process.env.REACT_APP_BACKEND_API_URL}/api/lectures/video/complete`, {
         lectureId,
         videoKey,
         status: 'COMPLETED',
@@ -109,8 +109,7 @@ const CourseContentPage = () => {
     }
 
     try {
-      const response = await axios.post('/api/lectures', {
-        courseId: parseInt(courseId),
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_API_URL}/api/lectures`, {
         title: newLecture.title,
         orderIndex: courseData.lectures.length + 1,
         status: 'PENDING'
