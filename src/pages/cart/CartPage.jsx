@@ -14,6 +14,7 @@ function CartPage() {
   const dispatch = useDispatch();
 
   useEffect(() => {
+
     if (!user) {
       toast.error('로그인이 필요한 서비스입니다.');
       navigate('/login');
@@ -22,6 +23,7 @@ function CartPage() {
   }, [user, navigate]);
 
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
+  const discountedPrice = totalPrice * 0.8; // 20% 할인
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -40,11 +42,16 @@ function CartPage() {
   }, []);
 
   const handlePayment = async () => {
+
+    console.log("cartItems: ", cartItems)
+
     try {
-      const orderData = await apiEndpoints.cart.createOrder({
-        studentId: user.id,
-        items: cartItems,
-        totalAmount: totalPrice
+      const orderData = await apiEndpoints.payment.createOrder({
+        courses: cartItems.map(item => ({
+          courseId: item.id,
+          price: item.price
+        })),
+        totalAmount: discountedPrice
       });
 
       const { IMP } = window;
@@ -53,25 +60,46 @@ function CartPage() {
         pay_method: "card",
         merchant_uid: orderData.merchantUid,
         amount: orderData.totalAmount,
-        name: cartItems.length > 1 
+        name: cartItems.length > 1
           ? `${cartItems[0].title} 외 ${cartItems.length - 1}건`
           : cartItems[0].title,
-        buyer_name: user.name
+        buyer_name: orderData.userName,
+        notice_url: "https://599b-58-120-167-126.ngrok-free.app/api/payments/webhook"
       }, async (rsp) => {
         if (rsp.success) {
-          await apiEndpoints.cart.processPayment({
-            orderId: orderData.orderId,
-            amount: orderData.totalAmount
-          });
-          dispatch(clearCart());
-          navigate('/dashboard');
-          toast.success('결제가 완료되었습니다.');
+          try {
+            const verifyResult = await apiEndpoints.payment.verifyPayment({
+              impUid: rsp.imp_uid,
+              merchantUid: rsp.merchant_uid,
+              buyerName: rsp.buyer_name,
+              amount: rsp.paid_amount,
+              status: rsp.status,
+              payMethod: rsp.pay_method
+            });
+
+            if (verifyResult.status === 'success') {
+              dispatch(clearCart());
+              navigate('/dashboard');
+              toast.success('결제가 완료되었습니다.');
+            } else {
+              toast.error('결제는 완료되었으나 처리 중입니다. 결제 내역에서 확인해주세요.')
+            }
+          } catch (error) {
+            console.error('Verification error:', error);
+          }
+          // await apiEndpoints.cart.processPayment({
+          //   orderId: orderData.orderId,
+          //   amount: orderData.totalAmount
+          // });
+          // dispatch(clearCart());
+          // navigate('/dashboard');
+          // toast.success('결제가 완료되었습니다.');
         } else {
-          toast.error(`결제 실패: ${rsp.error_msg}`);
+          toast.error(`결제에 실패했습니다. 사유: ${rsp.error_msg}`);
         }
       });
     } catch (error) {
-      console.error('결제 처리 오류:', error);
+      console.error('결제 처리 중 오류 발생: ', error);
       toast.error('결제 처리 중 오류가 발생했습니다.');
     }
   };
@@ -79,7 +107,7 @@ function CartPage() {
   return (
     <CartContainer>
       <CartHeader>장바구니</CartHeader>
-      
+
       {cartItems.length === 0 ? (
         <EmptyCart>
           <img src="/assets/icons/empty-cart.svg" alt="빈 장바구니" />
@@ -90,7 +118,7 @@ function CartPage() {
           <CartItemList>
             {cartItems.map(course => (
               <CourseWrapper key={course.id}>
-                <CourseCard 
+                <CourseCard
                   course={course}
                   type="cart"
                 />
@@ -115,7 +143,7 @@ function CartPage() {
               </PriceRow>
               <TotalRow>
                 <span>총 결제 금액</span>
-                <TotalPrice>₩{totalPrice.toLocaleString()}</TotalPrice>
+                <TotalPrice>₩{discountedPrice.toLocaleString()}</TotalPrice>
               </TotalRow>
             </PriceDetails>
             <PaymentButton onClick={handlePayment}>

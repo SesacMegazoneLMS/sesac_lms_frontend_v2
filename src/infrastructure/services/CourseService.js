@@ -3,7 +3,8 @@ import { API_ENDPOINTS } from '../api/endpoints';
 
 export const getCourses = async () => {
   try {
-    const response = await api.get(API_ENDPOINTS.COURSES);
+    const response = await api.get(`${process.env.REACT_APP_PAYMENT_API_URL}/api/courses`);
+    console.log("response:", response);
     const data = response.data?.courses || response.data;
     return Array.isArray(data) ? data : [];
   } catch (error) {
@@ -28,11 +29,11 @@ export const CourseService = {
     try {
       const response = await api.get(API_ENDPOINTS.COURSES);
       const courses = response.data?.courses || response.data || [];
-      const course = Array.isArray(courses) ? 
+      const course = Array.isArray(courses) ?
         courses.find(c => c.id === courseId) : null;
-      
+
       if (!course) throw new Error('강좌를 찾을 수 없습니다.');
-      
+
       return {
         ...course,
         curriculum: course.curriculum || [],
