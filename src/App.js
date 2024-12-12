@@ -1,28 +1,30 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import AuthLayout from './layouts/AuthLayout';
-import MainLayout from './layouts/MainLayout';
-import LoginPage from './pages/auth/LoginPage';
-import RegisterPage from './pages/auth/RegisterPage';
-import HomePage from './pages/home/HomePage';
-import CourseDetailPage from './pages/course/CourseDetailPage';
-import CoursesPage from './pages/course/CoursesPage';
-import { Provider } from 'react-redux';
-import { store } from './store/store';
-import 'react-toastify/dist/ReactToastify.css';
-import DashboardPage from './pages/dashboard/DashboardPage';
-import ProfilePage from './pages/profile/ProfilePage';
-import CartPage from './pages/cart/CartPage';
-import CourseCreatePage from './pages/instructor/CourseCreatePage';
-import CourseManagementPage from './pages/instructor/CourseManagementPage';
-import CourseQuizPage from './pages/instructor/CourseQuizPage';
-import CourseContentPage from './pages/instructor/CourseContentPage';
-import RoadmapsPage from './pages/roadmap/RoadmapsPage';
-import FreeCourses from './pages/course/FreeCourses';
-import AuthCallback from './pages/auth/AuthCallback';
-import ConfirmEmail from './pages/auth/ConfirmEmail';
-import CommunityPage from './pages/community/CommunityPage';
-
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import AuthLayout from "./layouts/AuthLayout";
+import MainLayout from "./layouts/MainLayout";
+import LoginPage from "./pages/auth/LoginPage";
+import RegisterPage from "./pages/auth/RegisterPage";
+import HomePage from "./pages/home/HomePage";
+import CourseDetailPage from "./pages/course/CourseDetailPage";
+import CoursesPage from "./pages/course/CoursesPage";
+import { Provider } from "react-redux";
+import { store } from "./store/store";
+import "react-toastify/dist/ReactToastify.css";
+import DashboardPage from "./pages/dashboard/DashboardPage";
+import ProfilePage from "./pages/profile/ProfilePage";
+import CartPage from "./pages/cart/CartPage";
+import CourseCreatePage from "./pages/instructor/CourseCreatePage";
+import CourseManagementPage from "./pages/instructor/CourseManagementPage";
+import CourseQuizPage from "./pages/instructor/CourseQuizPage";
+import CourseContentPage from "./pages/instructor/CourseContentPage";
+import RoadmapsPage from "./pages/roadmap/RoadmapsPage";
+import FreeCourses from "./pages/course/FreeCourses";
+import AuthCallback from "./pages/auth/AuthCallback";
+import ConfirmEmail from "./pages/auth/ConfirmEmail";
+import CommunityPage from "./pages/community/CommunityPage";
+import LoginTemp from "./pages/auth/LoginTemp";
+import AuthCallback2 from "./pages/auth/AuthCallback2";
+import CompleteProfile from "./pages/auth/CompleteProfile";
 
 function App() {
   return (
@@ -39,20 +41,32 @@ function App() {
             <Route path="cart" element={<CartPage />} />
             <Route path="roadmaps" element={<RoadmapsPage />} />
             <Route path="community" element={<CommunityPage />} />
-            
+
             <Route path="instructor">
               <Route path="course/create" element={<CourseCreatePage />} />
-              <Route path="course/:id/edit" element={<CourseManagementPage />} />
-              <Route path="/instructor/course/:courseId/content" element={<CourseContentPage />} />
-              <Route path="/instructor/course/:courseId/quiz" element={<CourseQuizPage />} />
+              <Route
+                path="course/:id/edit"
+                element={<CourseManagementPage />}
+              />
+              <Route
+                path="/instructor/course/:courseId/content"
+                element={<CourseContentPage />}
+              />
+              <Route
+                path="/instructor/course/:courseId/quiz"
+                element={<CourseQuizPage />}
+              />
             </Route>
           </Route>
-          
+
           <Route path="/auth" element={<AuthLayout />}>
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
             <Route path="callback" element={<AuthCallback />} />
             <Route path="confirm-email" element={<ConfirmEmail />} />
+            <Route path="temp-login" element={<LoginTemp />} />
+            <Route path="callback2" element={<AuthCallback2 />} />
+            <Route path="complete-profile" element={<CompleteProfile />} />
           </Route>
         </Routes>
       </Router>
