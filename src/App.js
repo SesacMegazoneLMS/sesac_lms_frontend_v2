@@ -23,6 +23,7 @@ import AuthCallback from './pages/auth/AuthCallback';
 import ConfirmEmail from './pages/auth/ConfirmEmail';
 import CommunityPage from './pages/community/CommunityPage';
 import InstructorMyPage from './pages/instructor/InstructorMyPage'
+import courseContentPage from "./pages/instructor/CourseContentPage";
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
               <Route path="/instructor/course/:courseId/content" element={<CourseContentPage />} />
               <Route path="/instructor/course/:courseId/quiz" element={<CourseQuizPage />} />
               <Route path="/instructor/profile" element={<InstructorMyPage />} />
+              <Route path="/instructor/course/:courseId/content" element={<CourseContentPage />} />
             </Route>
           </Route>
 
