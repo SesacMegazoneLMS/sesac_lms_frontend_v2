@@ -6,14 +6,14 @@
 // import { apiEndpoints } from '../../infrastructure/api/endpoints';
 // import { toast } from 'react-toastify';
 
-// function CheckoutPage() {
-//   const { cartItems } = useSelector(state => state.cart);
-//   const { user } = useSelector(state => state.auth);
-//   const navigate = useNavigate();
-//   const dispatch = useDispatch();
+function CheckoutPage() {
+  const { cartItems } = useSelector(state => state.cart);
+  const { user } = useSelector(state => state.auth);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-//   const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
-//   const discountedPrice = totalPrice * 0.8; // 20% 할인
+  const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
+  const discountedPrice = totalPrice * 0.8; // 20% 할인
 
 //   useEffect(() => {
 //     if (cartItems.length === 0) {
