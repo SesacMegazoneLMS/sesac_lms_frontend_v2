@@ -22,6 +22,18 @@ export const getRoadmaps = async () => {
   }
 };
 
+export const userService = {
+  getMyEnrollments: async () => {
+    try {
+      const response = await api.get('/api/enrollments/my');
+      return response.data;
+    } catch (error) {
+      console.error('수강 목록 조회 실패:', error);
+      throw error;
+    }
+  }
+};
+
 export const CourseService = {
   getCourseById: async (courseId) => {
     try {

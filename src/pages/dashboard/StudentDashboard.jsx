@@ -6,40 +6,31 @@ import { CourseCard } from '../../shared/components/CourseCard';
 import { StatsCard } from './StatsCard';
 import { QuizCard } from './QuizCard';
 import { CourseSection } from './CourseSection';
+import { userService } from '../../infrastructure/services/CourseService';
 
 function StudentDashboard() {
   const { user } = useSelector(state => state.auth);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
-  const [learningHistory, setLearningHistory] = useState([]);
-  const [upcomingQuizzes, setUpcomingQuizzes] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     const loadStudentData = async () => {
       try {
-        const coursesResponse = await fetch('/mock/db/courses.json');
-        const coursesData = await coursesResponse.json();
-        
-        const enrollmentsResponse = await fetch('/mock/db/enrollments.json');
-        const enrollmentsData = await enrollmentsResponse.json();
-        
-        const userEnrollments = enrollmentsData.enrollments.filter(
-          enrollment => enrollment.userId === user?.id
-        );
-        
-        const userCourses = userEnrollments.map(enrollment => {
-          const courseInfo = coursesData.courses.find(
-            course => course.id === enrollment.courseId
-          );
-          return {
-            ...courseInfo,
-            progress: enrollment.progress,
-            lastAccessedLecture: enrollment.lastAccessedLecture,
-            currentLecture: enrollment.lastAccessedLecture
-          };
-        });
-        
-        setEnrolledCourses(userCourses);
+
+        const { enrollments } = await userService.getMyEnrollments();
+
+        const formattedCourses = enrollments.map(enrollment => ({
+          id: enrollment.courseId,
+          title: enrollment.title,
+          thumbnail: enrollment.thumbnail,
+          progress: enrollment.progress || 0,
+          category: enrollment.category,
+          level: enrollment.level,
+          description: enrollment.description
+        }));
+
+        setEnrolledCourses(formattedCourses);
+
       } catch (error) {
         console.error('Error loading student data:', error);
       }
@@ -65,19 +56,19 @@ function StudentDashboard() {
       </Header>
 
       <MainContent>
-        <CourseSection 
+        <CourseSection
           courses={enrolledCourses}
-          onViewAll={() => navigate('/my-courses')} 
+          onViewAll={() => navigate('/my-courses')}
         />
         <SideSection>
-          <StatsCard 
+          <StatsCard
             stats={{
               totalHours: 23,
               weeklyHours: 5,
               completedCourses: 3
-            }} 
+            }}
           />
-          <QuizCard quizzes={upcomingQuizzes} />
+          <QuizCard quizzes={[]} />
         </SideSection>
       </MainContent>
     </DashboardContainer>
