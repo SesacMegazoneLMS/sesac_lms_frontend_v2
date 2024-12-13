@@ -75,7 +75,7 @@ export const CourseService = {
           'Authorization': `Bearer ${localStorage.getItem('idToken')}`
         }
       });
-      return response.data;
+      return response.data.courseDetails;
     } catch (error) {
       throw error;
     }

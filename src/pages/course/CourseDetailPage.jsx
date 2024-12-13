@@ -10,11 +10,17 @@ import { CourseService } from '../../infrastructure/services/CourseService';
 import CourseDetailTabs from './components/CourseDetailTabs';
 import InstructorSection from './components/InstructorSection';
 import { ActionButtons, AddToCartButton, EnrollButton } from '../../shared/components/common/Pagination';
+import {reviewService} from "../../infrastructure/services/ReviewService";
+import OnLoadMorePagination from "../../shared/components/common/OnLoadMorePagination";
+
 function CourseDetailPage() {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
+  const [reviews, setReviews] = useState([]); // 리뷰 상태 추가
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0); // 총 페이지 수 상태 추가
   const [activeTab, setActiveTab] = useState('curriculum');
   const [relatedRoadmaps, setRelatedRoadmaps] = useState([]);
 
@@ -22,13 +28,17 @@ function CourseDetailPage() {
     const fetchCourseData = async () => {
       try {
         const courseData = await CourseService.getCourseById(parseInt(id));
+        const reviewData = await reviewService.getReviewsByCourse(parseInt(id), currentPage);
+
         setCourse(courseData);
+        setReviews(prevReviews => [...prevReviews, ...reviewData.reviews]);
+        setTotalPages(reviewData.totalPages);
       } catch (error) {
         toast.error('강좌 정보를 불러오는데 실패했습니다.');
       }
     };
     fetchCourseData();
-  }, [id]);
+  }, [id, currentPage]);
 
   const handleAddToCart = () => {
     if (!course) return;
@@ -43,6 +53,21 @@ function CourseDetailPage() {
 
     toast.success('장바구니에 추가되었습니다.');
   };
+
+  const handleLoadMore = () => {
+    if (currentPage < totalPages) {
+      // 페이지를 증가시키고 데이터를 불러오는 로직
+      setCurrentPage(prevPage => prevPage + 1);
+    }
+  };
+
+  // const handleLike = (reviewId) => {
+  //   setReviews(prevReviews =>
+  //       prevReviews.map(review =>
+  //           review.id === reviewId ? { ...review, likes: review.likes + 1 } : review
+  //       )
+  //   );
+  // };
 
   if (!course) return <LoadingSpinner />;
 
@@ -127,7 +152,28 @@ function CourseDetailPage() {
           )}
 
           {activeTab === 'reviews' && (
-            <ReviewsSection reviews={course.reviews} />
+              <>
+                <ReviewsSection>
+                  <SectionTitle>수강평</SectionTitle>
+                  <ObjectivesList>
+                    {reviews.map(review => (
+                        <ObjectiveItem key={review.id}>
+                          <ReviewWriter>{review.writer}</ReviewWriter>
+                          <ReviewContent>{review.content}</ReviewContent>
+                          <ReviewRating>
+                            {'★'.repeat(review.rating)}{' '}
+                            {'☆'.repeat(5 - review.rating)} {/* 5점 만점으로 별 표시 */}
+                          </ReviewRating>
+                        </ObjectiveItem>
+                    ))}
+                  </ObjectivesList>
+                  <OnLoadMorePagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={handleLoadMore}
+                  />
+                </ReviewsSection>
+              </>
           )}
 
           {activeTab === 'instructor' && (
@@ -410,6 +456,21 @@ const CurriculumSection = styled.section`
 
 const ReviewsSection = styled.section`
   margin-bottom: 2rem;
+`;
+
+const ReviewWriter = styled.div`
+  font-weight: bold;
+  color: #007bff;
+`;
+
+const ReviewContent = styled.p`
+  margin: 5px 0;
+  color: #555;
+`;
+
+const ReviewRating = styled.div`
+  margin-top: 5px;
+  color: #ffcc00; // Gold color for rating stars
 `;
 
 export default CourseDetailPage;
