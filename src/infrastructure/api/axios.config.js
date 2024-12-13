@@ -43,13 +43,10 @@ api.interceptors.response.use(
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    const state = store.getState();
-    const token = state.auth.user?.idToken;
-
+    const token = localStorage.getItem('idToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
   },
   (error) => {

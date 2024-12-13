@@ -87,18 +87,14 @@ export const CourseService = {
 
 export const OrderService = {
   createOrder: async (orderData) => {
-    const token = localStorage.getItem('idToken');
-    console.log("orderData: ", orderData)
+
+    console.log("orderData: ", orderData);
 
     try {
-      // const response = await axiosInstance.post(API_ENDPOINTS.ORDERS.CREATE, {
-      //   courses: orderData.courses,
-      //   totalAmount: orderData.totalAmount
-      // });
-      const response = await axios.post(API_ENDPOINTS.ORDERS.CREATE, {
+      const response = await axiosInstance.post(API_ENDPOINTS.ORDERS.CREATE, {
         courses: orderData.courses,
         totalAmount: orderData.totalAmount
-      }, { headers: { 'Content-Type': 'application/json', Authorization: token } })
+      });
       return response.data
     } catch (error) {
       console.error('주문 생성 실패:', error);
