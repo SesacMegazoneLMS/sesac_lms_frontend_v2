@@ -1,14 +1,18 @@
+import axios from "axios";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom";
+import { loginSuccess } from "../../store/slices/authSlice";
 import { AUTH_SERVICE } from "../../infrastructure/services/auth-service";
+import { toast } from "react-toastify";
 
-function RegisterPage() {
+function CompleteProfile() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const uuid = location.state?.uuid;
+
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
     name: "",
     userType: "student",
     phoneNumber: "",
@@ -19,58 +23,61 @@ function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 유효성 검사
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("비밀번호가 일치하지 않습니다.");
-      return;
-    }
-
-    if (formData.password.length < 8) {
-      toast.error("비밀번호는 8자 이상이어야 합니다.");
-      return;
-    }
-
-    if (!formData.phoneNumber) {
-      toast.error("전화번호를 입력해주세요.");
-      return;
-    }
-
-    if (!formData.address) {
-      toast.error("주소를 입력해주세요.");
+    if (!formData.name || !formData.phoneNumber || !formData.address) {
+      toast.error("모든 필드를 입력해주세요.");
       return;
     }
 
     try {
-      const res = await AUTH_SERVICE.signup(
-        formData.email,
-        formData.password,
+      // API 호출
+      await AUTH_SERVICE.exchangeCode(
+        uuid,
         formData.name,
+        formData.userType,
         `${formData.countryCode}${formData.phoneNumber}`,
-        formData.address,
-        formData.userType
+        formData.address
       );
 
-      toast.success("회원가입이 완료되었습니다. 이메일을 확인해주세요.");
-      navigate("/auth/confirm-email", {
-        state: { email: res.data.user.email },
-      });
+      localStorage.setItem("accessToken", location.state?.accessToken);
+      localStorage.setItem("idToken", location.state?.idToken);
+      localStorage.setItem("refreshToken", location.state?.refreshToken);
+
+      const infoResponse = await axios.get(
+        "https://api.sesac-univ.click/api/users/profile/",
+        { headers: { Authorization: `Bearer ${location.state?.idToken}` } }
+      );
+
+      const { email, nickname, userType } = infoResponse.data.user;
+
+      dispatch(
+        loginSuccess({
+          email: email,
+          name: nickname,
+          role: userType.toLowerCase(),
+        })
+      );
+
+      toast.success("프로필이 완성되었습니다.");
+      navigate("/dashboard");
     } catch (error) {
+      toast.error("프로필 저장 중 오류가 발생했습니다.");
       console.error(error);
-      if (error.response.data.type === "UsernameExistsException") {
-        toast.error("이미 등록된 이메일입니다.");
-      } else if (error.response.data.type === "InvalidPasswordException") {
-        toast.error("비밀번호는 특수문자, 숫자, 대문자를 포함해야 합니다.");
-      } else {
-        toast.error(
-          error.response.data.message || "회원가입 중 오류가 발생했습니다."
-        );
-      }
     }
   };
 
+  if (!uuid) {
+    navigate("/");
+    return null;
+  }
+
   return (
-    <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="container mx-auto px-4 max-w-4xl p-8 space-y-6">
       <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="text-center mb-12">
+          <p className="mt-3 text-sm text-gray-500">
+            더 나은 서비스 이용을 위해 기본 정보를 입력해주세요
+          </p>
+        </div>
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -83,56 +90,6 @@ function RegisterPage() {
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              이메일
-            </label>
-            <input
-              type="email"
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              비밀번호
-            </label>
-            <input
-              type="password"
-              required
-              minLength={8}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              8자 이상, 특수문자, 숫자, 대문자를 포함해야 합니다
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              비밀번호 확인
-            </label>
-            <input
-              type="password"
-              required
-              minLength={8}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-              value={formData.confirmPassword}
-              onChange={(e) =>
-                setFormData({ ...formData, confirmPassword: e.target.value })
               }
             />
           </div>
@@ -201,18 +158,8 @@ function RegisterPage() {
               type="submit"
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
-              회원가입
+              프로필 완성하기
             </button>
-          </div>
-
-          <div className="text-sm text-center">
-            <span className="text-gray-600">이미 계정이 있으신가요?</span>{" "}
-            <Link
-              to="/auth/login"
-              className="font-medium text-primary hover:text-primary-dark"
-            >
-              로그인하기
-            </Link>
           </div>
         </form>
       </div>
@@ -220,4 +167,4 @@ function RegisterPage() {
   );
 }
 
-export default RegisterPage;
+export default CompleteProfile;

@@ -1,5 +1,6 @@
 import { CognitoUser, AuthenticationDetails, CognitoUserAttribute } from 'amazon-cognito-identity-js';
 import { userPool } from '../../config/cognito-config';
+import axios from "axios";
 
 export const authService = {
   login: (email, password, userType) => {
