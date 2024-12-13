@@ -5,20 +5,31 @@ import CourseCard from '../../shared/components/CourseCard';
 import RoadmapCard from '../../shared/components/RoadmapCard';
 
 function HomePage() {
-  const [courses, setCourses] = useState([]);
-  const [roadmaps, setRoadmaps] = useState([]);
+  const [courses, setCourses] = useState([]);  // 빈 배열로 초기화
+  const [roadmaps, setRoadmaps] = useState([]); // 빈 배열로 초기화
 
   useEffect(() => {
     const fetchData = async () => {
-      const [coursesData, roadmapsData] = await Promise.all([
-        getCourses(),
-        getRoadmaps(),
-      ]);
-      setCourses(coursesData);
-      setRoadmaps(roadmapsData);
+      try {
+        const [coursesData, roadmapsData] = await Promise.all([
+          getCourses(),
+          getRoadmaps(),
+        ]);
+        // 데이터가 배열인지 확인하고 설정
+        setCourses(Array.isArray(coursesData) ? coursesData : []);
+        setRoadmaps(Array.isArray(roadmapsData) ? roadmapsData : []);
+      } catch (error) {
+        console.error('데이터 로딩 실패:', error);
+        setCourses([]);
+        setRoadmaps([]);
+      }
     };
     fetchData();
   }, []);
+
+  // courses가 undefined나 null이 아닌지 확인
+  const displayCourses = Array.isArray(courses) ? courses.slice(0, 4) : [];
+  const displayRoadmaps = Array.isArray(roadmaps) ? roadmaps.slice(0, 2) : [];
 
   return (
     <div className="space-y-12">
@@ -52,7 +63,7 @@ function HomePage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {courses.slice(0, 4).map((course) => (
+          {displayCourses.map((course) => (
             <CourseCard key={course.id} course={course} />
           ))}
         </div>
@@ -68,7 +79,7 @@ function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {roadmaps.slice(0, 2).map((roadmap) => (
+            {displayRoadmaps.map((roadmap) => (
               <RoadmapCard key={roadmap.id} roadmap={roadmap} />
             ))}
           </div>
