@@ -31,7 +31,7 @@ function MainLayout() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
-  const { cartItems } = useSelector(state => state.cart);
+  const { items: cartItems } = useSelector(state => state.cart);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -91,7 +91,7 @@ function MainLayout() {
               </Link>
               <CartLink to="/cart" className="text-gray-600 hover:text-primary">
                 <FiShoppingCart size={20} />
-                {cartItems.length > 0 && (
+                {cartItems?.length > 0 && (
                   <CartBadge>{cartItems.length}</CartBadge>
                 )}
               </CartLink>
@@ -231,7 +231,7 @@ function MainLayout() {
             </div>
           </div>
           <div className="border-t border-gray-700 mt-8 pt-8 text-sm text-gray-400">
-            <p>상호명: (주)새싹에듀 | 대표자: 김새싹 | 사업자등록번호: 123-45-67890</p>
+            <p>상���명: (주)새싹에듀 | 대표자: 김새싹 | 사업자등록번호: 123-45-67890</p>
             <p>통신판매업신고: 제2024-서울강남-1234호 | 개인정보보호책임자: 이새싹</p>
             <p>주소: 서울특별시 강남구 테헤란로 123 새싹빌딩 4층</p>
             <p className="mt-4">&copy; 2024 새싹 LMS. All rights reserved.</p>

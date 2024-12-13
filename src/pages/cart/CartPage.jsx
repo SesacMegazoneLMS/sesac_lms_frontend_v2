@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 import CourseCard from '../../shared/components/CourseCard';
 
 function CartPage() {
-  const { cartItems } = useSelector(state => state.cart);
+  const { items: cartItems } = useSelector(state => state.cart);
   const { user } = useSelector(state => state.auth);
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -24,7 +24,6 @@ function CartPage() {
 
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
   const discountedPrice = totalPrice * 0.8; // 20% 할인
-
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://cdn.iamport.kr/v1/iamport.js";
