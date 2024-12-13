@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { removeFromCart, clearCart } from '../../store/slices/cartSlice';
-import { apiEndpoints } from '../../infrastructure/api/endpoints';
+import { OrderService, PaymentService } from '../../infrastructure/services/CourseService';
 import { toast } from 'react-toastify';
 import CourseCard from '../../shared/components/CourseCard';
 
@@ -24,6 +24,7 @@ function CartPage() {
 
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
   const discountedPrice = totalPrice * 0.8; // 20% 할인
+
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://cdn.iamport.kr/v1/iamport.js";
@@ -45,7 +46,7 @@ function CartPage() {
     console.log("cartItems: ", cartItems)
 
     try {
-      const orderData = await apiEndpoints.payment.createOrder({
+      const orderData = await OrderService.createOrder({
         courses: cartItems.map(item => ({
           courseId: item.id,
           price: item.price
@@ -63,11 +64,11 @@ function CartPage() {
           ? `${cartItems[0].title} 외 ${cartItems.length - 1}건`
           : cartItems[0].title,
         buyer_name: orderData.userName,
-        notice_url: "https://599b-58-120-167-126.ngrok-free.app/api/payments/webhook"
+        notice_url: "https://api.sesac-univ.click/api/payments/webhook"
       }, async (rsp) => {
         if (rsp.success) {
           try {
-            const verifyResult = await apiEndpoints.payment.verifyPayment({
+            const verifyResult = await PaymentService.verifyPayment({
               impUid: rsp.imp_uid,
               merchantUid: rsp.merchant_uid,
               buyerName: rsp.buyer_name,
@@ -86,13 +87,6 @@ function CartPage() {
           } catch (error) {
             console.error('Verification error:', error);
           }
-          // await apiEndpoints.cart.processPayment({
-          //   orderId: orderData.orderId,
-          //   amount: orderData.totalAmount
-          // });
-          // dispatch(clearCart());
-          // navigate('/dashboard');
-          // toast.success('결제가 완료되었습니다.');
         } else {
           toast.error(`결제에 실패했습니다. 사유: ${rsp.error_msg}`);
         }

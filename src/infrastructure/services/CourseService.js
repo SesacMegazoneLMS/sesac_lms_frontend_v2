@@ -42,6 +42,7 @@ export const getRoadmaps = async () => {
 const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 
 export const CourseService = {
+
   getCourses: async (filters) => {
     try {
       const params = new URLSearchParams();
@@ -59,9 +60,11 @@ export const CourseService = {
       });
 
       return {
-        courses: response.data.content,
+        courses: response.data.courses,
         totalPages: response.data.totalPages,
-        currentPage: response.data.number
+        totalElements: response.data.totalElements,
+        currentPage: response.data.currentPage,
+        message: response.data.message
       };
     } catch (error) {
       throw error;
@@ -84,13 +87,18 @@ export const CourseService = {
 
 export const OrderService = {
   createOrder: async (orderData) => {
+    const token = localStorage.getItem('idToken');
     console.log("orderData: ", orderData)
 
     try {
-      const response = await axiosInstance.post(API_ENDPOINTS.ORDERS.CREATE, {
+      // const response = await axiosInstance.post(API_ENDPOINTS.ORDERS.CREATE, {
+      //   courses: orderData.courses,
+      //   totalAmount: orderData.totalAmount
+      // });
+      const response = await axios.post(API_ENDPOINTS.ORDERS.CREATE, {
         courses: orderData.courses,
         totalAmount: orderData.totalAmount
-      });
+      }, { headers: { 'Content-Type': 'application/json', Authorization: token } })
       return response.data
     } catch (error) {
       console.error('주문 생성 실패:', error);

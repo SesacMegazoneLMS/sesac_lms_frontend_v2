@@ -10,8 +10,8 @@ function CoursesPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState({
-    category: 'all',
-    level: 'all', 
+    category: '',
+    level: '',
     sort: 'newest',
     search: '',
     page: 0,
@@ -131,11 +131,10 @@ function CoursesPage() {
             <button
               key={i}
               onClick={() => handlePageChange(i)}
-              className={`mx-1 px-4 py-2 rounded ${
-                currentPage === i
+              className={`mx-1 px-4 py-2 rounded ${currentPage === i
                   ? 'bg-blue-500 text-white'
                   : 'bg-gray-200'
-              }`}
+                }`}
             >
               {i + 1}
             </button>
