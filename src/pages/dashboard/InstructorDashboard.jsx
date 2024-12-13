@@ -10,7 +10,8 @@ import toast, { Toaster, useToasterStore } from 'react-hot-toast';
 import InstructorMyPage from '../instructor/InstructorMyPage';
 import CourseQuizPage from '../instructor/CourseQuizPage';
 import ProfilePage from '../profile/ProfilePage';
-
+import axios from "axios";
+import Pagination from "../../shared/components/common/Pagination";
 
 function InstructorDashboard() {
   const { user } = useSelector(state => state.auth);
@@ -45,6 +46,9 @@ function InstructorDashboard() {
     },
     profileImage: user?.profileImage || '/saesac.png'
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const coursesPerPage = 5; // 페이지 당 강좌 수
+  const [totalPages, setTotalPages] = useState(0);
 
   const tabs = [
     { id: 'dashboard', label: '대시보드' },
@@ -52,6 +56,28 @@ function InstructorDashboard() {
     { id: 'quizzes', label: '퀴즈 관리' },
     { id: 'profile', label: '프로필 관리' }  // 새로운 탭 추가
   ];
+
+  //내 강좌 목록 api----------------------------------------------------
+  //gnuke
+  const requestMyCourses = async (page = 1, size = coursesPerPage) => {
+    try {
+      const res = await axios.get(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/courses/instructor/me?page=${page}&size=${size}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("idToken")}`
+          }
+        }
+      );
+      console.log("myCourseList : " + res.data.myCourseList);
+      setRecentCourses(res.data.myCourseList);
+      setTotalPages(res.data.myCourseList.totalPages);
+
+    } catch (error) {
+      console.error(error);
+      // 에러 처리 로직 추가 가능
+    }
+  }
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -66,19 +92,6 @@ function InstructorDashboard() {
           averageRating: 4.5,
           completionRate: 78
         };
-
-        const mockCourses = [
-          {
-            id: 1,
-            title: "React 완벽 가이드",
-            students: 45,
-            rating: 4.8,
-            progress: 100,
-            lastUpdated: "2024-03-20",
-            income: 1200000
-          },
-          // ... 더 많은 강좌 데이터
-        ];
 
         const mockEnrollments = [
           {
@@ -130,11 +143,12 @@ function InstructorDashboard() {
         ];
 
         setStats(mockStats);
-        setRecentCourses(mockCourses);
         setRecentEnrollments(mockEnrollments);
         setRecentReviews(mockReviews);
         setRevenueData(mockRevenueData);
         setQuizzes(mockQuizzes);
+
+        requestMyCourses(currentPage, coursesPerPage);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -143,7 +157,13 @@ function InstructorDashboard() {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [currentPage]);
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    requestMyCourses(page, coursesPerPage); // 페이지 변경 시 데이터 요청
+  };
 
   const renderDashboardContent = () => (
     <div className="space-y-6">
@@ -328,66 +348,62 @@ function InstructorDashboard() {
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  강좌명
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  수강생
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  평점
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  수익
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  진행률
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  최근 업데이트
-                </th>
-              </tr>
+            <tr className="bg-gray-50">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                강좌명
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                수강생
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                평점
+              </th>
+              {/*<th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">*/}
+              {/*  수익*/}
+              {/*</th>*/}
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                진행률
+              </th>
+              {/*<th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">*/}
+              {/*  최근 업데이트*/}
+              {/*</th>*/}
+            </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {recentCourses.map(course => (
-                <tr key={course.id}>
+            {recentCourses.map(course => (
+                <tr key={course.id} className="cursor-pointer hover:bg-gray-100"
+                    onClick={() => window.location.href = `/instructor/course/${course.id}/content`}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Link
-                      to={`/instructor/courses/${course.id}`}
-                      className="text-primary hover:text-primary-dark"
-                    >
-                      {course.title}
-                    </Link>
+                    {course.title}
                   </td>
                   <td className="px-6 py-4 text-center whitespace-nowrap">
-                    {course.students}명
+                    {course.enrollmentCount}명
                   </td>
                   <td className="px-6 py-4 text-center whitespace-nowrap">
                     <div className="flex items-center justify-center">
-                      <FiStar className="text-yellow-400 mr-1" />
-                      {course.rating}
+                      <FiStar className="text-yellow-400 mr-1"/>
+                      {course.averageRating}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 text-center whitespace-nowrap">
-                    {course.income.toLocaleString()}원
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className="bg-primary h-2 rounded-full"
-                        style={{ width: `${course.progress}%` }}
+                          className="bg-primary h-2 rounded-full"
+                          style={{width: `${course.progress || 0}%`}}
                       />
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-500">
-                    {course.lastUpdated}
-                  </td>
                 </tr>
-              ))}
+            ))}
             </tbody>
           </table>
         </div>
+        {/* pagination component */}
+        <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+        />
       </div>
 
       {/* 최근 활동 섹션 */}
@@ -397,17 +413,17 @@ function InstructorDashboard() {
           <h2 className="text-lg font-semibold mb-4">최근 수강신청</h2>
           <div className="space-y-4">
             {recentEnrollments.map(enrollment => (
-              <div key={enrollment.id} className="flex items-center space-x-4">
-                <img
-                  src={enrollment.profileImage}
-                  alt={enrollment.studentName}
-                  className="w-10 h-10 rounded-full"
-                />
-                <div className="flex-1">
-                  <p className="font-medium">{enrollment.studentName}</p>
-                  <p className="text-sm text-gray-500">{enrollment.courseName}</p>
-                </div>
-                <span className="text-sm text-gray-500">{enrollment.date}</span>
+                <div key={enrollment.id} className="flex items-center space-x-4">
+                  <img
+                      src={enrollment.profileImage}
+                      alt={enrollment.studentName}
+                      className="w-10 h-10 rounded-full"
+                  />
+                  <div className="flex-1">
+                    <p className="font-medium">{enrollment.studentName}</p>
+                    <p className="text-sm text-gray-500">{enrollment.courseName}</p>
+                  </div>
+                  <span className="text-sm text-gray-500">{enrollment.date}</span>
               </div>
             ))}
           </div>
@@ -439,85 +455,97 @@ function InstructorDashboard() {
     </div>
   );
 
-  const renderCoursesContent = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">강좌 관리</h2>
-        <Link
-          to="/instructor/course/create"
-          className="bg-primary text-white px-4 py-2 rounded-lg flex items-center"
-        >
-          <FiPlus className="mr-2" />
-          새 강좌 만들기
-        </Link>
-      </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full">
-          <thead className="bg-gray-50">
+
+
+  // 강좌 목록 출력 함수
+  const renderCoursesContent = () => (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">강좌 관리</h2>
+          <Link
+              to="/instructor/course/create"
+              className="bg-primary text-white px-4 py-2 rounded-lg flex items-center"
+          >
+            <FiPlus className="mr-2"/>
+            새 강좌 만들기
+          </Link>
+        </div>
+
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">강좌명</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">상태</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">수강생</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">평점</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">관리</th>
             </tr>
-          </thead>
-          <tbody>
+            </thead>
+            <tbody>
             {recentCourses.map(course => (
-              <tr key={course.id} className="border-b">
-                <td className="px-6 py-4">{course.title}</td>
-                <td className="px-6 py-4 text-center">
-                  <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                    공개
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-center">{course.students}명</td>
-                <td className="px-6 py-4 text-center">
-                  <div className="flex items-center justify-center">
-                    <FiStar className="text-yellow-400 mr-1" />
-                    {course.rating}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <div className="flex justify-center space-x-2">
-                    <Link
-                      to={`/instructor/course/${course.id}/edit`}
-                      className="text-primary hover:text-primary-dark"
-                    >
-                      수정
-                    </Link>
-                    <Link
-                      to={`/instructor/course/${course.id}/content`}
-                      className="text-gray-600 hover:text-gray-800"
-                    >
-                      콘텐츠
-                    </Link>
-                    <Link
-                      to={`/instructor/course/${course.id}/quiz`}
-                      className="text-gray-600 hover:text-gray-800"
-                    >
-                      퀴즈
-                    </Link>
-                  </div>
-                </td>
-              </tr>
+                <tr key={course.id} className="">
+                  <td className="px-6 py-4">
+              <span
+                  className="cursor-pointer hover:underline"
+                  onClick={() => window.location.href = `/instructor/course/${course.id}/content`}
+              >
+                {course.title}
+              </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">{course.enrollmentCount}명</td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex items-center justify-center">
+                      <FiStar className="text-yellow-400 mr-1"/>
+                      {course.averageRating}점
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex justify-center space-x-2">
+                      <Link
+                          to={`/instructor/course/${course.id}/edit`}
+                          className="text-primary hover:text-primary-dark"
+                      >
+                        수정
+                      </Link>
+                      <Link
+                          to={`/instructor/course/${course.id}/content`}
+                          className="text-gray-600 hover:text-gray-800"
+                      >
+                        콘텐츠
+                      </Link>
+                      <Link
+                          to={`/instructor/course/${course.id}/quiz`}
+                          className="text-gray-600 hover:text-gray-800"
+                      >
+                        퀴즈
+                      </Link>
+                    </div>
+                  </td>
+                </tr>
             ))}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
+
+        {/* pagination component */}
+        <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+        />
       </div>
-    </div>
   );
 
   const renderQuizzesContent = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">퀴즈 관리</h2>
-      </div>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold">퀴즈 관리</h2>
+        </div>
 
-      {/* CourseQuizPage 컴포넌트 재사용 */}
-      <CourseQuizPage />
-    </div>
+        {/* CourseQuizPage 컴포넌트 재사용 */}
+        <CourseQuizPage/>
+      </div>
   );
 
   const handleImageUpload = (event) => {
@@ -545,58 +573,58 @@ function InstructorDashboard() {
   };
 
   const renderProfileContent = () => (
-    <ProfilePage />
+      <ProfilePage/>
   );
 
   return (
-    <div className="p-6">
-      {/* 탭 메뉴 */}
-      <div className="mb-6 border-b">
-        <div className="flex space-x-8">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`pb-4 px-2 ${activeTab === tab.id
-                ? 'border-b-2 border-primary text-primary font-medium'
-                : 'text-gray-500 hover:text-gray-700'
-                }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+      <div className="p-6">
+        {/* 탭 메뉴 */}
+        <div className="mb-6 border-b">
+          <div className="flex space-x-8">
+            {tabs.map(tab => (
+                <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`pb-4 px-2 ${activeTab === tab.id
+                        ? 'border-b-2 border-primary text-primary font-medium'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  {tab.label}
+                </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* 탭 컨텐츠 */}
-      {activeTab === 'dashboard' && renderDashboardContent()}
-      {activeTab === 'courses' && renderCoursesContent()}
-      {activeTab === 'quizzes' && renderQuizzesContent()}
-      {activeTab === 'profile' && renderProfileContent()}
-    </div>
+        {/* 탭 컨텐츠 */}
+        {activeTab === 'dashboard' && renderDashboardContent()}
+        {activeTab === 'courses' && renderCoursesContent()}
+        {activeTab === 'quizzes' && renderQuizzesContent()}
+        {activeTab === 'profile' && renderProfileContent()}
+      </div>
   );
 }
 
 // 통계 카드 컴포넌트
-function StatCard({ title, value, icon, trend }) {
+function StatCard({title, value, icon, trend}) {
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-500">{title}</p>
-          <p className="text-2xl font-bold">{value}</p>
-          {trend && (
-            <p className="text-sm text-green-500 flex items-center mt-1">
-              <FiTrendingUp className="mr-1" />
-              {trend}
-            </p>
-          )}
-        </div>
-        <div className="text-primary text-2xl">
-          {icon}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-500">{title}</p>
+            <p className="text-2xl font-bold">{value}</p>
+            {trend && (
+                <p className="text-sm text-green-500 flex items-center mt-1">
+                  <FiTrendingUp className="mr-1"/>
+                  {trend}
+                </p>
+            )}
+          </div>
+          <div className="text-primary text-2xl">
+            {icon}
+          </div>
         </div>
       </div>
-    </div>
   );
 }
 
