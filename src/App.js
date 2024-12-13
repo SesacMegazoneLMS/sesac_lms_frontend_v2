@@ -99,7 +99,7 @@ function App() {
                   path="/instructor/profile"
                   element={<InstructorMyPage />}
                 />
-                  <Route path="/instructor/upload" element={<UploadTest />} />
+                {/* <Route path="/instructor/upload" element={<UploadTest />} /> */}
 
               </Route>
             </Route>
