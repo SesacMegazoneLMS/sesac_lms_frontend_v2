@@ -3,12 +3,12 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { removeFromCart, clearCart } from '../../store/slices/cartSlice';
-import { apiEndpoints } from '../../infrastructure/api/endpoints';
+import { CourseService, OrderService, PaymentService } from '../../infrastructure/services/CourseService';
 import { toast } from 'react-toastify';
 import CourseCard from '../../shared/components/CourseCard';
 
 function CartPage() {
-  const { items: cartItems } = useSelector(state => state.cart);
+  const { cartItems } = useSelector(state => state.cart);
   const { user } = useSelector(state => state.auth);
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -24,6 +24,7 @@ function CartPage() {
 
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
   const discountedPrice = totalPrice * 0.8; // 20% 할인
+
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://cdn.iamport.kr/v1/iamport.js";
@@ -45,7 +46,7 @@ function CartPage() {
     console.log("cartItems: ", cartItems)
 
     try {
-      const orderData = await apiEndpoints.payment.createOrder({
+      const orderData = await OrderService.createOrder({
         courses: cartItems.map(item => ({
           courseId: item.id,
           price: item.price
@@ -60,14 +61,14 @@ function CartPage() {
         merchant_uid: orderData.merchantUid,
         amount: orderData.totalAmount,
         name: cartItems.length > 1
-          ? `${cartItems[0].title} 외 ${cartItems.length - 1}건`
-          : cartItems[0].title,
+            ? `${cartItems[0].title} 외 ${cartItems.length - 1}건`
+            : cartItems[0].title,
         buyer_name: orderData.userName,
-        notice_url: "https://599b-58-120-167-126.ngrok-free.app/api/payments/webhook"
+        notice_url: "https://3fd3-58-120-167-126.ngrok-free.app/api/payments/webhook"
       }, async (rsp) => {
         if (rsp.success) {
           try {
-            const verifyResult = await apiEndpoints.payment.verifyPayment({
+            const verifyResult = await PaymentService.verifyPayment({
               impUid: rsp.imp_uid,
               merchantUid: rsp.merchant_uid,
               buyerName: rsp.buyer_name,
@@ -104,54 +105,54 @@ function CartPage() {
   };
 
   return (
-    <CartContainer>
-      <CartHeader>장바구니</CartHeader>
+      <CartContainer>
+        <CartHeader>장바구니</CartHeader>
 
-      {cartItems.length === 0 ? (
-        <EmptyCart>
-          <img src="/assets/icons/empty-cart.svg" alt="빈 장바구니" />
-          <p>장바구니가 비어 있습니다.</p>
-        </EmptyCart>
-      ) : (
-        <CartContent>
-          <CartItemList>
-            {cartItems.map(course => (
-              <CourseWrapper key={course.id}>
-                <CourseCard
-                  course={course}
-                  type="cart"
-                />
-                <RemoveButton onClick={() => dispatch(removeFromCart(course.id))}>
-                  <TrashIcon />
-                  삭제
-                </RemoveButton>
-              </CourseWrapper>
-            ))}
-          </CartItemList>
+        {cartItems.length === 0 ? (
+            <EmptyCart>
+              <img src="/assets/icons/empty-cart.svg" alt="빈 장바구니" />
+              <p>장바구니가 비어 있습니다.</p>
+            </EmptyCart>
+        ) : (
+            <CartContent>
+              <CartItemList>
+                {cartItems.map(course => (
+                    <CourseWrapper key={course.id}>
+                      <CourseCard
+                          course={course}
+                          type="cart"
+                      />
+                      <RemoveButton onClick={() => dispatch(removeFromCart(course.id))}>
+                        <TrashIcon />
+                        삭제
+                      </RemoveButton>
+                    </CourseWrapper>
+                ))}
+              </CartItemList>
 
-          <OrderSummary>
-            <SummaryTitle>주문 요약</SummaryTitle>
-            <PriceDetails>
-              <PriceRow>
-                <span>상품 금액</span>
-                <span>₩{totalPrice.toLocaleString()}</span>
-              </PriceRow>
-              <PriceRow>
-                <span>할인 금액</span>
-                <DiscountPrice>-₩{(totalPrice * 0.2).toLocaleString()}</DiscountPrice>
-              </PriceRow>
-              <TotalRow>
-                <span>총 결제 금액</span>
-                <TotalPrice>₩{discountedPrice.toLocaleString()}</TotalPrice>
-              </TotalRow>
-            </PriceDetails>
-            <PaymentButton onClick={handlePayment}>
-              {cartItems.length}개 강좌 결제하기
-            </PaymentButton>
-          </OrderSummary>
-        </CartContent>
-      )}
-    </CartContainer>
+              <OrderSummary>
+                <SummaryTitle>주문 요약</SummaryTitle>
+                <PriceDetails>
+                  <PriceRow>
+                    <span>상품 금액</span>
+                    <span>₩{totalPrice.toLocaleString()}</span>
+                  </PriceRow>
+                  <PriceRow>
+                    <span>할인 금액</span>
+                    <DiscountPrice>-₩{(totalPrice * 0.2).toLocaleString()}</DiscountPrice>
+                  </PriceRow>
+                  <TotalRow>
+                    <span>총 결제 금액</span>
+                    <TotalPrice>₩{discountedPrice.toLocaleString()}</TotalPrice>
+                  </TotalRow>
+                </PriceDetails>
+                <PaymentButton onClick={handlePayment}>
+                  {cartItems.length}개 강좌 결제하기
+                </PaymentButton>
+              </OrderSummary>
+            </CartContent>
+        )}
+      </CartContainer>
   );
 }
 
@@ -200,7 +201,7 @@ const RemoveButton = styled.button`
   gap: 0.5rem;
   cursor: pointer;
   z-index: 10;
-  
+
   &:hover {
     background: #dbeafe;
   }
@@ -258,7 +259,7 @@ const PaymentButton = styled.button`
   border-radius: 0.5rem;
   font-weight: bold;
   cursor: pointer;
-  
+
   &:hover {
     background: #1e3a8a;
   }
@@ -267,12 +268,12 @@ const PaymentButton = styled.button`
 const EmptyCart = styled.div`
   text-align: center;
   padding: 3rem;
-  
+
   img {
     width: 120px;
     margin-bottom: 1rem;
   }
-  
+
   p {
     color: #6b7280;
   }

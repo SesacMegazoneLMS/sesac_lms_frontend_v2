@@ -485,7 +485,7 @@ function InstructorDashboard() {
                   <td className="px-6 py-4">
               <span
                   className="cursor-pointer hover:underline"
-                  onClick={() => window.location.href = `/instructor/course/${course.id}/content`}
+                  onClick={() => window.location.href = `/courses/${course.id}`}
               >
                 {course.title}
               </span>
