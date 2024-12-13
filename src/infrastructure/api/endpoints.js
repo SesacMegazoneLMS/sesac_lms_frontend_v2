@@ -1,4 +1,5 @@
 import { api } from './axios.config';
+import { axiosInstance } from './axios.config';
 
 const AUTH_URL = `${process.env.REACT_APP_AUTH_API_URL}`;
 const BACKEND_URL = `${process.env.REACT_APP_BACKEND_API_URL}/api`;
