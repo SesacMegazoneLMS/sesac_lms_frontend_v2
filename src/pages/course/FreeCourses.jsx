@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getCourses, getRoadmaps } from '../../infrastructure/services/CourseService';
+import { getCourses, CourseService } from '../../infrastructure/services/CourseService';
 import CourseCard from '../../shared/components/CourseCard';
 
 function FreeCourses() {
@@ -7,8 +7,8 @@ function FreeCourses() {
 
   useEffect(() => {
     const fetchCourses = async () => {
-      const data = await getCourses();
-      const freeCourses = data.filter(course => course.price === 0);
+      const data = await CourseService.getCourses();
+      const freeCourses = data.courses.filter(course => course.price === 0);
       setCourses(freeCourses);
     };
     fetchCourses();

@@ -1,35 +1,42 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getCourses, getRoadmaps } from '../../infrastructure/services/CourseService';
+import { CourseService, getRoadmaps } from '../../infrastructure/services/CourseService';
 import CourseCard from '../../shared/components/CourseCard';
 import RoadmapCard from '../../shared/components/RoadmapCard';
+import { toast } from 'react-hot-toast';
 
 function HomePage() {
-  const [courses, setCourses] = useState([]);  // 빈 배열로 초기화
-  const [roadmaps, setRoadmaps] = useState([]); // 빈 배열로 초기화
+  const [courses, setCourses] = useState([]);
+  const [roadmaps, setRoadmaps] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
         const [coursesData, roadmapsData] = await Promise.all([
-          getCourses(),
+          CourseService.getCourses({ page: 0, size: 4 }),
           getRoadmaps(),
         ]);
-        // 데이터가 배열인지 확인하고 설정
-        setCourses(Array.isArray(coursesData) ? coursesData : []);
-        setRoadmaps(Array.isArray(roadmapsData) ? roadmapsData : []);
+        setCourses(coursesData.courses || []);
+        setRoadmaps(roadmapsData || []);
       } catch (error) {
-        console.error('데이터 로딩 실패:', error);
-        setCourses([]);
-        setRoadmaps([]);
+        console.error('Error fetching data:', error);
+        toast.error('데이터를 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchData();
   }, []);
 
-  // courses가 undefined나 null이 아닌지 확인
-  const displayCourses = Array.isArray(courses) ? courses.slice(0, 4) : [];
-  const displayRoadmaps = Array.isArray(roadmaps) ? roadmaps.slice(0, 2) : [];
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-12">
@@ -63,9 +70,13 @@ function HomePage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {displayCourses.map((course) => (
-            <CourseCard key={course.id} course={course} />
-          ))}
+          {courses.length > 0 ? (
+            courses.slice(0, 4).map((course) => (
+              <CourseCard key={course.id} course={course} />
+            ))
+          ) : (
+            <p className="col-span-4 text-center text-gray-500">등록된 강좌가 없습니다.</p>
+          )}
         </div>
       </section>
 
@@ -79,9 +90,13 @@ function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {displayRoadmaps.map((roadmap) => (
-              <RoadmapCard key={roadmap.id} roadmap={roadmap} />
-            ))}
+            {roadmaps.length > 0 ? (
+              roadmaps.slice(0, 2).map((roadmap) => (
+                <RoadmapCard key={roadmap.id} roadmap={roadmap} />
+              ))
+            ) : (
+              <p className="col-span-2 text-center text-gray-500">등록된 로드맵이 없습니다.</p>
+            )}
           </div>
         </div>
       </section>

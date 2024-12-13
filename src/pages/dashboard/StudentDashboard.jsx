@@ -16,7 +16,6 @@ function StudentDashboard() {
   useEffect(() => {
     const loadStudentData = async () => {
       try {
-
         const { enrollments } = await userService.getMyEnrollments();
 
         const formattedCourses = enrollments.map(enrollment => ({
@@ -30,7 +29,6 @@ function StudentDashboard() {
         }));
 
         setEnrolledCourses(formattedCourses);
-
       } catch (error) {
         console.error('Error loading student data:', error);
       }

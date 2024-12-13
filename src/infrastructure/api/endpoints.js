@@ -8,7 +8,7 @@ const kakaoParams = new URLSearchParams({
   identity_provider: "kakao",
   client_id: "6tuhkvilko0ea253l36d4n3uec",
   response_type: "code",
-  redirect_uri: `${process.env.REACT_APP_AUTH_CALLBACK_URL}/auth/callback2`,
+  redirect_uri: `${process.env.REACT_APP_AUTH_CALLBACK_URL}/auth/callback`,
   scope: "openid aws.cognito.signin.user.admin",
 });
 const KAKAO_REQUEST = `https://ap-northeast-2ow5oyt4ja.auth.ap-northeast-2.amazoncognito.com/oauth2/authorize?${kakaoParams}`;

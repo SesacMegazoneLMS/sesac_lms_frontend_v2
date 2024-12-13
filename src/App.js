@@ -27,7 +27,7 @@ import AuthCallback2 from "./pages/auth/AuthCallback2";
 import CompleteProfile from "./pages/auth/CompleteProfile";
 import axios from "axios";
 import { loginSuccess } from "./store/slices/authSlice";
-
+import InstructorDashboard from "./pages/dashboard/InstructorDashboard";
 const AppContent = ({ children }) => {
   const dispatch = useDispatch();
 
@@ -82,6 +82,7 @@ function App() {
               <Route path="community" element={<CommunityPage />} />
 
               <Route path="instructor">
+                <Route path="dashboard" element={<InstructorDashboard />} />
                 <Route path="course/create" element={<CourseCreatePage />} />
                 <Route
                   path="course/:id/edit"

@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { toast } from 'react-toastify';
 import { LoadingSpinner } from '../../shared/components/common/LoadingSpinner';
 import { addToCart } from '../../store/slices/cartSlice';
 import { apiEndpoints } from '../../infrastructure/api/endpoints';
+import { CourseService } from '../../infrastructure/services/CourseService';
 import CourseDetailTabs from './components/CourseDetailTabs';
 import InstructorSection from './components/InstructorSection';
-
+import { ActionButtons, AddToCartButton, EnrollButton } from '../../shared/components/common/Pagination';
 function CourseDetailPage() {
   const { id } = useParams();
   const dispatch = useDispatch();
@@ -20,16 +21,10 @@ function CourseDetailPage() {
   useEffect(() => {
     const fetchCourseData = async () => {
       try {
-        const data = await apiEndpoints.courses.getById(parseInt(id));
-        setCourse(data);
-        // 관련 로드맵 찾기
-        const roadmapsData = await apiEndpoints.roadmaps.getAll();
-        const related = roadmapsData.filter(roadmap => 
-          roadmap.courses.includes(parseInt(id))
-        );
-        setRelatedRoadmaps(related);
+        const courseData = await CourseService.getCourseById(parseInt(id));
+        setCourse(courseData);
       } catch (error) {
-        toast.error('강좌 정보를 불러오는데 실패했습니다.')
+        toast.error('강좌 정보를 불러오는데 실패했습니다.');
       }
     };
     fetchCourseData();
@@ -39,7 +34,7 @@ function CourseDetailPage() {
     if (!course) return;
     
     dispatch(addToCart({
-      id: course.id,
+      courseId: course.id,
       title: course.title,
       instructor: course.instructor,
       price: course.price,
@@ -47,7 +42,6 @@ function CourseDetailPage() {
     }));
 
     toast.success('장바구니에 추가되었습니다.');
-    navigate('/cart');
   };
 
   if (!course) return <LoadingSpinner />;
@@ -58,19 +52,9 @@ function CourseDetailPage() {
         <CourseInfoSection>
           <CourseHeader>
             <CategoryBadge>{course.category}</CategoryBadge>
-            <LevelBadge>{course.level}</LevelBadge>
             <CourseTitle>{course.title}</CourseTitle>
             <Description>{course.description}</Description>
           </CourseHeader>
-          
-          <Stats>
-            <Rating>
-              <StarIcon>★</StarIcon>
-              <span>{course.rating}</span>
-              <StudentCount>({course.students.toLocaleString()}명)</StudentCount>
-            </Rating>
-            <LastUpdate>최근 업데이트: {course.lastUpdated}</LastUpdate>
-          </Stats>
 
           <RelatedRoadmaps>
             {relatedRoadmaps.map(roadmap => (
@@ -88,6 +72,15 @@ function CourseDetailPage() {
               </RoadmapCard>
             ))}
           </RelatedRoadmaps>
+
+          <ActionButtons>
+            <AddToCartButton onClick={handleAddToCart}>
+              장바구니에 담기
+            </AddToCartButton>
+            <EnrollButton onClick={() => navigate(`/checkout/${course.id}`)}>
+              바로 수강신청
+            </EnrollButton>
+          </ActionButtons>
 
           <CourseDetailTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -149,7 +142,7 @@ function CourseDetailPage() {
               <CurrentPrice>₩{course.price.toLocaleString()}</CurrentPrice>
               <ButtonGroup>
                 <CartButton onClick={handleAddToCart}>장바구니에 담기</CartButton>
-                <BuyButton onClick={() => navigate(`/checkout/${course.id}`)}>바로 수강신청</BuyButton>
+                <BuyButton onClick={() => navigate('/cart')}>바로 구매하기</BuyButton>
               </ButtonGroup>
             </PriceInfo>
           </PurchaseCard>
