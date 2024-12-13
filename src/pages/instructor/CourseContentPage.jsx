@@ -1,223 +1,245 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
+import { CognitoIdentityClient } from '@aws-sdk/client-cognito-identity';
 
+const CourseContentPage = () => {
+  const { courseId } = useParams();
+  const [courseData, setCourseData] = useState({
+    id: courseId,
+    title: '',
+    lectures: []
+  });
 
-function CourseContentPage() {
-    const { courseId } = useParams();
-    const [courseData, setCourseData] = useState({
-      title: '',
-      curriculum: []
-    });
-  
-    useEffect(() => {
-      const courses = JSON.parse(localStorage.getItem('published_courses') || '[]');
-      const course = courses.find(c => c.id === courseId);
-      if (course) {
-        setCourseData({
-          ...course,
-          curriculum: course.curriculum || []
-        });
-      }
-    }, [courseId]);
+  // 새 강의 입력을 위한 상태
+  const [newLecture, setNewLecture] = useState({
+    title: ''
+  });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleFileUpload = async (sectionIndex, lectureIndex, file) => {
+  useEffect(() => {
+    fetchCourseData();
+  }, [courseId]);
+
+  // 강의 목록 조회
+  const fetchCourseData = async () => {
     try {
-      const fileInfo = {
-        id: Date.now(),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        url: URL.createObjectURL(file)
-      };
-
-      const updatedCurriculum = [...courseData.curriculum];
-      if (!updatedCurriculum[sectionIndex].lectures[lectureIndex].materials) {
-        updatedCurriculum[sectionIndex].lectures[lectureIndex].materials = [];
-      }
-      updatedCurriculum[sectionIndex].lectures[lectureIndex].materials.push(fileInfo);
-      setCourseData({...courseData, curriculum: updatedCurriculum});
-      toast.success('파일이 업로드되었습니다.');
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_API_URL}/api/lectures/course/${courseId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('idToken')}`
+        }
+      });
+      const lectures = response.data || [];
+      const sortedLectures = lectures.sort((a, b) => a.orderIndex - b.orderIndex);
+      setCourseData(prev => ({ ...prev, lectures: sortedLectures }));
     } catch (error) {
-      toast.error('파일 업로드에 실패했습니다.');
+      console.error('Error fetching lectures:', error);
+      toast.error('강의 목록을 불러오는데 실패했습니다.');
     }
   };
 
-  const handleDeleteMaterial = (sectionIndex, lectureIndex, materialId) => {
-    const updatedCurriculum = [...courseData.curriculum];
-    const materials = updatedCurriculum[sectionIndex].lectures[lectureIndex].materials;
-    updatedCurriculum[sectionIndex].lectures[lectureIndex].materials = 
-      materials.filter(m => m.id !== materialId);
-    setCourseData({...courseData, curriculum: updatedCurriculum});
-  };
+  // 새 강의 생성
+  const handleCreateLecture = async () => {
+    if (!newLecture.title.trim()) {
+      toast.warning('강의 제목을 입력해주세요.');
+      return;
+    }
 
-  const handleAddSection = () => {
-    const newSection = {
-      sectionId: courseData.curriculum.length + 1,
-      title: `섹션 ${courseData.curriculum.length + 1}`,
-      lectures: []
-    };
-    
-    const updatedCurriculum = [...courseData.curriculum, newSection];
-    setCourseData({...courseData, curriculum: updatedCurriculum});
-  };
+    if (!selectedFile) {
+      toast.warning('영상 파일을 선택해주세요.');
+      return;
+    }
 
-  const handleAddLecture = (sectionIndex) => {
-    const newLecture = {
-      id: Date.now(),
-      title: '새 강의',
-      duration: '00:00',
-      isFree: false,
-      videoUrl: '',
-      materials: []
-    };
-
-    const updatedCurriculum = [...courseData.curriculum];
-    updatedCurriculum[sectionIndex].lectures.push(newLecture);
-    setCourseData({...courseData, curriculum: updatedCurriculum});
-  };
-
-  const handleSave = () => {
     try {
-      const courses = JSON.parse(localStorage.getItem('published_courses') || '[]');
-      const updatedCourses = courses.map(course => 
-        course.id === parseInt(courseId) ? { ...course, curriculum: courseData.curriculum } : course
+      setIsUploading(true);
+
+      // 1. 강의 생성 (videoKey는 null로 시작)
+      const createLectureResponse = await axios.post(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/lectures`,
+        {
+          courseId: parseInt(courseId),
+          title: newLecture.title,
+          orderIndex: courseData.lectures.length + 1,
+          status: 'PROCESSING',
+          videoKey: null
+        },
+        {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('idToken')}` }
+        }
       );
-      localStorage.setItem('published_courses', JSON.stringify(updatedCourses));
-      toast.success('콘텐츠가 저장되었습니다.');
+
+      const lectureId = createLectureResponse.data.id;
+
+      // 2. 비디오 업로드 준비
+      const sourceS3Key = `${Date.now()}-${selectedFile.name}`;
+
+      // 비디오 길이 추출
+      const duration = await new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.onloadedmetadata = () => {
+          window.URL.revokeObjectURL(video.src);
+          resolve(video.duration);
+        };
+        video.src = URL.createObjectURL(selectedFile);
+      });
+
+      const formattedDuration = new Date(duration * 1000).toISOString().substring(11, 19);
+
+      // 3. S3 업로드
+      const s3Client = new S3Client({
+        region: "ap-northeast-2",
+        credentials: fromCognitoIdentityPool({
+          client: new CognitoIdentityClient({ region: "ap-northeast-2" }),
+          identityPoolId: "ap-northeast-2:45f6eb55-07a3-4c4d-871f-5a39e5d4194b",
+          logins: {
+            'cognito-idp.ap-northeast-2.amazonaws.com/ap-northeast-2_ow5oyt4jA': localStorage.getItem('idToken')
+          }
+        })
+      });
+
+      await s3Client.send(new PutObjectCommand({
+        Bucket: "hip-media-input",
+        Key: sourceS3Key,
+        Body: selectedFile,
+        ContentType: selectedFile.type
+      }));
+
+      // 4. 비디오 정보 업데이트
+      const videoKey = sourceS3Key.split('.')[0] + "/" + sourceS3Key.split('.')[0] + ".m3u8";
+      await axios.post(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/lectures/video/complete`,
+        {
+          lectureId: lectureId,
+          videoKey: videoKey,
+          status: 'COMPLETED',
+          duration: formattedDuration
+        },
+        {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('idToken')}` }
+        }
+      );
+
+      // 5. 성공 처리
+      await fetchCourseData();
+      setNewLecture({ title: '' });
+      setSelectedFile(null);
+      toast.success('강의가 성공적으로 생성되었습니다.');
+
     } catch (error) {
-      toast.error('저장에 실패했습니다.');
+      console.error('Error:', error);
+      toast.error('강의 생성 실패: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  if (!courseData) return <div>로딩중...</div>;
+  // 강의 삭제 함수 추가
+  const handleDeleteLecture = async (lectureId) => {
+    if (!window.confirm('정말 이 강의를 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/lectures/${lectureId}`,
+        {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('idToken')}` }
+        }
+      );
+
+      toast.success('강의가 삭제되었습니다.');
+      await fetchCourseData(); // 강의 목록 새로고침
+    } catch (error) {
+      console.error('Error deleting lecture:', error);
+      toast.error('강의 삭제에 실패했습니다: ' + (error.response?.data?.message || error.message));
+    }
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">콘텐츠 관리: {courseData.title}</h1>
-        <button
-          onClick={handleSave}
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
-        >
-          저장
-        </button>
-      </div>
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-6">강의 콘텐츠 관리</h1>
 
-      {/* 커리큘럼 섹션 */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">커리큘럼</h2>
+      {/* 새 강의 생성 폼 */}
+      <div className="bg-white p-6 rounded-lg shadow mb-6">
+        <h2 className="text-lg font-semibold mb-4">새 강의 추가</h2>
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <input
+              type="text"
+              value={newLecture.title}
+              onChange={(e) => setNewLecture(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="강의 제목을 입력하세요"
+              className="flex-1 px-4 py-2 border rounded"
+            />
+          </div>
+
+          <div className="flex items-center gap-4">
+            <input
+              type="file"
+              accept="video/*"
+              onChange={(e) => setSelectedFile(e.target.files[0])}
+              className="hidden"
+              id="video-upload"
+            />
+            <label
+              htmlFor="video-upload"
+              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 cursor-pointer"
+            >
+              영상 선택
+            </label>
+            {selectedFile && (
+              <span className="text-sm text-gray-600">
+                선택된 파일: {selectedFile.name}
+              </span>
+            )}
+          </div>
+
           <button
-            onClick={handleAddSection}
-            className="text-primary hover:text-primary-dark"
+            onClick={handleCreateLecture}
+            disabled={!newLecture.title || !selectedFile || isUploading}
+            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
-            섹션 추가
+            {isUploading ? '업로드 중...' : '강의 생성'}
           </button>
         </div>
+      </div>
 
-        {courseData.curriculum.map((section, sectionIndex) => (
-          <div key={section.sectionId} className="border rounded-lg p-4 mb-4">
-            {/* 섹션 제목 */}
-            <div className="flex justify-between items-center mb-2">
-              <input
-                type="text"
-                value={section.title}
-                onChange={(e) => {
-                  const updatedCurriculum = [...courseData.curriculum];
-                  updatedCurriculum[sectionIndex].title = e.target.value;
-                  setCourseData({...courseData, curriculum: updatedCurriculum});
-                }}
-                className="font-medium px-2 py-1 border rounded"
-              />
-              <button
-                onClick={() => handleAddLecture(sectionIndex)}
-                className="text-sm text-primary hover:text-primary-dark"
-              >
-                강의 추가
-              </button>
-            </div>
-
-            {/* 강의 목록 */}
-            <div className="space-y-4">
-              {section.lectures.map((lecture, lectureIndex) => (
-                <div key={lecture.id} className="space-y-4 p-4 bg-gray-50 rounded">
-                  <div className="flex items-center space-x-4">
-                    <input
-                      type="text"
-                      value={lecture.title}
-                      onChange={(e) => {
-                        const updatedCurriculum = [...courseData.curriculum];
-                        updatedCurriculum[sectionIndex].lectures[lectureIndex].title = e.target.value;
-                        setCourseData({...courseData, curriculum: updatedCurriculum});
-                      }}
-                      className="flex-1 px-2 py-1 border rounded"
-                      placeholder="강의 제목"
-                    />
-                    <input
-                      type="text"
-                      value={lecture.videoUrl}
-                      onChange={(e) => {
-                        const updatedCurriculum = [...courseData.curriculum];
-                        updatedCurriculum[sectionIndex].lectures[lectureIndex].videoUrl = e.target.value;
-                        setCourseData({...courseData, curriculum: updatedCurriculum});
-                      }}
-                      placeholder="비디오 URL"
-                      className="flex-1 px-2 py-1 border rounded"
-                    />
-                  </div>
-                  
-                  {/* 자료 업로드 섹션 */}
-                  <div className="mt-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">강의 자료</span>
-                      <input
-                        type="file"
-                        onChange={(e) => handleFileUpload(sectionIndex, lectureIndex, e.target.files[0])}
-                        className="hidden"
-                        id={`file-upload-${lecture.id}`}
-                        accept=".pdf,.doc,.docx,.ppt,.pptx,.zip"
-                      />
-                      <label
-                        htmlFor={`file-upload-${lecture.id}`}
-                        className="text-sm text-primary hover:text-primary-dark cursor-pointer"
-                      >
-                        파일 추가
-                      </label>
-                    </div>
-
-                    {/* 업로드된 파일 목록 */}
-                    {lecture.materials && lecture.materials.length > 0 && (
-                      <div className="mt-2 space-y-2">
-                        {lecture.materials.map(material => (
-                          <div key={material.id} className="flex items-center justify-between text-sm bg-white p-2 rounded">
-                            <a 
-                              href={material.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-primary hover:text-primary-dark"
-                            >
-                              {material.name}
-                            </a>
-                            <button
-                              onClick={() => handleDeleteMaterial(sectionIndex, lectureIndex, material.id)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              삭제
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+      {/* 강의 목록 */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-lg font-semibold mb-4">강의 목록</h2>
+        <div className="space-y-4">
+          {courseData.lectures.map((lecture, index) => (
+            <div key={lecture.id} className="border rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="font-medium text-gray-500">
+                    {String(index + 1).padStart(2, '0')}강
+                  </span>
+                  <span className="font-medium">{lecture.title}</span>
                 </div>
-              ))}
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-gray-500">
+                    {lecture.status === 'COMPLETED' ? '업로드 완료' : '처리 중'}
+                  </div>
+                  <button
+                    onClick={() => handleDeleteLecture(lecture.id)}
+                    className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                  >
+                    삭제
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
-}
+};
 
 export default CourseContentPage;

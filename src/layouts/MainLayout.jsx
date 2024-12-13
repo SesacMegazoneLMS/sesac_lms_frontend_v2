@@ -51,9 +51,9 @@ function MainLayout() {
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
-              <img 
-                src="/saesac.png" 
-                alt="새싹 LMS" 
+              <img
+                src="/saesac.png"
+                alt="새싹 LMS"
                 className="h-12 w-auto object-contain"
                 style={{ aspectRatio: 'auto' }}
             />
@@ -101,7 +101,7 @@ function MainLayout() {
                     마이페이지
                   </Link>
                   <span className="text-gray-700">{user.name}님</span>
-                  <button 
+                  <button
                     onClick={handleLogout}
                     className="px-4 py-2 text-white bg-primary rounded-md hover:bg-primary-dark"
                   >
@@ -190,39 +190,39 @@ function MainLayout() {
                   <p>점심시간 13:00 ~ 14:00</p>
                 </div>
                 <div className="flex space-x-4 items-center">
-                  <a 
-                    href="https://facebook.com" 
+                  <a
+                    href="https://facebook.com"
                     className="social-icon"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <img 
+                    <img
                       src="/icons/facebook.png"
-                      alt="Facebook" 
+                      alt="Facebook"
                       className="w-6 h-6 hover:opacity-80 transition-opacity"
                     />
                   </a>
-                  <a 
-                    href="https://twitter.com" 
+                  <a
+                    href="https://twitter.com"
                     className="social-icon"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <img 
+                    <img
                       src="/icons/twitter.png"
-                      alt="Twitter" 
+                      alt="Twitter"
                       className="w-6 h-6 hover:opacity-80 transition-opacity"
                     />
                   </a>
-                  <a 
-                    href="https://instagram.com" 
+                  <a
+                    href="https://instagram.com"
                     className="social-icon"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <img 
-                      src="/icons/instagram.png" 
-                      alt="Instagram" 
+                    <img
+                      src="/icons/instagram.png"
+                      alt="Instagram"
                       className="w-6 h-6 hover:opacity-80 transition-opacity"
                     />
                   </a>
@@ -231,7 +231,7 @@ function MainLayout() {
             </div>
           </div>
           <div className="border-t border-gray-700 mt-8 pt-8 text-sm text-gray-400">
-            <p>상���명: (주)새싹에듀 | 대표자: 김새싹 | 사업자등록번호: 123-45-67890</p>
+            <p>상호명: (주)새싹에듀 | 대표자: 김새싹 | 사업자등록번호: 123-45-67890</p>
             <p>통신판매업신고: 제2024-서울강남-1234호 | 개인정보보호책임자: 이새싹</p>
             <p>주소: 서울특별시 강남구 테헤란로 123 새싹빌딩 4층</p>
             <p className="mt-4">&copy; 2024 새싹 LMS. All rights reserved.</p>

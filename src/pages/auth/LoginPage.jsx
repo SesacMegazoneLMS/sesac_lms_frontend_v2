@@ -8,14 +8,12 @@ import {
 } from "../../store/slices/authSlice";
 import { toast } from "react-toastify";
 import { CognitoUser, CognitoUserPool } from "amazon-cognito-identity-js";
-import { AUTH_ENDPOINTS } from "../../infrastructure/api/endpoints";
-import { AUTH_SERVICE } from "../../infrastructure/services/authService";
-
+import { AUTH_SERVICE } from "../../infrastructure/services/auth-service";
+import { AUTH_ENDPOINTS } from "../../infrastructure/api/auth-endpoints";
 const userPool = new CognitoUserPool({
   UserPoolId: "ap-northeast-2_ow5oyt4jA",
   ClientId: "6tuhkvilko0ea253l36d4n3uec",
 });
-
 function LoginPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -25,7 +23,6 @@ function LoginPage() {
     password: "",
     userType: "student",
   });
-
   const handleForgotPassword = async (email) => {
     try {
       const cognitoUser = new CognitoUser({
@@ -64,14 +61,14 @@ function LoginPage() {
       toast.success("로그인에 성공했습니다.");
       navigate("/dashboard");
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "로그인에 실패했습니다.";
-      
-      if (err.response?.data?.type === "UserNotConfirmedException") {
+      console.error(err);
+      if (err.response.data.type === "UserNotConfirmedException") {
         toast.info("이메일 인증이 필요합니다.");
         navigate("/auth/confirm-email", {
           state: { email: formData.email },
         });
       } else {
+        const errorMessage = err.message || "로그인에 실패했습니다.";
         dispatch(loginFailure(errorMessage));
         toast.error(errorMessage);
       }
@@ -98,7 +95,7 @@ function LoginPage() {
     } catch (error) {
       toast.error("Google 로그인에 실패했습니다.");
       console.error("Google login error:", error);
-      dispatch(loginFailure(error));
+      dispatch(loginFailure(errorMessage));
     }
   };
 

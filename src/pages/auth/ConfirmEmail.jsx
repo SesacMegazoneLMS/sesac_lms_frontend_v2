@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { AUTH_SERVICE } from "../../infrastructure/services/authService";
+import { AUTH_SERVICE } from "../../infrastructure/services/auth-service";
 
 function ConfirmEmail() {
   const [code, setCode] = useState("");

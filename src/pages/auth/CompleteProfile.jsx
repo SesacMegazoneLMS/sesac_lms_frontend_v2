@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { loginSuccess } from "../../store/slices/authSlice";
-import { AUTH_SERVICE } from "../../infrastructure/services/authService";
+import { AUTH_SERVICE } from "../../infrastructure/services/auth-service";
 import { toast } from "react-toastify";
 
 function CompleteProfile() {
