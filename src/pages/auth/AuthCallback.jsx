@@ -5,7 +5,7 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../store/slices/authSlice";
 
-const AuthCallback2 = () => {
+const AuthCallback = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -37,11 +37,9 @@ const AuthCallback2 = () => {
           localStorage.setItem("refreshToken", refreshToken);
 
           const infoResponse = await axios.get(
-            "http://localhost:8081/api/users/profile/",
+            "https://api.sesac-univ.click/api/users/profile/",
             { headers: { Authorization: `Bearer ${idToken}` } }
           );
-
-          console.error(infoResponse);
 
           const { email, nickname, userType } = infoResponse.data.user;
 
@@ -80,7 +78,7 @@ const AuthCallback2 = () => {
     };
 
     handleCallback();
-  }, [dispatch, navigate]);
+  }, [navigate]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -92,4 +90,4 @@ const AuthCallback2 = () => {
   );
 };
 
-export default AuthCallback2;
+export default AuthCallback;
