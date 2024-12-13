@@ -1,12 +1,10 @@
 import { api } from '../api/axios.config';
-import { API_ENDPOINTS } from '../api/endpoints';
 
 export const getCourses = async () => {
   try {
-    const response = await api.get(`${process.env.REACT_APP_PAYMENT_API_URL}/api/courses`);
-    console.log("response:", response);
-    const data = response.data?.courses || response.data;
-    return Array.isArray(data) ? data : [];
+    const response = await api.get('/api/courses');  // headers 제거
+    console.log('courses response:', response);
+    return response.data || [];
   } catch (error) {
     console.error('강좌 목록 조회 실패:', error);
     return [];
@@ -15,9 +13,9 @@ export const getCourses = async () => {
 
 export const getRoadmaps = async () => {
   try {
-    const response = await api.get(API_ENDPOINTS.ROADMAPS);
-    const data = response.data?.roadmaps || response.data;
-    return Array.isArray(data) ? data : [];
+    const response = await api.get('/api/roadmaps');  // headers 제거
+    console.log('roadmaps response:', response);
+    return response.data || [];
   } catch (error) {
     console.error('로드맵 조회 실패:', error);
     return [];
@@ -27,10 +25,8 @@ export const getRoadmaps = async () => {
 export const CourseService = {
   getCourseById: async (courseId) => {
     try {
-      const response = await api.get(API_ENDPOINTS.COURSES);
-      const courses = response.data?.courses || response.data || [];
-      const course = Array.isArray(courses) ?
-        courses.find(c => c.id === courseId) : null;
+      const response = await api.get(`/api/courses/${courseId}`);  // headers 제거
+      const course = response.data;
 
       if (!course) throw new Error('강좌를 찾을 수 없습니다.');
 

@@ -1,15 +1,15 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   user: null,
   isAuthenticated: false,
   loading: false,
   error: null,
-  userType: 'student' // 기본 사용자 타입 추가
+  userType: "student", // 기본 사용자 타입 추가
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     loginStart: (state) => {
@@ -21,10 +21,11 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.user = {
         ...action.payload,
-        userType: action.payload.role || 'student' // role 필드를 userType으로 매핑
+        userType: action.payload.role || "student", // role 필드를 userType으로 매핑
       };
       // 강사인 경우 instructor로 설정
-      state.userType = action.payload.role === 'instructor' ? 'instructor' : 'student';
+      state.userType =
+        action.payload.role === "instructor" ? "instructor" : "student";
       state.error = null;
     },
     loginFailure: (state, action) => {
@@ -32,24 +33,24 @@ const authSlice = createSlice({
       state.error = action.payload;
       state.isAuthenticated = false;
     },
-    logout: (state) => {
-      return initialState;
+    logout: () => {
+      localStorage.clear();
     },
     updateUserProfile: (state, action) => {
       state.user = {
         ...state.user,
-        ...action.payload
+        ...action.payload,
       };
-    }
-  }
+    },
+  },
 });
 
-export const { 
-  loginStart, 
-  loginSuccess, 
-  loginFailure, 
+export const {
+  loginStart,
+  loginSuccess,
+  loginFailure,
   logout,
-  updateUserProfile 
+  updateUserProfile,
 } = authSlice.actions;
 
 export default authSlice.reducer;

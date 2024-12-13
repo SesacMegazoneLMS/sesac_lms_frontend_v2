@@ -1,30 +1,30 @@
-import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { authService } from '../../infrastructure/services/authService';
-import { toast } from 'react-toastify';
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { AUTH_SERVICE } from "../../infrastructure/services/authService";
 
 function ConfirmEmail() {
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState("");
   const { state } = useLocation();
   const navigate = useNavigate();
 
   const handleConfirm = async (e) => {
     e.preventDefault();
     try {
-      await authService.confirmSignUp(state.email, code);
-      toast.success('이메일 인증이 완료되었습니다.');
-      navigate('/auth/login');
+      await AUTH_SERVICE.verify(state.email, code);
+      toast.success("이메일 인증이 완료되었습니다.");
+      navigate("/auth/login");
     } catch (error) {
-      toast.error('인증 코드가 올바르지 않습니다.');
+      toast.error("인증 코드가 올바르지 않습니다.");
     }
   };
 
   const handleResendCode = async () => {
     try {
-      await authService.resendConfirmationCode(state.email);
-      toast.success('인증 코드가 재전송되었습니다.');
+      await AUTH_SERVICE.resendCode(state.email);
+      toast.success("인증 코드가 재전송되었습니다.");
     } catch (error) {
-      toast.error('인증 코드 재전송에 실패했습니다.');
+      toast.error("인증 코드 재전송에 실패했습니다.");
     }
   };
 

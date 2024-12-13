@@ -1,95 +1,81 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { loginSuccess } from '../../store/slices/authSlice';
-import { toast } from 'react-toastify';
+// src/pages/AuthCallback.jsx
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "../../store/slices/authSlice";
 
-function AuthCallback() {
+const AuthCallback2 = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   useEffect(() => {
     const handleCallback = async () => {
+      // URL에서 인증 코드 추출
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get("code");
+
       try {
-        const params = new URLSearchParams(window.location.search);
-        const code = params.get('code');
-        const userType = localStorage.getItem('userType') || 'student';
+        if (!code) {
+          throw new Error("Authorization code not found");
+        }
 
-        if (code) {
-          const tokenEndpoint = `https://ap-northeast-2cj4nax3ku.auth.ap-northeast-2.amazoncognito.com/oauth2/token`;
-          const response = await fetch(tokenEndpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-              grant_type: 'authorization_code',
-              client_id: '4v0l18pe5gjvlv6jdmvarf5dck',
-              code,
-              redirect_uri: 'https://ap-northeast-2cj4nax3ku.auth.ap-northeast-2.amazoncognito.com/oauth2/idpresponse'
-            })
-          });
+        // Lambda 함수 호출하여 토큰 교환
+        const response = await axios.post(
+          `https://auth.sesac-univ.click/auth/exchange-code`,
+          { code },
+          { headers: { "Content-Type": "application/json" } }
+        );
 
-          if (!response.ok) {
-            throw new Error('토큰 교환 실패');
-          }
+        const { accessToken, idToken, refreshToken, isProfileComplete } =
+          response.data;
 
-          const data = await response.json();
-          const idToken = data.idToken;
-          const profileResponse = await fetch(
-            `${process.env.REACT_APP_BACKEND_API_ENDPOINT_URL}/api/users/profile/`,
-            {
-              headers: {
-                Authorization: `Bearer ${idToken}`
-              }
-            }
+        if (isProfileComplete) {
+          // 토큰 저장
+          localStorage.setItem("accessToken", accessToken);
+          localStorage.setItem("idToken", idToken);
+          localStorage.setItem("refreshToken", refreshToken);
+
+          const infoResponse = await axios.get(
+            "http://localhost:8081/api/users/profile/",
+            { headers: { Authorization: `Bearer ${idToken}` } }
           );
-          if (!profileResponse.ok) throw new Error('사용자 정보 가져오기 실패');
 
-          const profileData = await profileResponse.json();
+          console.error(infoResponse);
 
-          // ID 토큰에서 사용자 정보 추출
-          const payload = JSON.parse(atob(data.id_token.split('.')[1]));
+          const { email, nickname, userType } = infoResponse.data.user;
 
-          // Cognito 사용자 속성에서 userType 확인
-          const cognitoUserType = payload['custom:userType'] || userType;
+          dispatch(
+            loginSuccess({
+              email: email,
+              name: nickname,
+              role: userType.toLowerCase(),
+            })
+          );
 
-          console.log('Cognito User Type:', cognitoUserType);
-
-          const user = {
-            id: payload.sub,
-            email: payload.email,
-            name: payload.name,
-            role: cognitoUserType, // userType 대신 cognitoUserType 사용
-            accessToken: data.access_token,
-            idToken: data.id_token,
-            refreshToken: data.refresh_token
-          };
-
-          console.log('User Object:', user);
-
-          // 토큰들을 localStorage에 저장
-          localStorage.setItem('accessToken', data.access_token);
-          localStorage.setItem('idToken', data.id_token);
-          localStorage.setItem('refreshToken', data.refresh_token);
-
-          dispatch(loginSuccess(user));
-          toast.success('구글 로그인 성공');
-
-          // 이전 페이지로 돌아가기
-          const prevPage = localStorage.getItem('preLoginPage') || '/dashboard';
-          navigate(prevPage);
-
-          // 임시 저장된 데이터 삭제
-          localStorage.removeItem('preLoginPage');
-          localStorage.removeItem('userType');
-        } else {
-          throw new Error('인증 코드가 없습니다.');
+          // 대시보드로 이동
+          navigate("/dashboard");
         }
       } catch (error) {
-        console.error('Login Error:', error);
-        toast.error('로그인 처리 중 오류가 발생했습니다.');
-        navigate('/auth/login');
+        // 403: 프로필 미완성
+        if (error.response?.status === 403) {
+          const { uuid, accessToken, idToken, refreshToken } =
+            error.response.data;
+
+          navigate("/auth/complete-profile", {
+            state: {
+              uuid: uuid,
+              accessToken: accessToken,
+              idToken: idToken,
+              refreshToken: refreshToken,
+            },
+          });
+          return;
+        }
+
+        // 그 외 에러
+        console.error("Auth callback error:", error);
+        navigate("/error");
       }
     };
 
@@ -97,13 +83,13 @@ function AuthCallback() {
   }, [dispatch, navigate]);
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
-        <h2 className="text-xl font-semibold">로그인 처리 중...</h2>
-        <p className="mt-2 text-gray-600">잠시만 기다려주세요.</p>
+        <h2 className="text-xl font-semibold mb-2">인증 처리 중...</h2>
+        <p className="text-gray-600">잠시만 기다려주세요.</p>
       </div>
     </div>
   );
-}
+};
 
-export default AuthCallback;
+export default AuthCallback2;
