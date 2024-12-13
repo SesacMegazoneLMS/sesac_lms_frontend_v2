@@ -16,7 +16,6 @@ function StudentDashboard() {
   useEffect(() => {
     const loadStudentData = async () => {
       try {
-
         const { enrollments } = await userService.getMyEnrollments();
 
         const formattedCourses = enrollments.map(enrollment => ({
@@ -30,7 +29,6 @@ function StudentDashboard() {
         }));
 
         setEnrolledCourses(formattedCourses);
-
       } catch (error) {
         console.error('Error loading student data:', error);
       }
@@ -46,32 +44,32 @@ function StudentDashboard() {
   }
 
   return (
-      <DashboardContainer>
-        <Header>
-          <h1>안녕하세요, {user?.name}님!</h1>
-          <HeaderLinks>
-            <StyledLink to="/profile">프로필 관리</StyledLink>
-            <StyledLink to="/certificates">수료증 관리</StyledLink>
-          </HeaderLinks>
-        </Header>
+    <DashboardContainer>
+      <Header>
+        <h1>안녕하세요, {user?.name}님!</h1>
+        <HeaderLinks>
+          <StyledLink to="/profile">프로필 관리</StyledLink>
+          <StyledLink to="/certificates">수료증 관리</StyledLink>
+        </HeaderLinks>
+      </Header>
 
-        <MainContent>
-          <CourseSection
-              courses={enrolledCourses}
-              onViewAll={() => navigate('/my-courses')}
+      <MainContent>
+        <CourseSection
+          courses={enrolledCourses}
+          onViewAll={() => navigate('/my-courses')}
+        />
+        <SideSection>
+          <StatsCard
+            stats={{
+              totalHours: 23,
+              weeklyHours: 5,
+              completedCourses: 3
+            }}
           />
-          <SideSection>
-            <StatsCard
-                stats={{
-                  totalHours: 23,
-                  weeklyHours: 5,
-                  completedCourses: 3
-                }}
-            />
-            <QuizCard quizzes={[]} />
-          </SideSection>
-        </MainContent>
-      </DashboardContainer>
+          <QuizCard quizzes={[]} />
+        </SideSection>
+      </MainContent>
+    </DashboardContainer>
   );
 }
 
@@ -84,7 +82,7 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-
+  
   h1 {
     font-size: 24px;
     font-weight: bold;
@@ -99,7 +97,7 @@ const HeaderLinks = styled.div`
 const StyledLink = styled(Link)`
   color: #00c471;
   text-decoration: none;
-
+  
   &:hover {
     color: #00b265;
   }

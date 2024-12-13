@@ -1,24 +1,10 @@
 import { axiosInstance } from '../api/axios.config';
 import { API_ENDPOINTS } from '../api/endpoints';
-
-// export const getCourses = async () => {
-//   try {
-//     const response = await axiosInstance.get(API_ENDPOINTS.COURSES.LIST);
-//     console.log("response:", response);
-//     const data = response.data?.courses || response.data;
-//     return Array.isArray(data) ? data : [];
-//   } catch (error) {
-//     console.error('강좌 목록 조회 실패:', error);
-//     return [];
-//   }
-// };
+import axios from 'axios';
 
 export const userService = {
-
   getMyEnrollments: async () => {
-
     try {
-
       const response = await axiosInstance.get(API_ENDPOINTS.USERS.ENROLLMENTS);
 
       if (!response.data) {
@@ -40,7 +26,6 @@ export const userService = {
       throw new Error('네트워크 오류가 발생했습니다.');
     }
   }
-
 }
 
 export const getRoadmaps = async () => {
@@ -54,96 +39,51 @@ export const getRoadmaps = async () => {
   }
 };
 
+const API_URL = process.env.REACT_APP_BACKEND_API_URL;
+
 export const CourseService = {
-
-  // getAllCourses: async () => {
-  //   try {
-  //     const response = await axiosInstance.get(API_ENDPOINTS.COURSES.LIST);
-  //     console.log("response:", response);
-  //     const data = response.data?.courses || response.data;
-  //     return Array.isArray(data) ? data : [];
-  //   } catch (error) {
-  //     console.error('강좌 목록 조회 실패:', error);
-  //     return [];
-  //   }
-  // },
-
-  getCourses: async (params = {}) => {
+  getCourses: async (filters) => {
     try {
-      // 빈 값은 제외하고 파라미터 구성
-      const queryParams = {};
-      if (params.sort) queryParams.sort = params.sort;
-      if (params.category) queryParams.category = params.category;
-      if (params.level) queryParams.level = params.level;
-      if (params.search) queryParams.search = params.search;
-      queryParams.page = params.page;
-      queryParams.size = params.size;
+      const params = new URLSearchParams();
+      if (filters.category) params.append('category', filters.category);
+      if (filters.level) params.append('level', filters.level);
+      if (filters.sort) params.append('sort', filters.sort);
+      if (filters.search) params.append('search', filters.search);
+      params.append('page', filters.page.toString());
+      params.append('size', filters.size.toString());
 
-      const response = await axiosInstance.get(API_ENDPOINTS.COURSES.LIST, {
-        params: queryParams
+      const response = await axios.get(`${API_URL}/api/courses?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('idToken')}`
+        }
       });
 
       return {
-        courses: response.data.courses,
+        courses: response.data.content,
         totalPages: response.data.totalPages,
-        totalElements: response.data.totalElements,
-        currentPage: response.data.currentPage,
-        message: response.data.message
+        currentPage: response.data.number
       };
     } catch (error) {
-      console.error('강좌 목록 조회 실패: ', error);
       throw error;
     }
   },
 
-  getCourseById: async (id) => {
+  getCourseById: async (courseId) => {
     try {
-      const response = await axiosInstance.get(API_ENDPOINTS.COURSES.DETAIL(id));
-
-      return {
-        message: response.data.message,
-        data: response.data.courseDetails
-      };
-    } catch (error) {
-      if (error.response) {
-        return {
-          message: error.response.data?.message || '요청 실패',
-        };
-      } else {
-        return {
-          message: '네트워크 오류가 발생했습니다.'
+      const response = await axios.get(`${API_URL}/api/courses/${courseId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('idToken')}`
         }
-      }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
     }
-    // try {
-    //   const response = await api.get(API_ENDPOINTS.COURSES.DETAIL);
-    //   const courses = response.data?.courses || response.data || [];
-    //   const course = Array.isArray(courses) ?
-    //     courses.find(c => c.id === courseId) : null;
-
-    //   if (!course) throw new Error('강좌를 찾을 수 없습니다.');
-
-    //   return {
-    //     ...course,
-    //     curriculum: course.curriculum || [],
-    //     reviews: course.reviews || [],
-    //     instructor_details: course.instructor_details || {
-    //       name: course.instructor,
-    //       profile_image: '/default-profile.png',
-    //       bio: '강사 소개가 없습니다.'
-    //     }
-    //   };
-    // } catch (error) {
-    //   console.error('강좌 상세 정보 조회 실패:', error);
-    //   throw error;
-    // }
   }
 };
 
 export const OrderService = {
-
   createOrder: async (orderData) => {
-
     console.log("orderData: ", orderData)
 
     try {
@@ -151,21 +91,7 @@ export const OrderService = {
         courses: orderData.courses,
         totalAmount: orderData.totalAmount
       });
-      // const cartData = response.data?.cart || {};
-      // const orders = cartData.orders || [];
       return response.data
-
-      // const newOrder = {
-      //   orderId: `ORD-${Date.now()}`,
-      //   merchantUid: `MERCHANT-${Date.now()}`,
-      //   userId: orderData.studentId,
-      //   items: orderData.items,
-      //   totalAmount: orderData.totalAmount,
-      //   status: 'pending',
-      //   createdAt: new Date().toISOString()
-      // };
-
-      // return newOrder;
     } catch (error) {
       console.error('주문 생성 실패:', error);
       throw error;
@@ -174,7 +100,6 @@ export const OrderService = {
 };
 
 export const PaymentService = {
-
   verifyPayment: async (paymentData) => {
     try {
       const response = await axiosInstance.post(API_ENDPOINTS.PAYMENTS.VERIFY, {
@@ -184,27 +109,12 @@ export const PaymentService = {
         amount: paymentData.amount,
         status: paymentData.status,
         payMethod: paymentData.payMethod
-
       });
-      // const cartData = response.data?.cart || {};
-      // const transactions = cartData.transactions || [];
       return response.data;
-
-      // const newTransaction = {
-      //   transactionId: `TRX-${Date.now()}`,
-      //   orderId: paymentData.orderId,
-      //   paymentMethod: 'kakaopay',
-      //   amount: paymentData.amount,
-      //   status: 'completed',
-      //   paidAt: new Date().toISOString()
-      // };
-
-      // return newTransaction;
     } catch (error) {
       console.error('결제 검증 실패:', error);
       throw error;
     }
   }
 };
-
 export default CourseService;

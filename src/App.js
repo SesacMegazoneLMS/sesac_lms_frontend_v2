@@ -23,11 +23,10 @@ import AuthCallback from "./pages/auth/AuthCallback";
 import ConfirmEmail from "./pages/auth/ConfirmEmail";
 import CommunityPage from "./pages/community/CommunityPage";
 import InstructorMyPage from "./pages/instructor/InstructorMyPage";
-import AuthCallback2 from "./pages/auth/AuthCallback2";
 import CompleteProfile from "./pages/auth/CompleteProfile";
 import axios from "axios";
 import { loginSuccess } from "./store/slices/authSlice";
-
+import InstructorDashboard from "./pages/dashboard/InstructorDashboard";
 const AppContent = ({ children }) => {
   const dispatch = useDispatch();
 
@@ -82,25 +81,12 @@ function App() {
               <Route path="community" element={<CommunityPage />} />
 
               <Route path="instructor">
+                <Route path="dashboard" element={<InstructorDashboard />} />
                 <Route path="course/create" element={<CourseCreatePage />} />
-                <Route
-                  path="course/:id/edit"
-                  element={<CourseManagementPage />}
-                />
-                <Route
-                  path="/instructor/course/:courseId/content"
-                  element={<CourseContentPage />}
-                />
-                <Route
-                  path="/instructor/course/:courseId/quiz"
-                  element={<CourseQuizPage />}
-                />
-                <Route
-                  path="/instructor/profile"
-                  element={<InstructorMyPage />}
-                />
-                {/* <Route path="/instructor/upload" element={<UploadTest />} /> */}
-
+                <Route path="course/:id/edit" element={<CourseManagementPage />} />
+                <Route path="/instructor/course/:courseId/content" element={<CourseContentPage />} />
+                <Route path="/instructor/course/:courseId/quiz" element={<CourseQuizPage />} />
+                <Route path="/instructor/profile" element={<InstructorMyPage />} />
               </Route>
             </Route>
 
@@ -109,7 +95,6 @@ function App() {
               <Route path="register" element={<RegisterPage />} />
               <Route path="callback" element={<AuthCallback />} />
               <Route path="confirm-email" element={<ConfirmEmail />} />
-              <Route path="callback2" element={<AuthCallback2 />} />
               <Route path="complete-profile" element={<CompleteProfile />} />
             </Route>
           </Routes>

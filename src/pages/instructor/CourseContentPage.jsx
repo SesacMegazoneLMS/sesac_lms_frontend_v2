@@ -28,11 +28,14 @@ const CourseContentPage = () => {
   // 강의 목록 조회
   const fetchCourseData = async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_BACKEND_API_URL}/api/lectures/course/${courseId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('idToken')}`
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/lectures/course/${courseId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('idToken')}`
+          }
         }
-      });
+      );
       const lectures = response.data || [];
       const sortedLectures = lectures.sort((a, b) => a.orderIndex - b.orderIndex);
       setCourseData(prev => ({ ...prev, lectures: sortedLectures }));

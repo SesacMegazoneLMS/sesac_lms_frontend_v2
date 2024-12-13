@@ -61,11 +61,14 @@ function InstructorDashboard() {
   //gnuke
   const requestMyCourses = async (page = 1, size = coursesPerPage) => {
     try {
-      const res = await axios.get(`http://localhost:8081/api/courses/instructor/me?page=${page}&size=${size}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("idToken")}`
+      const res = await axios.get(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/courses/instructor/me?page=${page}&size=${size}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("idToken")}`
+          }
         }
-      });
+      );
       console.log("myCourseList : " + res.data.myCourseList);
       setRecentCourses(res.data.myCourseList);
       setTotalPages(res.data.myCourseList.totalPages);
@@ -485,7 +488,7 @@ function InstructorDashboard() {
                   <td className="px-6 py-4">
               <span
                   className="cursor-pointer hover:underline"
-                  onClick={() => window.location.href = `/courses/${course.id}`}
+                  onClick={() => window.location.href = `/instructor/course/${course.id}/content`}
               >
                 {course.title}
               </span>

@@ -67,13 +67,15 @@ function CourseCreatePage() {
         return;
       }
 
-      const res =
-          await axios.post("http://localhost:8081/api/courses",
-            courseData, {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("idToken")}`
-              },
-          });
+      const res = await axios.post(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/courses`,
+        courseData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("idToken")}`
+          },
+        }
+      );
         const courseId = res.data.courseId;
         alert(res.data.message);
 

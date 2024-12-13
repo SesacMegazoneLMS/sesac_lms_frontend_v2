@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { AUTH_SERVICE } from "../../infrastructure/services/auth-service";
+import { AUTH_SERVICE } from "../../infrastructure/services/authService";
 
 function RegisterPage() {
   const navigate = useNavigate();
