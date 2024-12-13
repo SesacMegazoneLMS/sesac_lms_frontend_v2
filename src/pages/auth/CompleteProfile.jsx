@@ -1,9 +1,15 @@
+import axios from "axios";
 import { useState } from "react";
+import { useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
+import { loginSuccess } from "../../store/slices/authSlice";
+import { AUTH_SERVICE } from "../../infrastructure/services/auth-service";
+import { toast } from "react-toastify";
 
 function CompleteProfile() {
-  const location = useLocation();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const uuid = location.state?.uuid;
 
   const [formData, setFormData] = useState({
@@ -24,12 +30,31 @@ function CompleteProfile() {
 
     try {
       // API 호출
-      await authService.completeProfile(
+      await AUTH_SERVICE.exchangeCode(
         uuid,
         formData.name,
         formData.userType,
         `${formData.countryCode}${formData.phoneNumber}`,
         formData.address
+      );
+
+      localStorage.setItem("accessToken", location.state?.accessToken);
+      localStorage.setItem("idToken", location.state?.idToken);
+      localStorage.setItem("refreshToken", location.state?.refreshToken);
+
+      const infoResponse = await axios.get(
+        "https://api.sesac-univ.click/api/users/profile/",
+        { headers: { Authorization: `Bearer ${location.state?.idToken}` } }
+      );
+
+      const { email, nickname, userType } = infoResponse.data.user;
+
+      dispatch(
+        loginSuccess({
+          email: email,
+          name: nickname,
+          role: userType.toLowerCase(),
+        })
       );
 
       toast.success("프로필이 완성되었습니다.");
@@ -47,21 +72,12 @@ function CompleteProfile() {
 
   return (
     <div className="container mx-auto px-4 max-w-4xl p-8 space-y-6">
-      <h1 className="text-4xl font-bold text-gray-900">
-        Please complete signup
-      </h1>
-      <h2 className="text-2xl text-gray-700">
-        이름 주소 전화번호 유저타입 입력해주세요
-      </h2>
-      <div className="mt-8 ml-4">
-        <p className="text-xl text-gray-600">
-          당신의 UUID:
-          <br />
-          <span className="font-mono ml-4">{uuid}</span>
-        </p>
-      </div>
-
       <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="text-center mb-12">
+          <p className="mt-3 text-sm text-gray-500">
+            더 나은 서비스 이용을 위해 기본 정보를 입력해주세요
+          </p>
+        </div>
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-gray-700">

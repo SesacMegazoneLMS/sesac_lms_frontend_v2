@@ -34,9 +34,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
     },
     logout: () => {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("idToken");
-      localStorage.removeItem("refreshToken");
+      localStorage.clear();
     },
     updateUserProfile: (state, action) => {
       state.user = {
