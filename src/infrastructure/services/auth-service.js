@@ -35,11 +35,80 @@ export const AUTH_SERVICE = {
     return AUTH_ENDPOINTS.login.userInfo;
   },
 
-  signup: () => { },
+  signup: async (email, password, name, phone, address, userType) => {
+    AUTH_ENDPOINTS.signup.request = {
+      email,
+      password,
+      name,
+      phone,
+      address,
+      userType,
+    };
 
-  verify: () => { },
+    const signupResponse = await axios.post(
+      AUTH_ENDPOINTS.signup.url,
+      AUTH_ENDPOINTS.signup.request,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-  resendCode: () => { },
+    return signupResponse;
+  },
 
-  exchangeCode: () => { },
+  verify: async (email, code) => {
+    AUTH_ENDPOINTS.verify.request = { email, code };
+
+    const verifyResponse = await axios.post(
+      AUTH_ENDPOINTS.verify.url,
+      AUTH_ENDPOINTS.verify.request,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return verifyResponse;
+  },
+
+  resendCode: async (email) => {
+    AUTH_ENDPOINTS.resend_code.request = { email };
+
+    const resendCodeResponse = await axios.post(
+      AUTH_ENDPOINTS.resend_code.url,
+      AUTH_ENDPOINTS.resend_code.request,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return resendCodeResponse;
+  },
+
+  exchangeCode: async (uuid, name, userType, phone, address) => {
+    AUTH_ENDPOINTS.exchange_code.request = {
+      uuid,
+      name,
+      userType,
+      phone,
+      address,
+    };
+
+    const exchangeCodeResponse = await axios.post(
+      AUTH_ENDPOINTS.exchange_code.url,
+      AUTH_ENDPOINTS.exchange_code.request,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return exchangeCodeResponse;
+  },
 };

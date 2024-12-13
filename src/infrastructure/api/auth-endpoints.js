@@ -1,7 +1,15 @@
-const AUTH_URL = `https://auth.sesac-univ.click`;
-const BACKEND_URL = `https://api.sesac-univ.click/api`;
+const AUTH_URL = `${process.env.REACT_APP_AUTH_API_URL}`;
+const BACKEND_URL = `${process.env.REACT_APP_BACKEND_API_URL}/api`;
 const GOOGLE_REQUEST = ``;
-const KAKAO_REQUEST = ``;
+
+const kakaoParams = new URLSearchParams({
+  identity_provider: "kakao",
+  client_id: "6tuhkvilko0ea253l36d4n3uec",
+  response_type: "code",
+  redirect_uri: `${process.env.REACT_APP_AUTH_CALLBACK_URL}/auth/callback2`,
+  scope: "openid aws.cognito.signin.user.admin",
+});
+const KAKAO_REQUEST = `https://ap-northeast-2ow5oyt4ja.auth.ap-northeast-2.amazoncognito.com/oauth2/authorize?${kakaoParams}`;
 const NAVER_REQUEST = ``;
 
 export const AUTH_ENDPOINTS = {
@@ -47,19 +55,18 @@ export const AUTH_ENDPOINTS = {
   },
 
   resend_code: {
-    url: `${AUTH_URL}/auth/resend_code`,
+    url: `${AUTH_URL}/auth/resend-code`,
     request: { email: "" },
     response: { message: "" },
   },
 
   exchange_code: {
-    url: `${AUTH_URL}/auth/exchange_code`,
-    request: { code: "" },
+    url: `${AUTH_URL}/auth/complete-profile`,
+    request: { uuid: "", code: "", name: "", phone: "", address: "" },
     response: {
       accessToken: "",
       idToken: "",
       refreshToken: "",
-      isProfileComplete: false,
     },
   },
 
