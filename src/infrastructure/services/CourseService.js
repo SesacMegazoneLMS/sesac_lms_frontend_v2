@@ -42,6 +42,7 @@ export const getRoadmaps = async () => {
 const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 
 export const CourseService = {
+
   getCourses: async (filters) => {
     try {
       const params = new URLSearchParams();
@@ -59,9 +60,11 @@ export const CourseService = {
       });
 
       return {
-        courses: response.data.content,
+        courses: response.data.courses,
         totalPages: response.data.totalPages,
-        currentPage: response.data.number
+        totalElements: response.data.totalElements,
+        currentPage: response.data.currentPage,
+        message: response.data.message
       };
     } catch (error) {
       throw error;
@@ -84,7 +87,8 @@ export const CourseService = {
 
 export const OrderService = {
   createOrder: async (orderData) => {
-    console.log("orderData: ", orderData)
+
+    console.log("orderData: ", orderData);
 
     try {
       const response = await axiosInstance.post(API_ENDPOINTS.ORDERS.CREATE, {
