@@ -27,6 +27,8 @@ import CompleteProfile from "./pages/auth/CompleteProfile";
 import axios from "axios";
 import { loginSuccess } from "./store/slices/authSlice";
 import InstructorDashboard from "./pages/dashboard/InstructorDashboard";
+import LectureVideoPage from "./pages/student/LectureVideoPage";
+import LectureDetailPage from "./pages/student/LectureDetailPage";
 
 const AppContent = ({ children }) => {
 
@@ -83,10 +85,13 @@ function App() {
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="courses" element={<CoursesPage />} />
               <Route path="courses/:id" element={<CourseDetailPage />} />
+              <Route path="courses/:courseId/lectures/:lectureId" element={<LectureVideoPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="cart" element={<CartPage />} />
               <Route path="roadmaps" element={<RoadmapsPage />} />
               <Route path="community" element={<CommunityPage />} />
+
+              <Route path="courses/:courseId/detail" element={<LectureDetailPage />} />
 
               <Route path="instructor">
                 <Route path="dashboard" element={<InstructorDashboard />} />
@@ -107,9 +112,12 @@ function App() {
                   path="/instructor/profile"
                   element={<InstructorMyPage />}
                 />
-                {/* <Route path="/instructor/upload" element={<UploadTest />} /> */}
-
+                {/* 수정된 강의 비디오 페이지 라우트 */}
+                <Route path="course/:courseId/lecture/:lectureId" element={<LectureVideoPage />} />
               </Route>
+
+              {/* 학생용 강의 비디오 페이지 라우트 */}
+              <Route path="course/:courseId/lecture/:lectureId" element={<LectureVideoPage />} />
             </Route>
 
             <Route path="/auth" element={<AuthLayout />}>

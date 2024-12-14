@@ -55,14 +55,14 @@ const CourseCard = ({ course, type = 'course' }) => {
 
   const handleCardClick = () => {
     if (isEnrolled) {
-      navigate(`/courses/${course.id}/learn`);
+      navigate(`/courses/${course.id}/detail`);
     } else {
       navigate(`/courses/${course.id}`);
     }
   };
 
   return (
-    <div 
+    <div
       className={`
         bg-white rounded-lg shadow hover:shadow-lg transition-all cursor-pointer
         ${isCart ? 'grid grid-cols-[180px,1fr] h-32' : 'hover:-translate-y-1'}
@@ -72,7 +72,7 @@ const CourseCard = ({ course, type = 'course' }) => {
       onClick={handleCardClick}
     >
       <div className={`relative ${isCart ? 'h-full' : ''}`}>
-        <img 
+        <img
           src={randomImage}
           alt={course.title}
           className={`
@@ -94,14 +94,14 @@ const CourseCard = ({ course, type = 'course' }) => {
           </div>
         )}
       </div>
-      
+
       <div className={`${isCart ? 'p-3' : 'p-4'}`}>
         <h3 className={`font-semibold text-gray-900 mb-1 line-clamp-1 
           ${isCart ? 'text-base' : 'text-lg'}`}>
           {course.title}
         </h3>
         <p className="text-sm text-gray-600 mb-2">{course.instructor}</p>
-        
+
         {!isCart && (
           <>
             <div className="flex items-center gap-2 mb-2">
@@ -119,7 +119,7 @@ const CourseCard = ({ course, type = 'course' }) => {
             </div>
           </>
         )}
-        
+
         <div className="flex justify-between items-center">
           <div className="flex flex-col">
             <span className="text-sm text-gray-500 line-through">
