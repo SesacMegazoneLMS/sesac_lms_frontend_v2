@@ -64,8 +64,9 @@ function LoginPage() {
       toast.success("로그인에 성공했습니다.");
       navigate("/dashboard");
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "로그인에 실패했습니다.";
-      
+      const errorMessage =
+        err.response?.data?.message || err.message || "로그인에 실패했습니다.";
+
       if (err.response?.data?.type === "UserNotConfirmedException") {
         toast.info("이메일 인증이 필요합니다.");
         navigate("/auth/confirm-email", {
@@ -87,17 +88,20 @@ function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleNaverLogin = async () => {
     try {
-      const googleAuthUrl = `https://accounts.google.com/o/oauth2/auth?client_id=785935071013-ms26qfbn4tiu4kui0leu7la8m3f18v5h.apps.googleusercontent.com&redirect_uri=https://ap-northeast-2cj4nax3ku.auth.ap-northeast-2.amazoncognito.com/oauth2/idpresponse&response_type=code&scope=email profile`;
-      // 현재 URL을 state로 저장
-      localStorage.setItem("preLoginPage", window.location.pathname);
-      // 사용자 유형도 저장
-      localStorage.setItem("userType", formData.userType);
-      window.location.href = googleAuthUrl;
+      window.location.href = AUTH_ENDPOINTS.naver.url;
     } catch (error) {
       toast.error("Google 로그인에 실패했습니다.");
-      console.error("Google login error:", error);
+      dispatch(loginFailure(error));
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      window.location.href = AUTH_ENDPOINTS.google.url;
+    } catch (error) {
+      toast.error("Google 로그인에 실패했습니다.");
       dispatch(loginFailure(error));
     }
   };
@@ -185,13 +189,15 @@ function LoginPage() {
               <img className="h-5 w-5" src="/icons/kakao.png" alt="Kakao" />
               <span className="ml-2">카카오로 시작하기</span>
             </button>
-            <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+            <button
+              onClick={handleNaverLogin}
+              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+            >
               <img className="h-5 w-5" src="/icons/naver.png" alt="Naver" />
               <span className="ml-2">네이버로 시작하기</span>
             </button>
             <button
               onClick={handleGoogleLogin}
-              type="button"
               className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
             >
               <img className="h-5 w-5" src="/icons/google.png" alt="Google" />

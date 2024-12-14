@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { loginSuccess } from "../../store/slices/authSlice";
@@ -11,6 +11,13 @@ function CompleteProfile() {
   const navigate = useNavigate();
   const location = useLocation();
   const uuid = location.state?.uuid;
+
+  useEffect(() => {
+    if (!uuid) {
+      toast.error("잘못된 접근입니다.");
+      navigate("/", { replace: true });
+    }
+  }, [uuid, navigate]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -28,47 +35,41 @@ function CompleteProfile() {
       return;
     }
 
-    try {
-      // API 호출
-      await AUTH_SERVICE.exchangeCode(
-        uuid,
-        formData.name,
-        formData.userType,
-        `${formData.countryCode}${formData.phoneNumber}`,
-        formData.address
-      );
+    AUTH_SERVICE.exchangeCode(
+      uuid,
+      formData.name,
+      formData.userType,
+      `${formData.countryCode}${formData.phoneNumber}`,
+      formData.address
+    )
+      .then(() => {
+        // 토큰 저장
+        localStorage.setItem("accessToken", location.state?.accessToken);
+        localStorage.setItem("idToken", location.state?.idToken);
+        localStorage.setItem("refreshToken", location.state?.refreshToken);
 
-      localStorage.setItem("accessToken", location.state?.accessToken);
-      localStorage.setItem("idToken", location.state?.idToken);
-      localStorage.setItem("refreshToken", location.state?.refreshToken);
+        return axios.get("https://api.sesac-univ.click/api/users/profile/", {
+          headers: { Authorization: `Bearer ${location.state?.idToken}` },
+        });
+      })
+      .then(({ data }) => {
+        const { email, nickname, userType } = data.user;
+        dispatch(
+          loginSuccess({
+            email,
+            name: nickname,
+            role: userType.toLowerCase(),
+          })
+        );
 
-      const infoResponse = await axios.get(
-        "https://api.sesac-univ.click/api/users/profile/",
-        { headers: { Authorization: `Bearer ${location.state?.idToken}` } }
-      );
-
-      const { email, nickname, userType } = infoResponse.data.user;
-
-      dispatch(
-        loginSuccess({
-          email: email,
-          name: nickname,
-          role: userType.toLowerCase(),
-        })
-      );
-
-      toast.success("프로필이 완성되었습니다.");
-      navigate("/dashboard");
-    } catch (error) {
-      toast.error("프로필 저장 중 오류가 발생했습니다.");
-      console.error(error);
-    }
+        toast.success("프로필이 완성되었습니다.");
+        navigate("/dashboard", { replace: true });
+      })
+      .catch((error) => {
+        console.error(error);
+        toast.error("프로필 저장 중 오류가 발생했습니다.");
+      });
   };
-
-  if (!uuid) {
-    navigate("/");
-    return null;
-  }
 
   return (
     <div className="container mx-auto px-4 max-w-4xl p-8 space-y-6">
