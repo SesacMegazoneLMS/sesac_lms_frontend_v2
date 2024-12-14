@@ -1,98 +1,114 @@
-import { CognitoUser, AuthenticationDetails, CognitoUserAttribute } from 'amazon-cognito-identity-js';
-import { userPool } from '../../config/cognito-config';
 import axios from "axios";
+import { AUTH_ENDPOINTS } from "../../infrastructure/api/endpoints";
 
 export const AUTH_SERVICE = {
-  login: (email, password, userType) => {
-    if (!email || !password || !userType) {
-      return Promise.reject(new Error('이메일, 비밀번호, 사용자 유형은 필수입니다.'));
-    }
+  login: async (email, password) => {
+    AUTH_ENDPOINTS.login.request = { email, password };
 
-    return new Promise((resolve, reject) => {
-      const authenticationDetails = new AuthenticationDetails({
-        Username: email,
-        Password: password
-      });
-
-      const cognitoUser = new CognitoUser({
-        Username: email,
-        Pool: userPool
-      });
-
-      cognitoUser.authenticateUser(authenticationDetails, {
-        onSuccess: (result) => {
-          const accessToken = result.getAccessToken().getJwtToken();
-          const idToken = result.getIdToken().getJwtToken();
-          const refreshToken = result.getRefreshToken().getToken();
-          const userAttributes = result.getIdToken().payload;
-
-          const cognitoUserType = userAttributes['custom:userType'];
-          if (!cognitoUserType) {
-            reject(new Error('사용자 유형이 없습니다.'));
-            return;
-          }
-
-          if (cognitoUserType !== userType) {
-            reject(new Error('잘못된 사용자 유형입니다.'));
-            return;
-          }
-
-          resolve({
-            id: userAttributes.sub,
-            email: userAttributes.email,
-            name: userAttributes.name,
-            role: cognitoUserType,
-            accessToken,
-            idToken,
-            refreshToken
-          });
+    const loginResponse = await axios.post(
+      AUTH_ENDPOINTS.login.url,
+      AUTH_ENDPOINTS.login.request,
+      {
+        headers: {
+          "Content-Type": "application/json"
         },
-        onFailure: (err) => {
-          reject(err);
-        }
-      });
+      }
+    );
+
+    AUTH_ENDPOINTS.login.response = loginResponse.data;
+
+    const { accessToken, idToken, refreshToken } =
+      AUTH_ENDPOINTS.login.response.tokens;
+
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("idToken", idToken);
+    localStorage.setItem("refreshToken", refreshToken);
+
+    const infoResponse = await axios.get(AUTH_ENDPOINTS.login.profile_url, {
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+      },
     });
+
+    AUTH_ENDPOINTS.login.userInfo = infoResponse.data;
+
+    return AUTH_ENDPOINTS.login.userInfo;
   },
 
-  googleLogin: () => {
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${process.env.REACT_APP_GOOGLE_CLIENT_ID}&redirect_uri=${window.location.origin}/auth/callback&response_type=code&scope=email profile`;
-    window.location.href = googleAuthUrl;
+  signup: async (email, password, name, phone, address, userType) => {
+    AUTH_ENDPOINTS.signup.request = {
+      email,
+      password,
+      name,
+      phone,
+      address,
+      userType,
+    };
+
+    const signupResponse = await axios.post(
+      AUTH_ENDPOINTS.signup.url,
+      AUTH_ENDPOINTS.signup.request,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return signupResponse;
   },
 
-  register: (email, password, name, userType, phoneNumber, address) => {
-    return new Promise((resolve, reject) => {
-      const attributeList = [
-        new CognitoUserAttribute({ Name: 'email', Value: email }),
-        new CognitoUserAttribute({ Name: 'name', Value: name }),
-        new CognitoUserAttribute({ Name: 'custom:userType', Value: userType }),
-        new CognitoUserAttribute({ Name: 'phone_number', Value: phoneNumber }),
-        new CognitoUserAttribute({ Name: 'address', Value: address })
-      ];
+  verify: async (email, code) => {
+    AUTH_ENDPOINTS.verify.request = { email, code };
 
-      userPool.signUp(email, password, attributeList, null, (err, result) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve(result.user);
-      });
-    });
+    const verifyResponse = await axios.post(
+      AUTH_ENDPOINTS.verify.url,
+      AUTH_ENDPOINTS.verify.request,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return verifyResponse;
   },
 
-  confirmRegistration: (email, code) => {
-    return new Promise((resolve, reject) => {
-      const cognitoUser = new CognitoUser({
-        Username: email,
-        Pool: userPool
-      });
+  resendCode: async (email) => {
+    AUTH_ENDPOINTS.resend_code.request = { email };
 
-      cognitoUser.confirmRegistration(code, true, (err, result) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve(result);
-      });
-    });
-  }
-}; 
+    const resendCodeResponse = await axios.post(
+      AUTH_ENDPOINTS.resend_code.url,
+      AUTH_ENDPOINTS.resend_code.request,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return resendCodeResponse;
+  },
+
+  exchangeCode: async (uuid, name, userType, phone, address) => {
+    AUTH_ENDPOINTS.exchange_code.request = {
+      uuid,
+      name,
+      userType,
+      phone,
+      address,
+    };
+
+    const exchangeCodeResponse = await axios.post(
+      AUTH_ENDPOINTS.exchange_code.url,
+      AUTH_ENDPOINTS.exchange_code.request,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return exchangeCodeResponse;
+  },
+};

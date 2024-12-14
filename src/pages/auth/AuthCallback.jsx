@@ -11,6 +11,8 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const handleCallback = async () => {
+      console.log("Current URL:", window.location.href);
+      console.log("Search params:", window.location.search);
       // URL에서 인증 코드 추출
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get("code");

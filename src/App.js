@@ -23,7 +23,6 @@ import AuthCallback from "./pages/auth/AuthCallback";
 import ConfirmEmail from "./pages/auth/ConfirmEmail";
 import CommunityPage from "./pages/community/CommunityPage";
 import InstructorMyPage from "./pages/instructor/InstructorMyPage";
-import AuthCallback2 from "./pages/auth/AuthCallback2";
 import CompleteProfile from "./pages/auth/CompleteProfile";
 import axios from "axios";
 import { loginSuccess } from "./store/slices/authSlice";
@@ -118,7 +117,6 @@ function App() {
               <Route path="register" element={<RegisterPage />} />
               <Route path="callback" element={<AuthCallback />} />
               <Route path="confirm-email" element={<ConfirmEmail />} />
-              <Route path="callback2" element={<AuthCallback2 />} />
               <Route path="complete-profile" element={<CompleteProfile />} />
             </Route>
           </Routes>
