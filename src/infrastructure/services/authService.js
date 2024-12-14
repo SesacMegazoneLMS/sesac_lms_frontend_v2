@@ -2,7 +2,7 @@ import { CognitoUser, AuthenticationDetails, CognitoUserAttribute } from 'amazon
 import { userPool } from '../../config/cognito-config';
 import axios from "axios";
 
-export const authService = {
+export const AUTH_SERVICE = {
   login: (email, password, userType) => {
     if (!email || !password || !userType) {
       return Promise.reject(new Error('이메일, 비밀번호, 사용자 유형은 필수입니다.'));
