@@ -55,9 +55,9 @@ const CourseCard = ({ course, type = 'course' }) => {
 
   const handleCardClick = () => {
     if (isEnrolled) {
-      navigate(`/course/${course.id}/learn`);
+      navigate(`/courses/${course.id}/learn`);
     } else {
-      navigate(`/course/${course.id}`);
+      navigate(`/courses/${course.id}`);
     }
   };
 

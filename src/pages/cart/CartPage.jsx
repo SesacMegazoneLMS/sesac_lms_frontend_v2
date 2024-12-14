@@ -63,7 +63,7 @@ function CartPage() {
           ? `${cartItems[0].title} 외 ${cartItems.length - 1}건`
           : cartItems[0].title,
         buyer_name: orderData.userName,
-        notice_url: "https://599b-58-120-167-126.ngrok-free.app/api/payments/webhook"
+        notice_url: "https://api.sesac-univ.click/api/payments/webhook"
       }, async (rsp) => {
         if (rsp.success) {
           try {
