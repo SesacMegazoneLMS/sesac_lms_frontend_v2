@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AuthLayout from "./layouts/AuthLayout";
 import MainLayout from "./layouts/MainLayout";
@@ -27,8 +27,11 @@ import CompleteProfile from "./pages/auth/CompleteProfile";
 import axios from "axios";
 import { loginSuccess } from "./store/slices/authSlice";
 import InstructorDashboard from "./pages/dashboard/InstructorDashboard";
+
 const AppContent = ({ children }) => {
+
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(true);  // 로딩 상태 추가
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -55,10 +58,15 @@ const AppContent = ({ children }) => {
           console.error("사용자 정보 조회 실패:", err);
         }
       }
+      setIsLoading(false);  // 데이터 로딩 완료
     };
 
     fetchUserInfo();
   }, [dispatch]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;  // 또는 로딩 스피너 컴포넌트
+  }
 
   return children;
 };

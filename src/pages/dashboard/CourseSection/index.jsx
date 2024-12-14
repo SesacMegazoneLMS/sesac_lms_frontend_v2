@@ -28,17 +28,17 @@ export const CourseSection = ({ courses, onViewAll, title, type = 'enrolled' }) 
       <CourseList>
         {courses.length > 0 ? (
           courses.map(course => (
-            <CourseCard 
-              key={course.id} 
+            <CourseCard
+              key={course.id}
               course={course}
               type={type}
             />
           ))
         ) : (
           <EmptyCourses>
-            <img 
-              src="/assets/icons/empty-course.svg" 
-              alt="강좌 없음" 
+            <img
+              src="/assets/icons/empty-course.svg"
+              alt="강좌 없음"
             />
             <p>강좌가 없습니다.</p>
           </EmptyCourses>
