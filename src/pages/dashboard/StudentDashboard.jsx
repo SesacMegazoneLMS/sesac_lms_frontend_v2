@@ -9,12 +9,17 @@ import { CourseSection } from './CourseSection';
 import { userService } from '../../infrastructure/services/CourseService';
 
 function StudentDashboard() {
-  const { user } = useSelector(state => state.auth);
+  const { user, loading } = useSelector(state => state.auth);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const navigate = useNavigate();
 
+  console.log("Current auth state:", { user, loading });  // 디버깅용
+
   useEffect(() => {
     const loadStudentData = async () => {
+
+      console.log("Loading student data...");  // 시작 로그
+
       try {
         const { enrollments } = await userService.getMyEnrollments();
 
@@ -34,10 +39,15 @@ function StudentDashboard() {
       }
     };
 
-    if (user?.id) {
+    if (user) {
       loadStudentData();
     }
-  }, [user?.id]);
+  }, [user]);
+
+  // 로딩 중일 때 표시
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;

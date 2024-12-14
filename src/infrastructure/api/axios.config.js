@@ -5,13 +5,13 @@ export const api = axios.create({
   baseURL: process.env.REACT_APP_PAYMENT_API_URL,
   timeout: 5000,
   headers: {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*'
+    'Content-Type': 'application/json'
   },
   withCredentials: false
 });
 
 export const axiosInstance = axios.create({
+  baseURL: process.env.REACT_APP_BACKEND_API_URL,
   timeout: 5000,
   headers: {
     'Content-Type': 'application/json'
@@ -50,6 +50,11 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('API 요청 실패:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      config: error.config
+    });
     return Promise.reject(error);
   }
 );

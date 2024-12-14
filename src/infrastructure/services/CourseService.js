@@ -5,6 +5,10 @@ import axios from 'axios';
 export const userService = {
   getMyEnrollments: async () => {
     try {
+
+      console.log("Starting API call to:", API_ENDPOINTS.USERS.ENROLLMENTS);
+      console.log("With token:", localStorage.getItem('idToken'));
+
       const response = await axiosInstance.get(API_ENDPOINTS.USERS.ENROLLMENTS);
 
       if (!response.data) {
