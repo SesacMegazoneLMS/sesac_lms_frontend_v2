@@ -45,7 +45,7 @@ function CourseDetailPage() {
 
   const handleAddToCart = () => {
     if (!course) return;
-    
+
     dispatch(addToCart({
       courseId: course.id,
       title: course.title,
@@ -146,7 +146,9 @@ function CourseDetailPage() {
                 <LectureList>
                   {course.lectures.map((lecture) => (
                     <LectureItem key={lecture.id}>
-                      <LectureTitle>{lecture.title}</LectureTitle>
+                      <LectureOrderIndex>{lecture.orderIndex}강</LectureOrderIndex>
+                      <LectureTitle>강의명 :{lecture.title}</LectureTitle>
+                      <LectureDuration>영상 시간: {lecture.duration}</LectureDuration>
                     </LectureItem>
                   ))}
                 </LectureList>
@@ -383,6 +385,14 @@ const LectureItem = styled.div`
 
 const LectureTitle = styled.h3`
   font-size: var(--font-size-base);
+`;
+
+const LectureDuration = styled.span`
+  color: var(--text-light);
+`;
+
+const LectureOrderIndex = styled.span`
+  color: var(--text-light);
 `;
 
 const PurchaseSection = styled.div`

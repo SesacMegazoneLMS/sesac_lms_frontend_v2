@@ -1,109 +1,174 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FiEdit2, FiUpload, FiSave } from 'react-icons/fi';
+import { FiPlus, FiGlobe, FiUpload } from 'react-icons/fi';
+import { FaLinkedin, FaGithub } from 'react-icons/fa';
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
+import { useSelector } from 'react-redux';
+import { updateUserProfile } from '../../store/slices/authSlice';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
+import { CognitoIdentityClient } from '@aws-sdk/client-cognito-identity';
 
 function InstructorMyPage() {
-  const { user } = useSelector(state => state.auth);
-  const [isEditing, setIsEditing] = useState(false);
+  const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
   const [profileData, setProfileData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    bio: user?.introduction || '', // 백엔드: introduction -> 프론트: bio
-    expertise: user?.techStack || [], // 백엔드: techStack -> 프론트: expertise
+    bio: '',
+    expertise: [],
     socialLinks: {
-      website: user?.websiteUrl || '', // 백엔드: websiteUrl -> 프론트: socialLinks.website
-      linkedin: user?.linkedinUrl || '', // 백엔드: linkedinUrl -> 프론트: socialLinks.linkedin
-      github: user?.githubUrl || '', // 백엔드: githubUrl -> 프론트: socialLinks.github
+      website: '',
+      linkedin: '',
+      github: ''
     },
-    profileImage: user?.profileImgUrl || '/default-avatar.png' // 백엔드: profileImgUrl -> 프론트: profileImage
+    profileImage: user?.profileImage || '/saesac.png'
   });
+  const [isUploading, setIsUploading] = useState(false);
 
-  // 백엔드 응답을 프론트엔드 형식으로 변환하는 함수
-  const transformApiResponse = (apiResponse) => {
-    const { profile } = apiResponse;
-    return {
-      name: user?.name || '',
-      email: user?.email || '',
-      bio: profile.introduction,
-      expertise: profile.techStack,
-      socialLinks: {
-        website: profile.websiteUrl,
-        linkedin: profile.linkedinUrl,
-        github: profile.githubUrl
-      },
-      profileImage: profile.profileImgUrl || '/default-avatar.png'
-    };
-  };
-
-  // 프론트엔드 데이터를 백엔드 형식으로 변환하는 함수
-  const transformToApiFormat = (frontendData) => {
-    return {
-      introduction: frontendData.bio,
-      techStack: frontendData.expertise,
-      websiteUrl: frontendData.socialLinks.website,
-      linkedinUrl: frontendData.socialLinks.linkedin,
-      githubUrl: frontendData.socialLinks.github,
-      profileImgUrl: frontendData.profileImage
-    };
-  };
-
-  const handleImageUpload = (event) => {
+  const handleImageUpload = async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileData(prev => ({
-          ...prev,
-          profileImage: reader.result
-        }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+
+      const uuid = uuidv4();
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+      const encodedEmail = btoa(user.email);
+      const sourceS3Key = `profile/${encodedEmail}/${uuid}.${fileExtension}`;
+      const cloudFrontUrl = `https://cdn.sesac-univ.click/${sourceS3Key}`;
+
+      const s3Client = new S3Client({
+        region: "ap-northeast-2",
+        credentials: fromCognitoIdentityPool({
+          client: new CognitoIdentityClient({ region: "ap-northeast-2" }),
+          identityPoolId: "ap-northeast-2:45f6eb55-07a3-4c4d-871f-5a39e5d4194b",
+          logins: {
+            'cognito-idp.ap-northeast-2.amazonaws.com/ap-northeast-2_ow5oyt4jA': localStorage.getItem('idToken')
+          }
+        })
+      });
+
+      await s3Client.send(new PutObjectCommand({
+        Bucket: "sesac-univ-profile",
+        Key: sourceS3Key,
+        Body: file,
+        ContentType: file.type
+      }));
+
+      setProfileData(prev => ({
+        ...prev,
+        profileImage: cloudFrontUrl
+      }));
+
+      await axios.put(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/users/profile/instructor/img`,
+        {
+          profileImgUrl: cloudFrontUrl
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('idToken')}`
+          }
+        }
+      );
+
+      toast.success('프로필 이미지가 성공적으로 업데이트되었습니다.');
+
+    } catch (error) {
+      console.error('이미지 업로드 오류:', error);
+      toast.error('이미지 업로드에 실패했습니다.');
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  const transformToApiFormat = (data) => {
+    return {
+      introduction: data.bio,
+      techStack: data.expertise.filter(skill => skill.trim() !== ''),
+      websiteUrl: data.socialLinks.website,
+      linkedinUrl: data.socialLinks.linkedin,
+      githubUrl: data.socialLinks.github
+    };
+  };
+
+  const handleAddExpertise = () => {
+    if (profileData.expertise.some(skill => skill.trim() === '')) {
+      toast.warning('비어있는 전문 분야를 먼저 입력해주세요.');
+      return;
+    }
+
+    if (profileData.expertise.length >= 10) {
+      toast.warning('전문 분야는 최대 10개까지 추가할 수 있습니다.');
+      return;
+    }
+
+    setProfileData(prev => ({
+      ...prev,
+      expertise: [...prev.expertise, '']
+    }));
   };
 
   const handleSaveProfile = async () => {
     try {
-      const apiData = transformToApiFormat(profileData);
-      const response = await fetch('/api/instructor/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(apiData)
-      });
+      const requestData = {
+        introduction: profileData.bio,
+        techStack: profileData.expertise.filter(skill => skill.trim() !== ''),
+        websiteUrl: profileData.socialLinks.website,
+        linkedinUrl: profileData.socialLinks.linkedin,
+        githubUrl: profileData.socialLinks.github
+      };
 
-      const data = await response.json();
+      const response = await axios.put(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/users/profile/instructor`,
+        requestData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem("idToken")}`
+          }
+        }
+      );
 
-      if (data.statusCode === 'OK') {
-        const transformedData = transformApiResponse(data);
-        setProfileData(transformedData);
-        toast.success('프로필이 저장되었습니다.');
-        setIsEditing(false);
+      if (response.data.statusCode === 'OK') {
+        toast.success('프로필이 성공적으로 저장되었습니다.');
+        navigate('/dashboard');
       } else {
-        throw new Error(data.message || '프로필 저장에 실패했습니다.');
+        throw new Error('프로필 저장에 실패했습니다.');
       }
     } catch (error) {
-      toast.error(error.message);
+      console.error('프로필 저장 오류:', error);
+      toast.error(error.message || '프로필 저장에 실패했습니다.');
     }
   };
 
-  // 프로필 데이터 가져오기
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch('/api/instructor/profile', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_API_URL}/api/users/profile/instructor`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("idToken")}`
+            }
           }
-        });
-        const data = await response.json();
+        );
 
-        if (data.statusCode === 'OK') {
-          const transformedData = transformApiResponse(data);
-          setProfileData(transformedData);
+        if (response.data.statusCode === 'OK') {
+          const { profile } = response.data;
+          setProfileData(prev => ({
+            ...prev,
+            bio: profile.introduction || '',
+            expertise: profile.techStack || [],
+            socialLinks: {
+              website: profile.websiteUrl || '',
+              linkedin: profile.linkedinUrl || '',
+              github: profile.githubUrl || ''
+            },
+            profileImage: profile.profileImgUrl || '/saesac.png'
+          }));
         }
       } catch (error) {
         toast.error('프로필 정보를 불러오는데 실패했습니다.');
@@ -117,188 +182,190 @@ function InstructorMyPage() {
     <div className="max-w-3xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         {/* 프로필 헤더 */}
-        <div className="relative h-48 bg-primary-light">
-          <div className="absolute -bottom-16 left-6">
+        <div className="relative h-32 bg-primary-light">
+          <div className="absolute -bottom-12 left-6">
             <div className="relative">
               <img
-                src={profileData.profileImage}
-                alt={profileData.name}
-                className="w-32 h-32 rounded-full border-4 border-white"
+                src={profileData.profileImage.startsWith('http')
+                  ? profileData.profileImage  // CloudFront URL이면 그대로 사용
+                  : '/saesac.png'  // 기본 이미지는 public 폴더에서 가져옴
+                }
+                alt="프로필"
+                className="w-32 h-32 rounded-full object-cover"
               />
-              {isEditing && (
-                <label className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow cursor-pointer">
-                  <FiUpload className="text-primary" />
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                  />
-                </label>
-              )}
+              <label className="absolute bottom-0 right-0 bg-primary hover:bg-primary-dark text-white rounded-full p-2 shadow-md cursor-pointer transition-colors duration-200">
+                <FiUpload className="w-5 h-5" />
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                />
+              </label>
             </div>
           </div>
           <div className="absolute top-4 right-4">
-            {isEditing ? (
-              <button
-                onClick={handleSaveProfile}
-                className="bg-primary text-white px-4 py-2 rounded-lg flex items-center"
-              >
-                <FiSave className="mr-2" />
-                저장
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="bg-white text-primary px-4 py-2 rounded-lg flex items-center"
-              >
-                <FiEdit2 className="mr-2" />
-                수정
-              </button>
-            )}
+            <button
+              onClick={handleSaveProfile}
+              className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center transition-colors duration-200"
+            >
+              저장
+            </button>
           </div>
         </div>
 
         {/* 프로필 정보 */}
-        <div className="pt-20 px-6 pb-6">
-          <div className="space-y-6">
-            {/* 기본 정보 */}
-            <div>
-              {isEditing ? (
-                <div className="space-y-4">
-                  <input
-                    type="text"
-                    value={profileData.name}
-                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                    className="text-2xl font-bold w-full px-3 py-2 border rounded"
-                    placeholder="이름을 입력하세요"
-                  />
-                  <input
-                    type="email"
-                    value={profileData.email}
-                    onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                    className="w-full px-3 py-2 border rounded text-gray-500"
-                    placeholder="이메일을 입력하세요"
-                    disabled
-                  />
-                </div>
-              ) : (
-                <div>
-                  <h1 className="text-2xl font-bold">{profileData.name}</h1>
-                  <p className="text-gray-500 mt-1">{profileData.email}</p>
-                </div>
-              )}
-            </div>
-
+        <div className="pt-16 px-6 pb-6">
+          <div className="space-y-4">
             {/* 자기소개 */}
             <div>
               <h2 className="text-lg font-semibold mb-2">자기소개</h2>
-              {isEditing ? (
+              <div className="relative">
                 <textarea
                   value={profileData.bio}
-                  onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
+                  onChange={(e) => {
+                    if (e.target.value.length <= 500) { // 500자 제한
+                      setProfileData(prev => ({ ...prev, bio: e.target.value }));
+                    }
+                  }}
+                  className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-primary focus:border-transparent"
                   rows={4}
                   placeholder="자기소개를 입력해주세요"
+                  maxLength={500} // HTML 기본 제한도 추가
                 />
-              ) : (
-                <p className="text-gray-600">{profileData.bio || '자기소개를 입력해주세요.'}</p>
-              )}
+                <div className="text-right text-sm text-gray-500 mt-1">
+                  {profileData.bio.length}/500자
+                </div>
+              </div>
             </div>
 
             {/* 전문 분야 */}
             <div>
-              <h2 className="text-lg font-semibold mb-2">전문 분야</h2>
-              {isEditing ? (
-                <div className="space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    {profileData.expertise.map((skill, index) => (
-                      <div key={index} className="flex items-center bg-gray-100 rounded-full px-3 py-1">
-                        <input
-                          type="text"
-                          value={skill}
-                          onChange={(e) => {
-                            const newExpertise = [...profileData.expertise];
-                            newExpertise[index] = e.target.value;
-                            setProfileData({ ...profileData, expertise: newExpertise });
-                          }}
-                          className="bg-transparent w-24"
-                          placeholder="기술명"
-                        />
-                        <button
-                          onClick={() => {
-                            const newExpertise = profileData.expertise.filter((_, i) => i !== index);
-                            setProfileData({ ...profileData, expertise: newExpertise });
-                          }}
-                          className="ml-2 text-red-500 hover:text-red-700"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+              <h2 className="text-lg font-semibold mb-2">
+                전문 분야
+                <span className="text-sm text-gray-500 ml-2">
+                  (최대 10개)
+                </span>
+              </h2>
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {profileData.expertise.map((skill, index) => (
+                    <div key={index} className="flex items-center bg-gray-100 rounded-full px-3 py-1">
+                      <input
+                        type="text"
+                        value={skill}
+                        onChange={(e) => {
+                          const newExpertise = [...profileData.expertise];
+                          newExpertise[index] = e.target.value;
+                          setProfileData(prev => ({ ...prev, expertise: newExpertise }));
+                        }}
+                        className="bg-transparent w-24"
+                        placeholder="기술명"
+                      />
+                      <button
+                        onClick={() => {
+                          const newExpertise = profileData.expertise.filter((_, i) => i !== index);
+                          setProfileData(prev => ({ ...prev, expertise: newExpertise }));
+                        }}
+                        className="ml-2 text-red-500 hover:text-red-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
                   <button
-                    onClick={() => setProfileData({
-                      ...profileData,
-                      expertise: [...profileData.expertise, '']
-                    })}
-                    className="text-primary hover:text-primary-dark flex items-center"
+                    onClick={handleAddExpertise}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center 
+                      ${profileData.expertise.length >= 10 ||
+                        profileData.expertise.some(skill => skill.trim() === '')
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-primary text-white hover:bg-primary-dark'
+                      }`}
+                    disabled={
+                      profileData.expertise.length >= 10 ||
+                      profileData.expertise.some(skill => skill.trim() === '')
+                    }
+                    title={
+                      profileData.expertise.length >= 10
+                        ? '최대 개수에 도달했습니다'
+                        : profileData.expertise.some(skill => skill.trim() === '')
+                          ? '비어있는 전문 분야를 먼저 입력해주세요'
+                          : '전문 분야 추가'
+                    }
                   >
-                    <span className="mr-1">+</span> 전문 분야 추가
+                    <FiPlus className="w-5 h-5" />
                   </button>
                 </div>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {profileData.expertise.map((skill, index) => (
-                    <span key={index} className="bg-gray-100 rounded-full px-3 py-1">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              )}
+              </div>
             </div>
 
             {/* 소셜 링크 */}
             <div>
               <h2 className="text-lg font-semibold mb-2">소셜 링크</h2>
-              {isEditing ? (
-                <div className="space-y-2">
-                  {Object.entries(profileData.socialLinks).map(([key, value]) => (
-                    <div key={key} className="flex items-center space-x-2">
-                      <span className="w-20 text-gray-600 capitalize">{key}</span>
-                      <input
-                        type="url"
-                        value={value}
-                        onChange={(e) => setProfileData({
-                          ...profileData,
-                          socialLinks: {
-                            ...profileData.socialLinks,
-                            [key]: e.target.value
-                          }
-                        })}
-                        className="flex-1 px-3 py-2 border rounded"
-                        placeholder={`${key} URL을 입력하세요`}
-                      />
-                    </div>
-                  ))}
+              <div className="space-y-2">
+                {/* Website */}
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 flex items-center justify-center">
+                    <FiGlobe className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <span className="w-20 text-gray-600">Website</span>
+                  <input
+                    type="url"
+                    value={profileData.socialLinks.website}
+                    onChange={(e) => setProfileData(prev => ({
+                      ...prev,
+                      socialLinks: {
+                        ...prev.socialLinks,
+                        website: e.target.value
+                      }
+                    }))}
+                    className="flex-1 px-3 py-2 border rounded"
+                    placeholder="https://your-website.com"
+                  />
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {Object.entries(profileData.socialLinks).map(([key, value]) => (
-                    value && (
-                      <a
-                        key={key}
-                        href={value}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center space-x-2 text-primary hover:text-primary-dark"
-                      >
-                        <span className="capitalize">{key}</span>
-                      </a>
-                    )
-                  ))}
+
+                {/* LinkedIn */}
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 flex items-center justify-center">
+                    <FaLinkedin className="w-5 h-5 text-[#0A66C2]" />
+                  </div>
+                  <span className="w-20 text-gray-600">LinkedIn</span>
+                  <input
+                    type="url"
+                    value={profileData.socialLinks.linkedin}
+                    onChange={(e) => setProfileData(prev => ({
+                      ...prev,
+                      socialLinks: {
+                        ...prev.socialLinks,
+                        linkedin: e.target.value
+                      }
+                    }))}
+                    className="flex-1 px-3 py-2 border rounded"
+                    placeholder="https://linkedin.com/in/username"
+                  />
                 </div>
-              )}
+
+                {/* GitHub */}
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 flex items-center justify-center">
+                    <FaGithub className="w-5 h-5 text-gray-800" />
+                  </div>
+                  <span className="w-20 text-gray-600">GitHub</span>
+                  <input
+                    type="url"
+                    value={profileData.socialLinks.github}
+                    onChange={(e) => setProfileData(prev => ({
+                      ...prev,
+                      socialLinks: {
+                        ...prev.socialLinks,
+                        github: e.target.value
+                      }
+                    }))}
+                    className="flex-1 px-3 py-2 border rounded"
+                    placeholder="https://github.com/username"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,8 +1,16 @@
-import { api } from './axios.config';
+import { api } from "./axios.config";
 
 const AUTH_URL = `${process.env.REACT_APP_AUTH_API_URL}`;
 const BACKEND_URL = `${process.env.REACT_APP_BACKEND_API_URL}/api`;
-const GOOGLE_REQUEST = ``;
+
+const googleParams = new URLSearchParams({
+  identity_provider: "Google", // Cognito의 Google IdP 이름
+  client_id: "6tuhkvilko0ea253l36d4n3uec", // 동일한 Cognito 앱 클라이언트 ID
+  response_type: "code",
+  redirect_uri: `${process.env.REACT_APP_AUTH_CALLBACK_URL}/auth/callback`,
+  scope: "openid aws.cognito.signin.user.admin", // Google scope 추가
+});
+const GOOGLE_REQUEST = `https://ap-northeast-2ow5oyt4ja.auth.ap-northeast-2.amazoncognito.com/oauth2/authorize?${googleParams}`;
 
 const kakaoParams = new URLSearchParams({
   identity_provider: "kakao",
@@ -12,7 +20,15 @@ const kakaoParams = new URLSearchParams({
   scope: "openid aws.cognito.signin.user.admin",
 });
 const KAKAO_REQUEST = `https://ap-northeast-2ow5oyt4ja.auth.ap-northeast-2.amazoncognito.com/oauth2/authorize?${kakaoParams}`;
-const NAVER_REQUEST = ``;
+
+const naverParams = new URLSearchParams({
+  identity_provider: "naver", // Cognito에 설정한 Custom Provider 이름
+  client_id: "6tuhkvilko0ea253l36d4n3uec",
+  response_type: "code",
+  redirect_uri: `${process.env.REACT_APP_AUTH_CALLBACK_URL}/auth/callback`,
+  scope: "openid aws.cognito.signin.user.admin", // Naver scope
+});
+const NAVER_REQUEST = `https://ap-northeast-2ow5oyt4ja.auth.ap-northeast-2.amazoncognito.com/oauth2/authorize?${naverParams}`;
 
 export const AUTH_ENDPOINTS = {
   login: {
@@ -86,22 +102,29 @@ export const AUTH_ENDPOINTS = {
 };
 
 export const API_ENDPOINTS = {
+  COURSES: "/courses.json",
+  USERS: "/users.json",
+  ORDERS: "/orders.json",
+  CART: "/cart.json",
+  ROADMAPS: "/roadmaps.json",
+  COMMUNITY: "/community.json",
+  PAYMENTS: "/payments.json",
   COURSES: {
     LIST: `${BACKEND_URL}/courses`,
     DETAIL: (id) => `${BACKEND_URL}/courses/${id}`,
   },
   USERS: {
-    ENROLLMENTS: `${BACKEND_URL}/enrollments`
+    ENROLLMENTS: `${BACKEND_URL}/enrollments`,
   },
   ORDERS: {
-    CREATE: `${BACKEND_URL}/orders`
+    CREATE: `${BACKEND_URL}/orders`,
   },
-  CART: '/cart.json',
-  ROADMAPS: '/roadmaps.json',
-  COMMUNITY: '/community.json',
+  CART: "/cart.json",
+  ROADMAPS: "/roadmaps.json",
+  COMMUNITY: "/community.json",
   PAYMENTS: {
     VERIFY: `${BACKEND_URL}/payments/verify`,
-  }
+  },
 };
 
 export const apiEndpoints = {
@@ -109,13 +132,80 @@ export const apiEndpoints = {
     getCart: async (userId) => {
       const response = await api.get(API_ENDPOINTS.CART);
       const cartData = response.data?.cart || {};
-      return cartData.orders?.find(order => order.userId === userId) || null;
-    }
+      return cartData.orders?.find((order) => order.userId === userId) || null;
+    },
+  },
+
+  payment: {
+    createOrder: async (orderData) => {
+      console.log("orderData: ", orderData);
+
+      try {
+        const response = await api.post(
+          `${process.env.REACT_APP_PAYMENT_API_URL}/api/orders`,
+          {
+            courses: orderData.courses,
+            totalAmount: orderData.totalAmount,
+          }
+        );
+        // const cartData = response.data?.cart || {};
+        // const orders = cartData.orders || [];
+        return response.data;
+
+        // const newOrder = {
+        //   orderId: `ORD-${Date.now()}`,
+        //   merchantUid: `MERCHANT-${Date.now()}`,
+        //   userId: orderData.studentId,
+        //   items: orderData.items,
+        //   totalAmount: orderData.totalAmount,
+        //   status: 'pending',
+        //   createdAt: new Date().toISOString()
+        // };
+
+        // return newOrder;
+      } catch (error) {
+        console.error("주문 생성 실패:", error);
+        throw error;
+      }
+    },
+
+    verifyPayment: async (paymentData) => {
+      try {
+        const response = await api.post(
+          `${process.env.REACT_APP_PAYMENT_API_URL}/api/payments/verify`,
+          {
+            impUid: paymentData.impUid,
+            merchantUid: paymentData.merchantUid,
+            buyerName: paymentData.buyerName,
+            amount: paymentData.amount,
+            status: paymentData.status,
+            payMethod: paymentData.payMethod,
+          }
+        );
+        // const cartData = response.data?.cart || {};
+        // const transactions = cartData.transactions || [];
+        return response.data;
+
+        // const newTransaction = {
+        //   transactionId: `TRX-${Date.now()}`,
+        //   orderId: paymentData.orderId,
+        //   paymentMethod: 'kakaopay',
+        //   amount: paymentData.amount,
+        //   status: 'completed',
+        //   paidAt: new Date().toISOString()
+        // };
+
+        // return newTransaction;
+      } catch (error) {
+        console.error("결제 검증 실패:", error);
+        throw error;
+      }
+    },
   },
 
   getOrderHistory: async (userId) => {
     const response = await api.get(API_ENDPOINTS.CART);
     const cartData = response.data?.cart || {};
-    return cartData.orders?.filter(order => order.userId === userId) || [];
-  }
+    return cartData.orders?.filter((order) => order.userId === userId) || [];
+  },
 };
