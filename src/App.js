@@ -27,13 +27,8 @@ import CompleteProfile from "./pages/auth/CompleteProfile";
 import axios from "axios";
 import { loginSuccess } from "./store/slices/authSlice";
 import InstructorDashboard from "./pages/dashboard/InstructorDashboard";
-import LectureVideoPage from "./pages/student/LectureVideoPage";
-import LectureDetailPage from "./pages/student/LectureDetailPage";
-
 const AppContent = ({ children }) => {
-
   const dispatch = useDispatch();
-  const [isLoading, setIsLoading] = useState(true);  // 로딩 상태 추가
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -60,15 +55,10 @@ const AppContent = ({ children }) => {
           console.error("사용자 정보 조회 실패:", err);
         }
       }
-      setIsLoading(false);  // 데이터 로딩 완료
     };
 
     fetchUserInfo();
   }, [dispatch]);
-
-  if (isLoading) {
-    return <div>Loading...</div>;  // 또는 로딩 스피너 컴포넌트
-  }
 
   return children;
 };
@@ -85,39 +75,19 @@ function App() {
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="courses" element={<CoursesPage />} />
               <Route path="courses/:id" element={<CourseDetailPage />} />
-              <Route path="courses/:courseId/lectures/:lectureId" element={<LectureVideoPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="cart" element={<CartPage />} />
               <Route path="roadmaps" element={<RoadmapsPage />} />
               <Route path="community" element={<CommunityPage />} />
 
-              <Route path="courses/:courseId/detail" element={<LectureDetailPage />} />
-
               <Route path="instructor">
                 <Route path="dashboard" element={<InstructorDashboard />} />
                 <Route path="course/create" element={<CourseCreatePage />} />
-                <Route
-                  path="course/:id/edit"
-                  element={<CourseManagementPage />}
-                />
-                <Route
-                  path="/instructor/course/:courseId/content"
-                  element={<CourseContentPage />}
-                />
-                <Route
-                  path="/instructor/course/:courseId/quiz"
-                  element={<CourseQuizPage />}
-                />
-                <Route
-                  path="/instructor/profile"
-                  element={<InstructorMyPage />}
-                />
-                {/* 수정된 강의 비디오 페이지 라우트 */}
-                <Route path="course/:courseId/lecture/:lectureId" element={<LectureVideoPage />} />
+                <Route path="course/:id/edit" element={<CourseManagementPage />} />
+                <Route path="/instructor/course/:courseId/content" element={<CourseContentPage />} />
+                <Route path="/instructor/course/:courseId/quiz" element={<CourseQuizPage />} />
+                <Route path="/instructor/profile" element={<InstructorMyPage />} />
               </Route>
-
-              {/* 학생용 강의 비디오 페이지 라우트 */}
-              <Route path="course/:courseId/lecture/:lectureId" element={<LectureVideoPage />} />
             </Route>
 
             <Route path="/auth" element={<AuthLayout />}>

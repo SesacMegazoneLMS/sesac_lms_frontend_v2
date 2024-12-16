@@ -1,4 +1,4 @@
-import { api } from '../api/axios.config';
+import { axiosInstance } from '../api/axios.config';
 import { API_ENDPOINTS } from '../api/endpoints';
 
 class CommunityService {
