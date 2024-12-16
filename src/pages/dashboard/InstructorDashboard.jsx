@@ -589,7 +589,7 @@ function InstructorDashboard() {
     try {
       // TODO: API 연동 시 실제 저장 로직 구현
       toast.success('프로필이 저장되었습니다.');
-      setIsEditing(false);
+      // setIsEditing(false);
     } catch (error) {
       toast.error('프로필 저장에 실패했습니다.');
     }
