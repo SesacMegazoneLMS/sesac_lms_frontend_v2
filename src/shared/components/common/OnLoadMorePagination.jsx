@@ -4,7 +4,7 @@ import styled from 'styled-components';
 export const OnLoadMorePagination = ({ currentPage, totalPages, onPageChange }) => {
     return (
         <PaginationWrapper>
-            <LoadMoreButton onClick={onPageChange} disabled={currentPage === totalPages}>
+            <LoadMoreButton onClick={onPageChange} disabled={currentPage === totalPages || totalPages === 0}>
                 더보기
             </LoadMoreButton>
         </PaginationWrapper>

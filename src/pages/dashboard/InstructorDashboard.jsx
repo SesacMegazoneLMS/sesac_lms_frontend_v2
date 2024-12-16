@@ -69,7 +69,6 @@ function InstructorDashboard() {
           }
         }
       );
-      console.log("myCourseList : " + res.data.myCourseList);
       setRecentCourses(res.data.myCourseList);
       setTotalPages(res.data.myCourseList.totalPages);
 
