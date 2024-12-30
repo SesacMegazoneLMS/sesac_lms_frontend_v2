@@ -1,5 +1,5 @@
-import { axiosInstance } from '../api/axios.config';
-import { API_ENDPOINTS } from '../api/endpoints';
+import {api} from '../api/axios.config';
+import {API_ENDPOINTS} from '../api/endpoints';
 
 class CommunityService {
   async getPosts(page = 1, filters = {}) {
