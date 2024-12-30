@@ -27,6 +27,10 @@ import CompleteProfile from "./pages/auth/CompleteProfile";
 import axios from "axios";
 import { loginSuccess } from "./store/slices/authSlice";
 import InstructorDashboard from "./pages/dashboard/InstructorDashboard";
+import LectureVideoPage from "./pages/student/LectureVideoPage";
+import LectureDetailPage from "./pages/student/LectureDetailPage";
+
+
 const AppContent = ({ children }) => {
   const dispatch = useDispatch();
 
@@ -79,6 +83,8 @@ function App() {
               <Route path="cart" element={<CartPage />} />
               <Route path="roadmaps" element={<RoadmapsPage />} />
               <Route path="community" element={<CommunityPage />} />
+              <Route path="courses/:courseId/lectures/:lectureId" element={<LectureVideoPage />} />
+              <Route path="courses/:courseId/detail" element={<LectureDetailPage />} />
 
               <Route path="instructor">
                 <Route path="dashboard" element={<InstructorDashboard />} />
