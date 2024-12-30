@@ -1,5 +1,5 @@
 // front/src/pages/lecture/LectureVideoPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import ReactPlayer from 'react-player';
 import axios from 'axios';
@@ -8,6 +8,9 @@ import { toast } from 'react-toastify';
 const LectureVideoPage = () => {
   const { courseId, lectureId } = useParams();
   const [lectureData, setLectureData] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [watchedTime, setWatchedTime] = useState(0);
+  const playerRef = useRef(null);
 
   useEffect(() => {
     fetchLectureData();
@@ -28,6 +31,36 @@ const LectureVideoPage = () => {
       console.error('Error fetching lecture:', error);
       toast.error('강의 정보를 불러오는데 실패했습니다.');
     }
+  };
+
+  // 주기적으로 시청 진도 저장
+  const saveProgress = useCallback(async () => {
+    try {
+      await axios.post(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/lectures/${lectureId}/progress`,
+        {
+          progressRate: progress,
+          watchedSeconds: watchedTime,
+        },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem('idToken')}` }
+        }
+      );
+    } catch (error) {
+      console.error('진도율 저장 실패:', error);
+    }
+  }, [progress, watchedTime, lectureId]);
+
+  // 영상 진행 상태 모니터링
+  const handleProgress = ({ played, playedSeconds }) => {
+    setProgress(played * 100);
+    setWatchedTime(Math.floor(playedSeconds));
+  };
+
+  // 영상 종료 시 처리
+  const handleEnded = async () => {
+    await saveProgress();
+    toast.success('강의를 완료했습니다!');
   };
 
   if (!lectureData) return <div>Loading...</div>;
@@ -53,6 +86,7 @@ const LectureVideoPage = () => {
           <div className="aspect-w-16 aspect-h-9 bg-black rounded-lg overflow-hidden">
             {lectureData.status === 'COMPLETED' ? (
               <ReactPlayer
+                ref={playerRef}
                 url={lectureData.videoUrl}
                 width="100%"
                 height="100%"
@@ -63,6 +97,9 @@ const LectureVideoPage = () => {
                     forceHLS: true,
                   }
                 }}
+                onProgress={handleProgress}
+                onEnded={handleEnded}
+                progressInterval={5000} // 5초마다 진도 체크
               />
             ) : (
               <div className="flex items-center justify-center h-full">

@@ -4,14 +4,20 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { CourseCard } from '../../shared/components/CourseCard';
 import { StatsCard } from './StatsCard';
-import { QuizCard } from './QuizCard';
+// import { QuizCard } from './QuizCard';
 import { CourseSection } from './CourseSection';
 import { userService } from '../../infrastructure/services/CourseService';
+import axios from 'axios';
 
 function StudentDashboard() {
   const { user, loading } = useSelector(state => state.auth);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    totalHours: 0,
+    weeklyHours: 0,
+    completedCourses: 0
+  });
 
   console.log("Current auth state:", { user, loading });  // 디버깅용
 
@@ -44,6 +50,19 @@ function StudentDashboard() {
     }
   }, [user]);
 
+  useEffect(() => {
+    const fetchStats = async () => {
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/students/stats`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem('idToken')}` }
+        }
+      );
+      setStats(response.data);
+    };
+    fetchStats();
+  }, []);
+
   // 로딩 중일 때 표시
   if (loading) {
     return <div>Loading...</div>;
@@ -59,7 +78,7 @@ function StudentDashboard() {
         <h1>안녕하세요, {user?.name}님!</h1>
         <HeaderLinks>
           <StyledLink to="/profile">프로필 관리</StyledLink>
-          <StyledLink to="/certificates">수료증 관리</StyledLink>
+
         </HeaderLinks>
       </Header>
 
@@ -69,14 +88,8 @@ function StudentDashboard() {
           onViewAll={() => navigate('/my-courses')}
         />
         <SideSection>
-          <StatsCard
-            stats={{
-              totalHours: 23,
-              weeklyHours: 5,
-              completedCourses: 3
-            }}
-          />
-          <QuizCard quizzes={[]} />
+          <StatsCard stats={stats} />
+          {/* <QuizCard quizzes={[]} /> */}
         </SideSection>
       </MainContent>
     </DashboardContainer>
