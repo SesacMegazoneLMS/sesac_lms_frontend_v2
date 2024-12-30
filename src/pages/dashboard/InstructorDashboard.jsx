@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fi';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import toast, { Toaster, useToasterStore } from 'react-hot-toast';
+import { StatsService } from '../../infrastructure/services/StatisticsService';
 import InstructorMyPage from '../instructor/InstructorMyPage';
 import CourseQuizPage from '../instructor/CourseQuizPage';
 import ProfilePage from '../profile/ProfilePage';
@@ -110,14 +111,23 @@ function InstructorDashboard() {
         setIsLoading(true);
         await fetchInstructorProfile();
 
-        const mockStats = {
-          totalStudents: 150,
-          totalCourses: 5,
-          totalRevenue: 3000000,
-          monthlyRevenue: 800000,
-          averageRating: 4.5,
-          completionRate: 78
-        };
+        const data = await StatsService.getInstructorStats();
+
+        const stats = {
+          totalStudents: data.statistics.totalStudents,
+          totalCourses: data.statistics.activeCourses,
+          totalRevenue: data.statistics.totalRevenue,
+          averageRating: data.statistics.averageRating,
+        }
+
+        // const mockStats = {
+        //   totalStudents: 150,
+        //   totalCourses: 5,
+        //   totalRevenue: 3000000,
+        //   monthlyRevenue: 800000,
+        //   averageRating: 4.5,
+        //   completionRate: 78
+        // };
 
         const mockEnrollments = [
           {
@@ -165,7 +175,7 @@ function InstructorDashboard() {
           }
         ];
 
-        setStats(mockStats);
+        setStats(stats);
         setRecentEnrollments(mockEnrollments);
         setRecentReviews(mockReviews);
         setRevenueData(mockRevenueData);
