@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fi';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import toast, { Toaster, useToasterStore } from 'react-hot-toast';
+import { StatsService } from '../../infrastructure/services/StatisticsService';
 import InstructorMyPage from '../instructor/InstructorMyPage';
 import CourseQuizPage from '../instructor/CourseQuizPage';
 import ProfilePage from '../profile/ProfilePage';
@@ -110,14 +111,24 @@ function InstructorDashboard() {
         setIsLoading(true);
         await fetchInstructorProfile();
 
-        const mockStats = {
-          totalStudents: 150,
-          totalCourses: 5,
-          totalRevenue: 3000000,
-          monthlyRevenue: 800000,
-          averageRating: 4.5,
-          completionRate: 78
-        };
+        const data = await StatsService.getInstructorStats();
+
+        const stats = {
+          totalStudents: data.statistics.totalStudents,
+          totalCourses: data.statistics.activeCourses,
+          totalRevenue: data.statistics.totalRevenue,
+          averageRating: data.statistics.averageRating,
+          monthlyRevenue: data.statistics.monthlyStats?.revenue || 0,
+        }
+
+        // const mockStats = {
+        //   totalStudents: 150,
+        //   totalCourses: 5,
+        //   totalRevenue: 3000000,
+        //   monthlyRevenue: 800000,
+        //   averageRating: 4.5,
+        //   completionRate: 78
+        // };
 
         const mockEnrollments = [
           {
@@ -165,7 +176,7 @@ function InstructorDashboard() {
           }
         ];
 
-        setStats(mockStats);
+        setStats(stats);
         setRecentEnrollments(mockEnrollments);
         setRecentReviews(mockReviews);
         setRevenueData(mockRevenueData);
@@ -182,6 +193,28 @@ function InstructorDashboard() {
     fetchDashboardData();
   }, [currentPage, fetchInstructorProfile]);
 
+  const handleManualUpdate = async () => {
+    try {
+      setIsLoading(true);
+      await StatsService.manualUpdate();
+
+      const data = await StatsService.getInstructorStats();
+      setStats({
+        totalStudents: data.statistics.totalStudents,
+        totalCourses: data.statistics.activeCourses,
+        totalRevenue: data.statistics.totalRevenue,
+        averageRating: data.statistics.averageRating,
+        monthlyRevenue: data.statistics.monthlyStats?.revenue || 0,
+      });
+      toast.success('통계가 성공적으로 업데이트되었습니다.');
+    } catch (error) {
+      console.log('통계 업데이트 실패: ', error);
+      toast.error('통계 업데이트에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   // 페이지 변경 핸들러
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -190,6 +223,7 @@ function InstructorDashboard() {
 
   const renderDashboardContent = () => (
     <div className="space-y-6">
+
       {/* 강사 프로필 섹션 */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex items-center space-x-4">
@@ -312,6 +346,16 @@ function InstructorDashboard() {
 
       {/* 통계 카드 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* 수동 업데이트 버튼 추가 */}
+        <div className="col-span-full flex justify-end mb-4">
+          <button
+            onClick={handleManualUpdate}
+            disabled={isLoading}
+            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
+          >
+            {isLoading ? '업데이트 중...' : '통계 수동 업데이트'}
+          </button>
+        </div>
         <StatCard
           title="총 수강생"
           value={`${stats.totalStudents}명`}
@@ -393,31 +437,33 @@ function InstructorDashboard() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {recentCourses.map(course => (
-                <tr key={course.id} className="cursor-pointer hover:bg-gray-100"
-                  onClick={() => window.location.href = `/instructor/course/${course.id}/content`}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {course.title}
-                  </td>
-                  <td className="px-6 py-4 text-center whitespace-nowrap">
-                    {course.enrollmentCount}명
-                  </td>
-                  <td className="px-6 py-4 text-center whitespace-nowrap">
-                    <div className="flex items-center justify-center">
-                      <FiStar className="text-yellow-400 mr-1" />
-                      {course.averageRating}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full"
-                        style={{ width: `${course.progress || 0}%` }}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {[...recentCourses]
+                .sort((a, b) => b.createdAt.localeCompare(a.createdAt)) // 최신 순으로 정렬
+                .map(course => (
+                  <tr key={course.id} className="cursor-pointer hover:bg-gray-100"
+                    onClick={() => window.location.href = `/instructor/course/${course.id}/content`}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {course.title}
+                    </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                      {course.enrollmentCount}명
+                    </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center">
+                        <FiStar className="text-yellow-400 mr-1" />
+                        {course.averageRating.toFixed(1)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-primary h-2 rounded-full"
+                          style={{ width: `${course.progress || 0}%` }}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
@@ -520,7 +566,7 @@ function InstructorDashboard() {
                 <td className="px-6 py-4 text-center">
                   <div className="flex items-center justify-center">
                     <FiStar className="text-yellow-400 mr-1" />
-                    {course.averageRating}점
+                    {course.averageRating.toFixed(1)}점
                   </div>
                 </td>
                 <td className="px-6 py-4 text-center">
