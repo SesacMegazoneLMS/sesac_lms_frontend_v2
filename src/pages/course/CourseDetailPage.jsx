@@ -58,7 +58,6 @@ function CourseDetailPage() {
   };
 
   const handleLoadMore = () => {
-    console.log(totalPages)
     if (currentPage < totalPages) {
       // 페이지를 증가시키고 데이터를 불러오는 로직
       setCurrentPage(prevPage => prevPage + 1);
@@ -67,8 +66,8 @@ function CourseDetailPage() {
 
   const handleLike = async (reviewId) => {
     const likeStatus = await reviewService.getLikeStatus(reviewId);
-    console.log("like : " + likeStatus);
-    console.log("course : " + course);
+    console.log("like : " + JSON.stringify(likeStatus));
+    console.log("course : " + JSON.stringify(course));
   };
 
   // if (!course || !course.id) return <LoadingSpinner />;

@@ -1,8 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { addToCart } from '../../../store/slices/cartSlice';
-import { toast } from 'react-toastify';
+import React, {useMemo, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {useDispatch} from 'react-redux';
+import { cartService } from '../../../infrastructure/services/CartService';
 
 // 모든 강의 이미지 import
 import BigDataAnalysis from '../../../assets/images/courses/BigDataAnalysis.png';
@@ -41,16 +40,30 @@ const CourseCard = ({ course, type = 'course' }) => {
 
   if (!course) return null;
 
-  const handleAddToCart = (e) => {
-    e.stopPropagation();
-    dispatch(addToCart({
-      id: course.id,
-      title: course.title,
-      instructor: course.instructor,
-      price: course.price,
-      thumbnail: randomImage // 랜덤 이미지 사용
-    }));
-    toast.success('장바구니에 추가되었습니다.');
+  const handleAddToCart = async (course) => {
+    try{
+      const res = await cartService.addToCart( course.id );
+      if (res.success) {
+        alert(res.message); // 성공 메시지 표시
+      } else {
+        // 에러 타입에 따른 처리
+        switch (res.type) {
+          case 'AUTH_ERROR':
+            // 로그인 페이지로 리다이렉트하거나 로그인 모달 표시
+            break;
+          case 'DUPLICATE_ERROR':
+            // 중복 알림 표시
+            break;
+          case 'RUNTIME_ERROR':
+          case 'NETWORK_ERROR':
+            // 일반 에러 메시지 표시
+            break;
+        }
+        alert(res.message);
+      }
+    }catch(error){
+        alert('장바구니에 동일한 강좌가 있습니다.');
+    }
   };
 
   const handleCardClick = () => {
@@ -85,7 +98,7 @@ const CourseCard = ({ course, type = 'course' }) => {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                handleAddToCart(e);
+                handleAddToCart(course);
               }}
               className="bg-[#00c471] text-white px-4 py-2 rounded hover:bg-[#00a65f]"
             >
