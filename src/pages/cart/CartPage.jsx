@@ -5,15 +5,15 @@ import styled from 'styled-components';
 import {clearCart} from '../../store/slices/cartSlice';
 import {OrderService, PaymentService} from '../../infrastructure/services/CourseService';
 import {toast} from 'react-toastify';
-import CourseCard from '../../shared/components/CourseCard';
 import {cartService} from "../../infrastructure/services/CartService";
+import {getCourseImage} from "../../shared/utils/imageUtils";
 
 function CartPage() {
   const user = localStorage.getItem("idToken");
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [cartItems, setCartItems] = useState([]);
-  const [selectedItems, setSelectedItems] = useState({}); // 선택된 아이템 관리
+  const [selectedItems, setSelectedItems] = useState({});
 
   useEffect(() => {
     if (!user) {
@@ -22,13 +22,76 @@ function CartPage() {
     }
   }, [user, navigate]);
 
+
+  const handleSelectDelete = async () => {
+    const selectedIndexes = Object.keys(selectedItems).filter(key => selectedItems[key]).map(Number);
+    if (selectedIndexes.length === 0) {
+      toast.error('선택된 강좌가 없습니다.');
+      return;
+    }
+    if (window.confirm(`${selectedIndexes.length}개 강좌를 삭제하시겠습니까?`)) {
+      try{
+        const res = await cartService.deleteFromCart(selectedIndexes); // 변경된 부분
+        if(res) {
+          setCartItems(prevItems => prevItems.filter((_, index) => !selectedIndexes.includes(index)));
+          setSelectedItems({});
+          alert('선택한 강좌가 삭제되었습니다.');
+        }
+      }catch (error){
+        toast.error('선택한 강좌 삭제 실패');
+        console.log(error);
+      }
+    }
+  };
+
+  const handleAllDelete = async () => {
+    if (cartItems.length === 0) {
+      toast.error('장바구니가 비어있습니다.');
+      return;
+    }
+    if (window.confirm('장바구니의 모든 강좌를 삭제하시겠습니까?')) {
+      try{
+        // 모든 인덱스를 가져와 delete 요청 보내기
+        const allIndexes = cartItems.map((_, index) => index);
+        const res = await cartService.deleteFromCart(allIndexes);
+        if(res){
+          setCartItems([]);
+          setSelectedItems({});
+          alert('장바구니의 모든 강좌가 삭제되었습니다.');
+        }
+      }catch (error){
+        toast.error('장바구니 삭제 실패');
+        console.log(error);
+      }
+    }
+  };
+
+  const deleteFromCart = async (index) => {
+    try {
+      const res = await cartService.deleteFromCart([index]); // 변경된 부분
+      if(res) {
+        setCartItems(prevItems => {
+          const newItems = [...prevItems];
+          newItems.splice(index, 1);
+          const newSelection = { ...selectedItems};
+          delete newSelection[index];
+          setSelectedItems(newSelection);
+          alert('선택한 강좌가 삭제되었습니다.');
+          return newItems;
+        })
+      }
+    } catch(error) {
+      console.log("함수 : " + error);
+      toast.error('삭제 실패');
+    }
+  }
+
   const fetchCartsData = async () => {
     try {
       const cartsData = await cartService.getCarts();
       if (cartsData && cartsData.cartInfo) {
         const cartItemsArray = Object.values(cartsData.cartInfo);
         setCartItems(cartItemsArray);
-        // 초기 선택 상태 설정
         const initialSelection = {};
         cartItemsArray.forEach((item, index) => {
           initialSelection[index] = false;
@@ -40,17 +103,6 @@ function CartPage() {
     }
   }
 
-  const deleteFromCart = async (index) => {
-    try {
-      const res = await cartService.deleteFromCart(index);
-      alert(res);
-      fetchCartsData();
-    } catch(error) {
-      console.log("함수 : " + error);
-    }
-  }
-
-  // 체크박스 선택 처리
   const handleSelectItem = (index) => {
     setSelectedItems(prev => ({
       ...prev,
@@ -58,7 +110,6 @@ function CartPage() {
     }));
   };
 
-  // 전체 선택/해제 처리
   const handleSelectAll = () => {
     const allSelected = Object.values(selectedItems).every(item => item);
     const newSelection = {};
@@ -85,10 +136,9 @@ function CartPage() {
     }
   }, []);
 
-  // 선택된 아이템들의 총 가격 계산
   const selectedItemsList = cartItems.filter((_, index) => selectedItems[index]);
   const totalPrice = selectedItemsList.reduce((sum, item) => sum + item.price, 0);
-  const discountedPrice = totalPrice * 0.8; // 20% 할인
+  const discountedPrice = totalPrice * 0.8;
 
   const handlePayment = async () => {
     if (selectedItemsList.length === 0) {
@@ -105,8 +155,6 @@ function CartPage() {
         totalAmount: discountedPrice
       });
 
-      console.log( "orderData : " + JSON.stringify(orderData));
-
       const { IMP } = window;
       IMP.request_pay({
         pg: "kakaopay",
@@ -121,7 +169,7 @@ function CartPage() {
       }, async (rsp) => {
         if (rsp.success) {
           try {
-            const verifyResult = await PaymentService.verifyPayment({
+            await PaymentService.verifyPayment({
               impUid: rsp.imp_uid,
               merchantUid: rsp.merchant_uid,
               buyerName: rsp.buyer_name,
@@ -129,14 +177,9 @@ function CartPage() {
               status: rsp.status,
               payMethod: rsp.pay_method
             });
-
-            if (verifyResult.status === 'success') {
-              dispatch(clearCart());
-              navigate('/dashboard');
-              toast.success('결제가 완료되었습니다.');
-            } else {
-              toast.error('결제는 완료되었으나 처리 중입니다. 결제 내역에서 확인해주세요.')
-            }
+            dispatch(clearCart());
+            navigate('/dashboard');
+            toast.success('결제가 완료되었습니다.');
           } catch (error) {
             console.error('Verification error:', error);
           }
@@ -152,23 +195,34 @@ function CartPage() {
 
   return (
       <CartContainer>
-        <CartHeader>장바구니</CartHeader>
-
+        <CartHeaderWrapper>
+          <CartHeader>장바구니</CartHeader>
+          <CartCount>강좌 수: {cartItems.length}개</CartCount>
+        </CartHeaderWrapper>
         {cartItems.length === 0 ? (
             <EmptyCart>
-              <img src="/assets/icons/empty-cart.svg" alt="빈 장바구니" />
               <p>장바구니가 비어 있습니다.</p>
             </EmptyCart>
         ) : (
             <CartContent>
               <CartItemList>
                 <SelectAllWrapper>
-                  <Checkbox
-                      type="checkbox"
-                      checked={Object.values(selectedItems).every(item => item)}
-                      onChange={handleSelectAll}
-                  />
-                  <span>전체 선택</span>
+                  <CheckboxArea>
+                    <Checkbox
+                        type="checkbox"
+                        checked={Object.values(selectedItems).every(item => item)}
+                        onChange={handleSelectAll}
+                    />
+                    <span>전체 선택</span>
+                  </CheckboxArea>
+                  <ButtonArea>
+                    <DeleteButton onClick={handleSelectDelete}>
+                      선택 삭제
+                    </DeleteButton>
+                    <DeleteButton onClick={handleAllDelete}>
+                      전체 삭제
+                    </DeleteButton>
+                  </ButtonArea>
                 </SelectAllWrapper>
                 {cartItems.map((course, index) => (
                     <CourseWrapper key={course.id}>
@@ -179,10 +233,13 @@ function CartPage() {
                             onChange={() => handleSelectItem(index)}
                         />
                       </CheckboxWrapper>
-                      <CourseCard
-                          course={course}
-                          type="cart"
-                      />
+                      <CourseItem>
+                        <CourseImage src={getCourseImage(course)} alt={course.title} style={{ width: '120px', height: '80px' }}/>
+                        <CourseInfo>
+                          <CourseTitle>{course.title}</CourseTitle>
+                          <CoursePrice>₩{course.price.toLocaleString()}</CoursePrice>
+                        </CourseInfo>
+                      </CourseItem>
                       <RemoveButton onClick={() => deleteFromCart(index)}>
                         <TrashIcon />
                         삭제
@@ -190,7 +247,6 @@ function CartPage() {
                     </CourseWrapper>
                 ))}
               </CartItemList>
-
               <OrderSummary>
                 <SummaryTitle>주문 요약</SummaryTitle>
                 <SelectedCount>선택된 강좌: {selectedItemsList.length}개</SelectedCount>
@@ -221,7 +277,6 @@ function CartPage() {
   );
 }
 
-// 추가된 Styled Components
 const Checkbox = styled.input`
   width: 20px;
   height: 20px;
@@ -238,16 +293,34 @@ const CheckboxWrapper = styled.div`
 const SelectAllWrapper = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
   padding: 1rem 0;
   margin-bottom: 1rem;
   border-bottom: 1px solid #e5e7eb;
-  
-  span {
-    font-weight: 500;
+`;
+const CheckboxArea = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`
+const ButtonArea = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+const DeleteButton = styled.button`
+  background-color: #fff;
+  color: #1e40af;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+
+  &:hover {
+    background: #dbeafe;
   }
 `;
-
 const SelectedCount = styled.div`
   color: #6b7280;
   margin-bottom: 1rem;
@@ -259,10 +332,23 @@ const CartContainer = styled.div`
   padding: 2rem;
 `;
 
+const CartHeaderWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+`;
+
 const CartHeader = styled.h1`
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 1.5rem;
+`;
+
+const CartCount = styled.span`
+  font-size: 1rem;
+  color: #6b7280;
+  margin-right: 340px;
 `;
 
 const CartContent = styled.div`
@@ -282,12 +368,43 @@ const CourseWrapper = styled.div`
   background: white;
   border-radius: 0.5rem;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+`;
+
+const CourseItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+`;
+
+const CourseImage = styled.img`
+  width: 100px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+`;
+
+const CourseInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+const CourseTitle = styled.h3`
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+`;
+
+const CoursePrice = styled.span`
+  font-size: 0.875rem;
+  color: #6b7280;
 `;
 
 const RemoveButton = styled.button`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
   background: #fff;
   color: #1e40af;
   padding: 0.5rem;
@@ -296,8 +413,7 @@ const RemoveButton = styled.button`
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  z-index: 10;
-  
+
   &:hover {
     background: #dbeafe;
   }
@@ -355,7 +471,7 @@ const PaymentButton = styled.button`
   border-radius: 0.5rem;
   font-weight: bold;
   cursor: pointer;
-  
+
   &:hover {
     background: #1e3a8a;
   }
@@ -364,12 +480,12 @@ const PaymentButton = styled.button`
 const EmptyCart = styled.div`
   text-align: center;
   padding: 3rem;
-  
+
   img {
     width: 120px;
     margin-bottom: 1rem;
   }
-  
+
   p {
     color: #6b7280;
   }
@@ -380,5 +496,6 @@ const TrashIcon = styled.span`
     content: "🗑";
   }
 `;
+
 
 export default CartPage;
