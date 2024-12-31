@@ -75,17 +75,19 @@ export const cartService = {
         }
     },
 
-    deleteFromCart: async (index) => {
+    deleteFromCart: async (indexes) => {
         try{
-            const index2 = index + 1;
-            const res = await axios.delete(`${API_URL}/api/carts/items/${index2}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('idToken')}`
-                    }
-                });
-            return res.data;
+            // index 값에 1을 더해서 서버로 보내기
+            const modifiedIndexes = indexes.map(index => index + 1);
+            await axios.delete(`${API_URL}/api/carts/items`,{
+                data: modifiedIndexes,
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('idToken')}`
+                }
+            });
+            return true;
         }catch (error){
+            console.error("Error deleting from cart:", error);
             throw error;
         }
     }
