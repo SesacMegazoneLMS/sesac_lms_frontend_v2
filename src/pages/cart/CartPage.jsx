@@ -166,23 +166,35 @@ function CartPage() {
             : selectedItemsList[0].title,
         buyer_name: orderData.userName,
         notice_url: "https://api.sesac-univ.click/api/payments/webhook"
-      }, async (rsp) => {
+      }, (rsp) => {
         if (rsp.success) {
-          try {
-            await PaymentService.verifyPayment({
-              impUid: rsp.imp_uid,
-              merchantUid: rsp.merchant_uid,
-              buyerName: rsp.buyer_name,
-              amount: rsp.paid_amount,
-              status: rsp.status,
-              payMethod: rsp.pay_method
-            });
-            dispatch(clearCart());
-            navigate('/dashboard');
-            toast.success('결제가 완료되었습니다.');
-          } catch (error) {
-            console.error('Verification error:', error);
-          }
+          PaymentService.verifyPayment({
+            impUid: rsp.imp_uid,
+            merchantUid: rsp.merchant_uid,
+            buyerName: rsp.buyer_name,
+            amount: rsp.paid_amount,
+            status: rsp.status,
+            payMethod: rsp.pay_method
+          })
+              .then(async () => { // `then` 내부를 async 함수로 변경
+                const purchasedIndexes = Object.keys(selectedItems).filter(key => selectedItems[key]).map(Number);
+                await cartService.deleteFromCart(purchasedIndexes);
+                // 결제 완료된 항목들을 장바구니에서 제거
+                setCartItems(prevItems => prevItems.filter((_, index) => !purchasedIndexes.includes(index)));
+                setSelectedItems(prev => {
+                  const newSelection = { ...prev };
+                  purchasedIndexes.forEach(key => {
+                    delete newSelection[key];
+                  });
+                  return newSelection;
+                });
+                dispatch(clearCart());
+                alert('결제가 완료되었습니다.');
+                navigate('/dashboard');
+              })
+              .catch(error => {
+                console.error('Verification error:', error);
+              });
         } else {
           toast.error(`결제에 실패했습니다. 사유: ${rsp.error_msg}`);
         }
