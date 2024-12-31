@@ -7,6 +7,7 @@ import { LoadingSpinner } from '../../shared/components/common/LoadingSpinner';
 import { CourseService } from '../../infrastructure/services/CourseService';
 import CourseDetailTabs from '../course/components/CourseDetailTabs';
 import InstructorSection from '../course/components/InstructorSection';
+import axios from 'axios';
 
 function LectureDetailPage() {
   const { courseId } = useParams();
@@ -18,24 +19,35 @@ function LectureDetailPage() {
   useEffect(() => {
     const fetchCourseData = async () => {
       try {
-        const courseData = await CourseService.getCourseById(parseInt(courseId));
-        setCourse(courseData);
+        console.log('Fetching course data for ID:', courseId);
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_API_URL}/api/courses/${courseId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('idToken')}`
+            }
+          }
+        );
+        console.log('Course data received:', response.data);
+        setCourse(response.data.courseDetails);
       } catch (error) {
+        console.error('Error fetching course:', error);
         toast.error('강좌 정보를 불러오는데 실패했습니다.');
       }
     };
     fetchCourseData();
   }, [courseId]);
 
-  useEffect(() => {
-    console.log(course);
-  }, [course]);
-
   const handleStartLecture = (lectureId) => {
     navigate(`/courses/${courseId}/lectures/${lectureId}`);
   };
 
-  if (!course) return <LoadingSpinner />;
+  if (!course) {
+    console.log('Course data is null, showing loading spinner');
+    return <LoadingSpinner />;
+  }
+
+  console.log('Rendering course data:', course);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -50,7 +62,11 @@ function LectureDetailPage() {
         </div>
 
         {/* 탭 네비게이션 */}
-        <CourseDetailTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        <CourseDetailTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          isActive={activeTab === 'curriculum'}
+        />
 
         {/* 탭 컨텐츠 */}
         <div className="p-6">
@@ -72,42 +88,43 @@ function LectureDetailPage() {
               </div>
 
               {/* 커리큘럼 섹션 */}
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">커리큘럼</h2>
-                <div className="space-y-3">
-                  {course.lectures?.map((lecture) => (
-                    <div
-                      key={lecture.id}
-                      onClick={() => handleStartLecture(lecture.id)}
-                      className={`
-                        flex justify-between items-center p-4 rounded-lg cursor-pointer
-                        transition-all duration-200 ease-in-out
-                        ${lecture.status === 'COMPLETED'
-                          ? 'bg-white border-l-4 border-green-500 hover:bg-gray-50'
-                          : 'bg-gray-50 border-l-4 border-gray-300 opacity-75 cursor-not-allowed'}
-                      `}
-                    >
-                      <div className="flex items-center space-x-4">
-                        <span className="text-gray-500 font-medium min-w-[48px]">
-                          {lecture.orderIndex}강
-                        </span>
-                        <h3 className="text-gray-900 font-medium">{lecture.title}</h3>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <span className="text-sm text-gray-500">{lecture.duration}</span>
-                        <span className={`
-                          px-3 py-1 rounded-full text-sm font-medium
+              {course.lectures && course.lectures.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">커리큘럼</h2>
+                  <div className="space-y-3">
+                    {course.lectures.map((lecture) => (
+                      <div
+                        key={lecture.id}
+                        onClick={() => handleStartLecture(lecture.id)}
+                        className={`
+                          flex justify-between items-center p-4 rounded-lg
                           ${lecture.status === 'COMPLETED'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-600'}
-                        `}>
-                          {lecture.status === 'COMPLETED' ? '시청 가능' : '처리 중'}
-                        </span>
+                            ? 'bg-white border-l-4 border-green-500 hover:bg-gray-50 cursor-pointer'
+                            : 'bg-gray-50 border-l-4 border-gray-300 opacity-75'}
+                        `}
+                      >
+                        <div className="flex items-center space-x-4">
+                          <span className="text-gray-500 font-medium min-w-[48px]">
+                            {lecture.orderIndex}강 {lecture.isCompleted ? '완료' : '미완료'}
+                          </span>
+                          <h3 className="text-gray-900 font-medium">{lecture.title}</h3>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <span className="text-sm text-gray-500">{lecture.duration}</span>
+                          <span className={`
+                            px-3 py-1 rounded-full text-sm font-medium
+                            ${lecture.status === 'COMPLETED'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-600'}
+                          `}>
+                            {lecture.status === 'COMPLETED' ? '시청 가능' : '처리 중'}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 

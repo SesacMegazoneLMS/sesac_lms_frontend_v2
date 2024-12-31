@@ -77,13 +77,17 @@ export const CourseService = {
 
   getCourseById: async (courseId) => {
     try {
-      const response = await axios.get(`${API_URL}/api/courses/${courseId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('idToken')}`
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/courses/${courseId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('idToken')}`
+          }
         }
-      });
-      return response.data.courseDetails;
+      );
+      return response.data;
     } catch (error) {
+      console.error('Error in getCourseById:', error);
       throw error;
     }
   }

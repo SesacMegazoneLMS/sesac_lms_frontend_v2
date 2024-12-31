@@ -140,7 +140,7 @@ function MainLayout() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex space-x-8 py-4">
             <Link
-              to="/category/programming"
+              to="/category=PROGRAMMINGD&sort=newest&page=0&size=10"
               className="flex items-center space-x-2 text-gray-600 hover:text-primary"
             >
               <img

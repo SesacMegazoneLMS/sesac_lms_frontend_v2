@@ -8,6 +8,7 @@ import { StatsCard } from './StatsCard';
 import { CourseSection } from './CourseSection';
 import { userService } from '../../infrastructure/services/CourseService';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 function StudentDashboard() {
   const { user, loading } = useSelector(state => state.auth);
@@ -52,13 +53,20 @@ function StudentDashboard() {
 
   useEffect(() => {
     const fetchStats = async () => {
-      const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_API_URL}/api/students/stats`,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem('idToken')}` }
-        }
-      );
-      setStats(response.data);
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_API_URL}/api/students/stats`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('idToken')}`
+            }
+          }
+        );
+        setStats(response.data);
+      } catch (error) {
+        console.error('통계 데이터 로딩 실패:', error);
+        toast.error('통계 데이터를 불러오는데 실패했습니다.');
+      }
     };
     fetchStats();
   }, []);
