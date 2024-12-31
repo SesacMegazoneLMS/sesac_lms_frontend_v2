@@ -5,8 +5,8 @@ import styled from 'styled-components';
 import {clearCart} from '../../store/slices/cartSlice';
 import {OrderService, PaymentService} from '../../infrastructure/services/CourseService';
 import {toast} from 'react-toastify';
-import CourseCard from '../../shared/components/CourseCard';
 import {cartService} from "../../infrastructure/services/CartService";
+import {getCourseImage} from "../../shared/utils/imageUtils";
 
 function CartPage() {
   const user = localStorage.getItem("idToken");
@@ -27,6 +27,7 @@ function CartPage() {
       const cartsData = await cartService.getCarts();
       if (cartsData && cartsData.cartInfo) {
         const cartItemsArray = Object.values(cartsData.cartInfo);
+        console.log("iii : " + JSON.stringify(cartsData.cartInfo));
         setCartItems(cartItemsArray);
         // 초기 선택 상태 설정
         const initialSelection = {};
@@ -44,7 +45,23 @@ function CartPage() {
     try {
       const res = await cartService.deleteFromCart(index);
       alert(res);
-      fetchCartsData();
+
+      // 1. 서버에서 삭제
+      await cartService.deleteFromCart(index);
+
+      // 2. 로컬 상태 업데이트
+      setCartItems(prevItems => {
+        const newItems = [...prevItems];
+        newItems.splice(index, 1);
+
+        // 선택 아이템 상태도 업데이트 해줘야 함
+        const newSelection = { ...selectedItems};
+        delete newSelection[index];
+        setSelectedItems(newSelection);
+
+        return newItems;
+      })
+
     } catch(error) {
       console.log("함수 : " + error);
     }
@@ -156,7 +173,6 @@ function CartPage() {
 
         {cartItems.length === 0 ? (
             <EmptyCart>
-              <img src="/assets/icons/empty-cart.svg" alt="빈 장바구니" />
               <p>장바구니가 비어 있습니다.</p>
             </EmptyCart>
         ) : (
@@ -179,10 +195,15 @@ function CartPage() {
                             onChange={() => handleSelectItem(index)}
                         />
                       </CheckboxWrapper>
-                      <CourseCard
-                          course={course}
-                          type="cart"
-                      />
+                      <CourseItem>
+                        {/* CourseImage 컴포넌트의 width와 height 값을 변경하여 이미지 크기를 키웁니다. */}
+                        <CourseImage src={getCourseImage(course)} alt={course.title} style={{ width: '120px', height: '80px' }}/>
+                        <CourseInfo>
+                          <CourseTitle>{course.title}</CourseTitle>
+                          <CoursePrice>₩{course.price.toLocaleString()}</CoursePrice>
+                        </CourseInfo>
+                      </CourseItem>
+
                       <RemoveButton onClick={() => deleteFromCart(index)}>
                         <TrashIcon />
                         삭제
@@ -242,7 +263,7 @@ const SelectAllWrapper = styled.div`
   padding: 1rem 0;
   margin-bottom: 1rem;
   border-bottom: 1px solid #e5e7eb;
-  
+
   span {
     font-weight: 500;
   }
@@ -282,12 +303,46 @@ const CourseWrapper = styled.div`
   background: white;
   border-radius: 0.5rem;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 1rem;
 `;
 
+const CourseItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1; /* 남은 공간을 모두 채우도록 설정 */
+`;
+
+const CourseImage = styled.img`
+  // 이 부분이 수정되었습니다.
+  width: 100px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+`;
+
+
+const CourseInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+const CourseTitle = styled.h3`
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+`;
+
+const CoursePrice = styled.span`
+  font-size: 0.875rem;
+  color: #6b7280;
+`;
+
+
 const RemoveButton = styled.button`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
   background: #fff;
   color: #1e40af;
   padding: 0.5rem;
@@ -296,8 +351,7 @@ const RemoveButton = styled.button`
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  z-index: 10;
-  
+
   &:hover {
     background: #dbeafe;
   }
@@ -355,7 +409,7 @@ const PaymentButton = styled.button`
   border-radius: 0.5rem;
   font-weight: bold;
   cursor: pointer;
-  
+
   &:hover {
     background: #1e3a8a;
   }
@@ -364,12 +418,12 @@ const PaymentButton = styled.button`
 const EmptyCart = styled.div`
   text-align: center;
   padding: 3rem;
-  
+
   img {
     width: 120px;
     margin-bottom: 1rem;
   }
-  
+
   p {
     color: #6b7280;
   }

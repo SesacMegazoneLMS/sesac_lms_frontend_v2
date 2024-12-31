@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {useDispatch} from 'react-redux';
 import styled from 'styled-components';
@@ -11,19 +11,22 @@ import InstructorSection from './components/InstructorSection';
 import {ActionButtons, AddToCartButton, EnrollButton} from '../../shared/components/common/Pagination';
 import {reviewService} from "../../infrastructure/services/ReviewService";
 import OnLoadMorePagination from "../../shared/components/common/OnLoadMorePagination";
-import { useCallback } from "react";
+import {getCourseImage} from "../../shared/utils/imageUtils";
+import {cartService} from "../../infrastructure/services/CartService"; // import
 
 function CourseDetailPage() {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
-  const [reviews, setReviews] = useState([]); // 리뷰 상태 추가
+  const [reviews, setReviews] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0); // 총 페이지 수 상태 추가
+  const [totalPages, setTotalPages] = useState(0);
   const [activeTab, setActiveTab] = useState('curriculum');
   const [relatedRoadmaps, setRelatedRoadmaps] = useState([]);
   const [message, setMessage] = useState('');
+  const [courseImage, setCourseImage] = useState('');
+
 
   const fetchCourseData = useCallback(async () => {
     try {
@@ -34,6 +37,11 @@ function CourseDetailPage() {
       setReviews(prevReviews => [...prevReviews, ...reviewData.reviews]);
       setTotalPages(reviewData.totalPages);
       setMessage(reviewData.message);
+
+      // 강의 이미지 로직 추가
+      setCourseImage(getCourseImage(courseData));
+
+
     } catch (error) {
       toast.error('강좌 정보를 불러오는데 실패했습니다.');
     }
@@ -43,18 +51,30 @@ function CourseDetailPage() {
     fetchCourseData();
   }, [fetchCourseData]);
 
-  const handleAddToCart = () => {
-    if (!course) return;
-
-    dispatch(addToCart({
-      courseId: course.id,
-      title: course.title,
-      instructor: course.instructor,
-      price: course.price,
-      thumbnail: course.thumbnail
-    }));
-
-    toast.success('장바구니에 추가되었습니다.');
+  const handleAddToCart = async (course) => {
+    try{
+      const res = await cartService.addToCart( course.id );
+      if (res.success) {
+        alert(res.message); // 성공 메시지 표시
+      } else {
+        // 에러 타입에 따른 처리
+        switch (res.type) {
+          case 'AUTH_ERROR':
+            // 로그인 페이지로 리다이렉트하거나 로그인 모달 표시
+            break;
+          case 'DUPLICATE_ERROR':
+            // 중복 알림 표시
+            break;
+          case 'RUNTIME_ERROR':
+          case 'NETWORK_ERROR':
+            // 일반 에러 메시지 표시
+            break;
+        }
+        alert(res.message);
+      }
+    }catch(error){
+      alert('장바구니에 동일한 강좌가 있습니다.');
+    }
   };
 
   const handleLoadMore = () => {
@@ -70,142 +90,141 @@ function CourseDetailPage() {
     console.log("course : " + JSON.stringify(course));
   };
 
-  // if (!course || !course.id) return <LoadingSpinner />;
 
   return (
       !course ? (<LoadingSpinner/>) :
-    <PageContainer>
-      <MainContent>
-        <CourseInfoSection>
-          <CourseHeader>
-            <CategoryBadge>{course.category}</CategoryBadge>
-            <CourseTitle>{course.title}</CourseTitle>
-            <Description>{course.description}</Description>
-          </CourseHeader>
+          <PageContainer>
+            <MainContent>
+              <CourseInfoSection>
+                <CourseHeader>
+                  <CategoryBadge>{course.category}</CategoryBadge>
+                  <CourseTitle>{course.title}</CourseTitle>
+                  <Description>{course.description}</Description>
+                </CourseHeader>
 
-          <RelatedRoadmaps>
-            {relatedRoadmaps.map(roadmap => (
-              <RoadmapCard key={roadmap.id}>
-                <RoadmapThumbnail src={roadmap.thumbnail} alt={roadmap.title} />
-                <RoadmapInfo>
-                  <RoadmapTitle>{roadmap.title}</RoadmapTitle>
-                  <RoadmapDescription>{roadmap.description}</RoadmapDescription>
-                  <SkillTags>
-                    {roadmap.skills.map(skill => (
-                      <SkillTag key={skill}>{skill}</SkillTag>
-                    ))}
-                  </SkillTags>
-                </RoadmapInfo>
-              </RoadmapCard>
-            ))}
-          </RelatedRoadmaps>
-
-          <ActionButtons>
-            <AddToCartButton onClick={handleAddToCart}>
-              장바구니에 담기
-            </AddToCartButton>
-            <EnrollButton onClick={() => navigate(`/checkout/${course.id}`)}>
-              바로 수강신청
-            </EnrollButton>
-          </ActionButtons>
-
-          <CourseDetailTabs activeTab={activeTab} onTabChange={setActiveTab} />
-
-          {activeTab === 'curriculum' && (
-            <>
-              <ObjectivesSection>
-                <SectionTitle>학습 목표</SectionTitle>
-                <ObjectivesList>
-                  {course.objectives.map((objective, index) => (
-                    <ObjectiveItem key={index}>{objective}</ObjectiveItem>
+                <RelatedRoadmaps>
+                  {relatedRoadmaps.map(roadmap => (
+                      <RoadmapCard key={roadmap.id}>
+                        <RoadmapThumbnail src={roadmap.thumbnail} alt={roadmap.title} />
+                        <RoadmapInfo>
+                          <RoadmapTitle>{roadmap.title}</RoadmapTitle>
+                          <RoadmapDescription>{roadmap.description}</RoadmapDescription>
+                          <SkillTags>
+                            {roadmap.skills.map(skill => (
+                                <SkillTag key={skill}>{skill}</SkillTag>
+                            ))}
+                          </SkillTags>
+                        </RoadmapInfo>
+                      </RoadmapCard>
                   ))}
-                </ObjectivesList>
-              </ObjectivesSection>
+                </RelatedRoadmaps>
 
-              <RequirementsSection>
-                <SectionTitle>수강 전 필요한 것들</SectionTitle>
-                <RequirementsList>
-                  {course.requirements.map((req, index) => (
-                    <RequirementItem key={index}>{req}</RequirementItem>
-                  ))}
-                </RequirementsList>
-              </RequirementsSection>
+                <ActionButtons>
+                  <AddToCartButton onClick={() => handleAddToCart(course)}>
+                    장바구니에 담기
+                  </AddToCartButton>
+                  <EnrollButton onClick={() => navigate(`/checkout/${course.id}`)}>
+                    바로 수강신청
+                  </EnrollButton>
+                </ActionButtons>
 
-              <SkillsSection>
-                <SectionTitle>배울 수 있는 기술</SectionTitle>
-                <SkillsList>
-                  {course.skills.map((skill, index) => (
-                    <SkillTag key={index}>{skill}</SkillTag>
-                  ))}
-                </SkillsList>
-              </SkillsSection>
+                <CourseDetailTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-              <CurriculumSection>
-                <SectionTitle>커리큘럼</SectionTitle>
-                <LectureList>
-                  {course.lectures.map((lecture) => (
-                    <LectureItem key={lecture.id}>
-                      <LectureOrderIndex>{lecture.orderIndex}강</LectureOrderIndex>
-                      <LectureTitle>강의명 :{lecture.title}</LectureTitle>
-                      <LectureDuration>영상 시간: {lecture.duration}</LectureDuration>
-                    </LectureItem>
-                  ))}
-                </LectureList>
-              </CurriculumSection>
-            </>
-          )}
+                {activeTab === 'curriculum' && (
+                    <>
+                      <ObjectivesSection>
+                        <SectionTitle>학습 목표</SectionTitle>
+                        <ObjectivesList>
+                          {course.objectives.map((objective, index) => (
+                              <ObjectiveItem key={index}>{objective}</ObjectiveItem>
+                          ))}
+                        </ObjectivesList>
+                      </ObjectivesSection>
 
-          {activeTab === 'reviews' && (
-              <ReviewsSection>
-                <SectionTitle>수강평</SectionTitle>
-                <ObjectivesList>
-                  {reviews.length === 0 ? (
-                      <div>{message}</div>
-                  ) : (
-                      reviews.map(review => (
-                          <ObjectiveItem key={review.id}>
-                            <ReviewWriter>{review.writer}</ReviewWriter>
-                            <ReviewContent>{review.content}</ReviewContent>
-                            <ReviewRating>
-                              {'★'.repeat(review.rating)}{' '}
-                              {'☆'.repeat(5 - review.rating)} {/* 5점 만점으로 별 표시 */}
-                            </ReviewRating>
-                            <LikeButton onClick={() => handleLike(review.id)}>
-                              좋아요
-                            </LikeButton>
-                            {/* 좋아요 수 표시 */}
-                            <LikeCount>{review.likesCount}</LikeCount>
-                          </ObjectiveItem>
-                      ))
-                  )}
-                </ObjectivesList>
-                <OnLoadMorePagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handleLoadMore}
-                />
-              </ReviewsSection>
-          )}
+                      <RequirementsSection>
+                        <SectionTitle>수강 전 필요한 것들</SectionTitle>
+                        <RequirementsList>
+                          {course.requirements.map((req, index) => (
+                              <RequirementItem key={index}>{req}</RequirementItem>
+                          ))}
+                        </RequirementsList>
+                      </RequirementsSection>
 
-          {activeTab === 'instructor' && (
-            <InstructorSection instructor={course.user} />
-          )}
-        </CourseInfoSection>
+                      <SkillsSection>
+                        <SectionTitle>배울 수 있는 기술</SectionTitle>
+                        <SkillsList>
+                          {course.skills.map((skill, index) => (
+                              <SkillTag key={index}>{skill}</SkillTag>
+                          ))}
+                        </SkillsList>
+                      </SkillsSection>
 
-        <PurchaseSection>
-          <PurchaseCard>
-            <PreviewImage src={course.thumbnail} alt={course.title} />
-            <PriceInfo>
-              <CurrentPrice>₩{course.price.toLocaleString()}</CurrentPrice>
-              <ButtonGroup>
-                <CartButton onClick={handleAddToCart}>장바구니에 담기</CartButton>
-                <BuyButton onClick={() => navigate('/cart')}>바로 구매하기</BuyButton>
-              </ButtonGroup>
-            </PriceInfo>
-          </PurchaseCard>
-        </PurchaseSection>
-      </MainContent>
-    </PageContainer>
+                      <CurriculumSection>
+                        <SectionTitle>커리큘럼</SectionTitle>
+                        <LectureList>
+                          {course.lectures.map((lecture) => (
+                              <LectureItem key={lecture.id}>
+                                <LectureOrderIndex>{lecture.orderIndex}강</LectureOrderIndex>
+                                <LectureTitle>강의명 :{lecture.title}</LectureTitle>
+                                <LectureDuration>영상 시간: {lecture.duration}</LectureDuration>
+                              </LectureItem>
+                          ))}
+                        </LectureList>
+                      </CurriculumSection>
+                    </>
+                )}
+
+                {activeTab === 'reviews' && (
+                    <ReviewsSection>
+                      <SectionTitle>수강평</SectionTitle>
+                      <ObjectivesList>
+                        {reviews.length === 0 ? (
+                            <div>{message}</div>
+                        ) : (
+                            reviews.map(review => (
+                                <ObjectiveItem key={review.id}>
+                                  <ReviewWriter>{review.writer}</ReviewWriter>
+                                  <ReviewContent>{review.content}</ReviewContent>
+                                  <ReviewRating>
+                                    {'★'.repeat(review.rating)}{' '}
+                                    {'☆'.repeat(5 - review.rating)} {/* 5점 만점으로 별 표시 */}
+                                  </ReviewRating>
+                                  <LikeButton onClick={() => handleLike(review.id)}>
+                                    좋아요
+                                  </LikeButton>
+                                  {/* 좋아요 수 표시 */}
+                                  <LikeCount>{review.likesCount}</LikeCount>
+                                </ObjectiveItem>
+                            ))
+                        )}
+                      </ObjectivesList>
+                      <OnLoadMorePagination
+                          currentPage={currentPage}
+                          totalPages={totalPages}
+                          onPageChange={handleLoadMore}
+                      />
+                    </ReviewsSection>
+                )}
+
+                {activeTab === 'instructor' && (
+                    <InstructorSection instructor={course.user} />
+                )}
+              </CourseInfoSection>
+
+              <PurchaseSection>
+                <PurchaseCard>
+                  <PreviewImage src={courseImage} alt={course.title} />
+                  <PriceInfo>
+                    <CurrentPrice>₩{course.price.toLocaleString()}</CurrentPrice>
+                    <ButtonGroup>
+                      <CartButton onClick={() => handleAddToCart(course)}>장바구니에 담기</CartButton>
+                      <BuyButton onClick={() => navigate('/cart')}>바로 구매하기</BuyButton>
+                    </ButtonGroup>
+                  </PriceInfo>
+                </PurchaseCard>
+              </PurchaseSection>
+            </MainContent>
+          </PageContainer>
   );
 }
 

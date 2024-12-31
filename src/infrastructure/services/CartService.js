@@ -63,7 +63,7 @@ export const cartService = {
     getCarts: async () => {
         try{
             const page = 1;
-            const size = 5;
+            const size = 1000;
             const res = await axios.get(`${API_URL}/api/carts?page=${page}&size=${size}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('idToken')}`
