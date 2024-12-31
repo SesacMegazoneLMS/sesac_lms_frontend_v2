@@ -1,9 +1,11 @@
-import { Outlet, Link } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../store/slices/authSlice';
-import { useNavigate } from 'react-router-dom';
-import { FiShoppingCart } from 'react-icons/fi';
-import styled from 'styled-components';
+import { Outlet, Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../store/slices/authSlice";
+import { useNavigate } from "react-router-dom";
+import { FiShoppingCart } from "react-icons/fi";
+import styled from "styled-components";
+import ChatModal from "./ChatModal";
+import { useState, useEffect } from "react";
 
 const CartLink = styled(Link)`
   position: relative;
@@ -30,12 +32,19 @@ const CartBadge = styled.span`
 function MainLayout() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user } = useSelector(state => state.auth);
-  const { items: cartItems } = useSelector(state => state.cart);
+  const { user } = useSelector((state) => state.auth);
+  const { items: cartItems } = useSelector((state) => state.cart);
+  const [isChatOpen, setIsChatOpen] = useState(() => {
+    return localStorage.getItem("isChatOpen") === "true";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("isChatOpen", isChatOpen);
+  }, [isChatOpen]);
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate('/auth/login');
+    navigate("/auth/login");
   };
 
   return (
@@ -51,11 +60,11 @@ function MainLayout() {
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
-              <img
-                src="/saesac.png"
-                alt="새싹 LMS"
-                className="h-12 w-auto object-contain"
-                style={{ aspectRatio: 'auto' }}
+            <img
+              src="/saesac.png"
+              alt="새싹 LMS"
+              className="h-12 w-auto object-contain"
+              style={{ aspectRatio: "auto" }}
             />
             {/* 로고 영역 */}
             <div className="flex items-center">
@@ -86,7 +95,10 @@ function MainLayout() {
               <Link to="/roadmaps" className="text-gray-600 hover:text-primary">
                 로드맵
               </Link>
-              <Link to="/community" className="text-gray-600 hover:text-primary">
+              <Link
+                to="/community"
+                className="text-gray-600 hover:text-primary"
+              >
                 커뮤니티
               </Link>
               <CartLink to="/cart" className="text-gray-600 hover:text-primary">
@@ -97,7 +109,10 @@ function MainLayout() {
               </CartLink>
               {user ? (
                 <div className="flex items-center space-x-4">
-                  <Link to="/dashboard" className="text-gray-600 hover:text-primary">
+                  <Link
+                    to="/dashboard"
+                    className="text-gray-600 hover:text-primary"
+                  >
                     마이페이지
                   </Link>
                   <span className="text-gray-700">{user.name}님</span>
@@ -124,19 +139,43 @@ function MainLayout() {
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex space-x-8 py-4">
-            <Link to="/category/programming" className="flex items-center space-x-2 text-gray-600 hover:text-primary">
-              <img src="/icons/programming.png" alt="Programming" className="w-5 h-5" />
+            <Link
+              to="/category/programming"
+              className="flex items-center space-x-2 text-gray-600 hover:text-primary"
+            >
+              <img
+                src="/icons/programming.png"
+                alt="Programming"
+                className="w-5 h-5"
+              />
               <span>프로그래밍</span>
             </Link>
-            <Link to="/category/security" className="flex items-center space-x-2 text-gray-600 hover:text-primary">
-              <img src="/icons/security.png" alt="Security" className="w-5 h-5" />
+            <Link
+              to="/category/security"
+              className="flex items-center space-x-2 text-gray-600 hover:text-primary"
+            >
+              <img
+                src="/icons/security.png"
+                alt="Security"
+                className="w-5 h-5"
+              />
               <span>보안</span>
             </Link>
-            <Link to="/category/data-science" className="flex items-center space-x-2 text-gray-600 hover:text-primary">
-              <img src="/icons/data.png" alt="Data Science" className="w-5 h-5" />
+            <Link
+              to="/category/data-science"
+              className="flex items-center space-x-2 text-gray-600 hover:text-primary"
+            >
+              <img
+                src="/icons/data.png"
+                alt="Data Science"
+                className="w-5 h-5"
+              />
               <span>데이터 사이언스</span>
             </Link>
-            <Link to="/category/design" className="flex items-center space-x-2 text-gray-600 hover:text-primary">
+            <Link
+              to="/category/design"
+              className="flex items-center space-x-2 text-gray-600 hover:text-primary"
+            >
               <img src="/icons/design.png" alt="Design" className="w-5 h-5" />
               <span>디자인</span>
             </Link>
@@ -156,29 +195,105 @@ function MainLayout() {
             <div>
               <h3 className="text-lg font-bold mb-4">새싹 LMS 소개</h3>
               <ul className="space-y-2">
-                <li><Link to="/about" className="text-gray-300 hover:text-white">회사소개</Link></li>
-                <li><Link to="/careers" className="text-gray-300 hover:text-white">채용정보</Link></li>
-                <li><Link to="/press" className="text-gray-300 hover:text-white">보도자료</Link></li>
-                <li><Link to="/partners" className="text-gray-300 hover:text-white">제휴문의</Link></li>
+                <li>
+                  <Link to="/about" className="text-gray-300 hover:text-white">
+                    회사소개
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/careers"
+                    className="text-gray-300 hover:text-white"
+                  >
+                    채용정보
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/press" className="text-gray-300 hover:text-white">
+                    보도자료
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/partners"
+                    className="text-gray-300 hover:text-white"
+                  >
+                    제휴문의
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
               <h3 className="text-lg font-bold mb-4">학습 지원</h3>
               <ul className="space-y-2">
-                <li><Link to="/faq" className="text-gray-300 hover:text-white">자주묻는질문</Link></li>
-                <li><Link to="/contact" className="text-gray-300 hover:text-white">문의하기</Link></li>
-                <li><Link to="/support" className="text-gray-300 hover:text-white">학습 가이드</Link></li>
-                <li><Link to="/mentoring" className="text-gray-300 hover:text-white">멘토링 신청</Link></li>
-                <li><Link to="/bug-report" className="text-gray-300 hover:text-white">버그 제보</Link></li>
+                <li>
+                  <Link to="/faq" className="text-gray-300 hover:text-white">
+                    자주묻는질문
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/contact"
+                    className="text-gray-300 hover:text-white"
+                  >
+                    문의하기
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/support"
+                    className="text-gray-300 hover:text-white"
+                  >
+                    학습 가이드
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/mentoring"
+                    className="text-gray-300 hover:text-white"
+                  >
+                    멘토링 신청
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/bug-report"
+                    className="text-gray-300 hover:text-white"
+                  >
+                    버그 제보
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
               <h3 className="text-lg font-bold mb-4">이용안내</h3>
               <ul className="space-y-2">
-                <li><Link to="/terms" className="text-gray-300 hover:text-white">이용약관</Link></li>
-                <li><Link to="/privacy" className="text-gray-300 hover:text-white">개인정보처리방침</Link></li>
-                <li><Link to="/refund" className="text-gray-300 hover:text-white">환불규정</Link></li>
-                <li><Link to="/sitemap" className="text-gray-300 hover:text-white">사이트맵</Link></li>
+                <li>
+                  <Link to="/terms" className="text-gray-300 hover:text-white">
+                    이용약관
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/privacy"
+                    className="text-gray-300 hover:text-white"
+                  >
+                    개인정보처리방침
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/refund" className="text-gray-300 hover:text-white">
+                    환불규정
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/sitemap"
+                    className="text-gray-300 hover:text-white"
+                  >
+                    사이트맵
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
@@ -231,8 +346,14 @@ function MainLayout() {
             </div>
           </div>
           <div className="border-t border-gray-700 mt-8 pt-8 text-sm text-gray-400">
-            <p>상호명: (주)새싹에듀 | 대표자: 김새싹 | 사업자등록번호: 123-45-67890</p>
-            <p>통신판매업신고: 제2024-서울강남-1234호 | 개인정보보호책임자: 이새싹</p>
+            <p>
+              상호명: (주)새싹에듀 | 대표자: 김새싹 | 사업자등록번호:
+              123-45-67890
+            </p>
+            <p>
+              통신판매업신고: 제2024-서울강남-1234호 | 개인정보보호책임자:
+              이새싹
+            </p>
             <p>주소: 서울특별시 강남구 테헤란로 123 새싹빌딩 4층</p>
             <p className="mt-4">&copy; 2024 새싹 LMS. All rights reserved.</p>
           </div>
@@ -240,9 +361,14 @@ function MainLayout() {
       </footer>
 
       {/* 채팅 상담 버튼 */}
-      <button className="fixed bottom-8 right-8 bg-primary text-white p-4 rounded-full shadow-lg hover:bg-primary-dark">
+      <button
+        onClick={() => setIsChatOpen(true)}
+        className="fixed bottom-8 right-8 bg-primary text-white p-4 rounded-full shadow-lg hover:bg-primary-dark"
+      >
         💬
       </button>
+
+      {isChatOpen && <ChatModal onClose={() => setIsChatOpen(false)} />}
     </div>
   );
 }
