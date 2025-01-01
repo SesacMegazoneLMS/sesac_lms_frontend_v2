@@ -96,7 +96,7 @@ function MainLayout() {
                 로드맵
               </Link>
               <Link
-                to="/community"
+                to="/community/all"
                 className="text-gray-600 hover:text-primary"
               >
                 커뮤니티
