@@ -367,7 +367,7 @@ $$`;
 
       if (response.status === 201) {
         alert("게시물이 작성되었습니다.");
-        navigate("/community/all");
+        navigate(`/community/post-detail/${response.data.data.id}`);
       }
     } catch (error) {
       console.error("게시물 작성 실패:", error);
