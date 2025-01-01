@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { D3Editor } from "./D3Editor";
 import "./BoardEditor.css";
 import { useSelector } from "react-redux";
+import axios from "axios";
 
 const CATEGORIES = [
   { id: "announcement", name: "공지사항" },

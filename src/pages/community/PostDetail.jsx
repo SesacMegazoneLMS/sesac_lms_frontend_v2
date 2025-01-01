@@ -52,17 +52,17 @@ const PostDetail = () => {
     }
 
     if (post && viewerRef.current) {
-      const viewer = new toastui.Editor.factory({
+      const viewer = new window.toastui.Editor.factory({
         el: viewerRef.current,
         initialValue: post.content,
         viewer: true,
         plugins: [
           [
-            toastui.Editor.plugin.uml,
+            window.toastui.Editor.plugin.uml,
             { rendererURL: "http://www.plantuml.com/plantuml/png/" },
           ],
           [
-            toastui.Editor.plugin.chart,
+            window.toastui.Editor.plugin.chart,
             {
               width: 800, // max-w-4xl에 맞춤
               height: 400, // 2:1 비율 유지
@@ -72,7 +72,7 @@ const PostDetail = () => {
               maxHeight: 400, // 2:1 비율 유지
             },
           ],
-          [toastui.Editor.plugin.codeSyntaxHighlight],
+          [window.toastui.Editor.plugin.codeSyntaxHighlight],
         ],
       });
     }

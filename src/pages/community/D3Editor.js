@@ -1,5 +1,3 @@
-// import * as d3 from "d3";
-
 export class D3Editor {
   constructor(editorInstance, closeModal) {
     this.editor = editorInstance;
@@ -69,7 +67,7 @@ export class D3Editor {
     });
 
     document.getElementById("clear-all").addEventListener("click", () => {
-      if (confirm("모든 요소를 삭제하시겠습니까?")) {
+      if (window.confirm("모든 요소를 삭제하시겠습니까?")) {
         this.clearAll();
       }
     });
@@ -127,7 +125,7 @@ export class D3Editor {
       const blob = new Blob([source], { type: "image/svg+xml" });
       const fileName = `drawing-${Date.now()}.svg`;
 
-      const presignedResponse = await axios.post(
+      const presignedResponse = await window.axios.post(
         "https://crxqx9589i.execute-api.ap-northeast-2.amazonaws.com/dev/api/upload",
         {
           fileName,
@@ -141,7 +139,7 @@ export class D3Editor {
 
       const { signedUrl, key } = presignedResponse.data.data;
 
-      await axios.put(signedUrl, blob, {
+      await window.axios.put(signedUrl, blob, {
         headers: {
           "Content-Type": "image/svg+xml",
         },
