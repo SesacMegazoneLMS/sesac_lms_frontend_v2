@@ -39,6 +39,10 @@ function MainLayout() {
   });
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem("isChatOpen", isChatOpen);
   }, [isChatOpen]);
 
@@ -96,7 +100,7 @@ function MainLayout() {
                 로드맵
               </Link>
               <Link
-                to="/community"
+                to="/community/all"
                 className="text-gray-600 hover:text-primary"
               >
                 커뮤니티
