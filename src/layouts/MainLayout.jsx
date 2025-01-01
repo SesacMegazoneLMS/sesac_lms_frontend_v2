@@ -39,6 +39,10 @@ function MainLayout() {
   });
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem("isChatOpen", isChatOpen);
   }, [isChatOpen]);
 
