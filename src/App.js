@@ -29,6 +29,10 @@ import { loginSuccess } from "./store/slices/authSlice";
 import InstructorDashboard from "./pages/dashboard/InstructorDashboard";
 import LectureVideoPage from "./pages/student/LectureVideoPage";
 import LectureDetailPage from "./pages/student/LectureDetailPage";
+import BoardEditor from "./pages/community/BoardEditor";
+import BoardPage from "./pages/community/BoardPage";
+import PostDetail from "./pages/community/PostDetail";
+import EditPost from "./pages/community/EditPost";
 
 
 const AppContent = ({ children }) => {
@@ -93,6 +97,13 @@ function App() {
                 <Route path="/instructor/course/:courseId/content" element={<CourseContentPage />} />
                 <Route path="/instructor/course/:courseId/quiz" element={<CourseQuizPage />} />
                 <Route path="/instructor/profile" element={<InstructorMyPage />} />
+              </Route>
+
+              <Route path="community">
+                <Route path="write" element={<BoardEditor />} />
+                <Route path="all" element={<BoardPage />} />
+                <Route path="post-detail/:id" element={<PostDetail />} />
+                <Route path="post-edit/:id" element={<EditPost />} />
               </Route>
             </Route>
 
