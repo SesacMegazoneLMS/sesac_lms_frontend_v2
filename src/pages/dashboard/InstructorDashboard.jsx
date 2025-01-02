@@ -121,26 +121,14 @@ function InstructorDashboard() {
           monthlyRevenue: data.statistics.monthlyStats?.revenue || 0,
         }
 
-        const mockEnrollments = [
-          {
-            id: 1,
-            studentName: "김철수",
-            courseName: "React 완벽 가이드",
-            date: "2024-03-20",
-            profileImage: "/default-avatar.png"
-          },
-        ];
-
-        const mockReviews = [
-          {
-            id: 1,
-            studentName: "이영희",
-            courseName: "React 완벽 가이드",
-            rating: 5,
-            content: "정말 유익한 강의였습니다. 무에서 바로 적용할 수 있는 내용이라 좋았어요.",
-            date: "2024-03-19"
-          },
-        ];
+        // const mockStats = {
+        //   totalStudents: 150,
+        //   totalCourses: 5,
+        //   totalRevenue: 3000000,
+        //   monthlyRevenue: 800000,
+        //   averageRating: 4.5,
+        //   completionRate: 78
+        // };
 
         const mockRevenueData = [
           { month: '1월', revenue: 500000 },
@@ -168,8 +156,6 @@ function InstructorDashboard() {
         ];
 
         setStats(stats);
-        setRecentEnrollments(mockEnrollments);
-        setRecentReviews(mockReviews);
         setRevenueData(mockRevenueData);
         setQuizzes(mockQuizzes);
 
@@ -181,7 +167,30 @@ function InstructorDashboard() {
       }
     };
 
+    const fetchRecentEnrollments = async () => {
+
+      setIsLoading(true);
+      await fetchInstructorProfile();
+
+      const enrollmentData = await StatsService.getRecentEnrollments();
+
+      setRecentEnrollments(enrollmentData);
+
+    }
+
+    const fetchRecentReviews = async () => {
+
+      setIsLoading(true);
+      await fetchInstructorProfile();
+
+      const reviewData = await StatsService.getRecentReviews();
+
+      setRecentReviews(reviewData);
+    }
+
     fetchDashboardData();
+    fetchRecentEnrollments();
+    fetchRecentReviews();
   }, [currentPage, fetchInstructorProfile]);
 
   const handleManualUpdate = async () => {
@@ -472,20 +481,31 @@ function InstructorDashboard() {
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-4">최근 수강신청</h2>
           <div className="space-y-4">
-            {recentEnrollments.map(enrollment => (
-              <div key={enrollment.id} className="flex items-center space-x-4">
-                <img
-                  src={enrollment.profileImage}
-                  alt={enrollment.studentName}
-                  className="w-10 h-10 rounded-full"
-                />
-                <div className="flex-1">
-                  <p className="font-medium">{enrollment.studentName}</p>
-                  <p className="text-sm text-gray-500">{enrollment.courseName}</p>
+            {recentEnrollments.length > 0 ? (
+              recentEnrollments.map(enrollment => (
+                <div
+                  key={`enrollment-${enrollment.userId}-${enrollment.enrolledAt}`}
+                  className="flex items-center space-x-4"
+                >
+                  <img
+                    src="/default-profile.png"
+                    alt={enrollment.username}
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div className="flex-1">
+                    <p className="font-medium">{enrollment.username}</p>
+                    <p className="text-sm text-gray-500">{enrollment.courseName}</p>
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {new Date(enrollment.enrolledAt).toLocaleDateString()}
+                  </span>
                 </div>
-                <span className="text-sm text-gray-500">{enrollment.date}</span>
+              ))
+            ) : (
+              <div className="text-center text-gray-500">
+                최근 수강신청이 없습니다.
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -493,22 +513,31 @@ function InstructorDashboard() {
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-4">최근 수강평</h2>
           <div className="space-y-4">
-            {recentReviews.map(review => (
-              <div key={review.id} className="border-b pb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium">{review.studentName}</span>
-                  <div className="flex items-center">
-                    <FiStar className="text-yellow-400 mr-1" />
-                    {review.rating}
+            {recentReviews.length > 0 ? (
+              recentReviews.map(review => (
+                <div
+                  key={`review-${review.id}`}
+                  className="border-b pb-4"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium">{review.writer}</span>
+                    <div className="flex items-center">
+                      <FiStar className="text-yellow-400 mr-1" />
+                      <span>{review.rating}</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-1">{review.content}</p>
+                  <div className="flex justify-between items-center text-sm text-gray-500">
+                    <span>{review.courseName}</span>
+                    <span>{new Date(review.createdAt).toLocaleDateString()}</span>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">{review.content}</p>
-                <div className="flex justify-between items-center text-sm text-gray-500">
-                  <span>{review.courseName}</span>
-                  <span>{review.date}</span>
-                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500">
+                최근 수강평이 없습니다.
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
