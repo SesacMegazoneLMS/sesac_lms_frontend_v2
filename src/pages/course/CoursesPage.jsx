@@ -31,6 +31,8 @@ function CoursesPage() {
       ...prev,
       category: urlCategory,
     }));
+
+    fetchCourses();
   }, [searchParams]);
 
   const fetchCourses = async () => {
