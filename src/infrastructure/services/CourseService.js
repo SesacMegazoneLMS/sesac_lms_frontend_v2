@@ -1,33 +1,33 @@
-import { axiosInstance } from '../api/axios.config';
-import { API_ENDPOINTS } from '../api/endpoints';
-import axios from 'axios';
+import { axiosInstance } from "../api/axios.config";
+import { API_ENDPOINTS } from "../api/endpoints";
+import axios from "axios";
 
 export const userService = {
   getMyEnrollments: async () => {
     try {
-
       console.log("Starting API call to:", API_ENDPOINTS.USERS.ENROLLMENTS);
-      console.log("With token:", localStorage.getItem('idToken'));
+      console.log("With token:", localStorage.getItem("idToken"));
 
       const response = await axiosInstance.get(API_ENDPOINTS.USERS.ENROLLMENTS);
 
       if (!response.data) {
-        throw new Error('데이터가 없습니다.');
+        throw new Error("데이터가 없습니다.");
       }
 
       return {
         enrollments: response.data.courses || [],
-        message: response.data.message
+        message: response.data.message,
       };
-
     } catch (error) {
       console.error("수강 중인 강의 조회 실패: ", error);
 
       if (error.response) {
-        throw new Error(error.response.data?.message || '강의 목록을 불러오는데 실패했습니다.');
+        throw new Error(
+          error.response.data?.message || "강의 목록을 불러오는데 실패했습니다."
+        );
       }
 
-      throw new Error('네트워크 오류가 발생했습니다.');
+      throw new Error("네트워크 오류가 발생했습니다.");
     }
   },
 
@@ -61,6 +61,8 @@ export const userService = {
     }
   },
 };
+  },
+};
 
 export const getRoadmaps = async () => {
   try {
@@ -68,7 +70,18 @@ export const getRoadmaps = async () => {
     const data = response.data?.roadmaps || response.data;
     return Array.isArray(data) ? data : [];
   } catch (error) {
-    console.error('로드맵 조회 실패:', error);
+    console.error("로드맵 조회 실패:", error);
+    return [];
+  }
+};
+
+export const getFreeCourses = async () => {
+  try {
+    const response = await axios.get(API_ENDPOINTS.FREE_COURSES);
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.error("무료 강좌 조회 실패:", error);
     return [];
   }
 };
@@ -76,29 +89,31 @@ export const getRoadmaps = async () => {
 const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 
 export const CourseService = {
-
   getCourses: async (filters) => {
     try {
       const params = new URLSearchParams();
-      if (filters.category) params.append('category', filters.category);
-      if (filters.level) params.append('level', filters.level);
-      if (filters.sort) params.append('sort', filters.sort);
-      if (filters.search) params.append('search', filters.search);
-      params.append('page', filters.page.toString());
-      params.append('size', filters.size.toString());
+      if (filters.category) params.append("category", filters.category);
+      if (filters.level) params.append("level", filters.level);
+      if (filters.sort) params.append("sort", filters.sort);
+      if (filters.search) params.append("search", filters.search);
+      params.append("page", filters.page.toString());
+      params.append("size", filters.size.toString());
 
-      const response = await axios.get(`${API_URL}/api/courses?${params.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('idToken')}`
+      const response = await axios.get(
+        `${API_URL}/api/courses?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("idToken")}`,
+          },
         }
-      });
+      );
 
       return {
         courses: response.data.courses,
         totalPages: response.data.totalPages,
         totalElements: response.data.totalElements,
         currentPage: response.data.currentPage,
-        message: response.data.message
+        message: response.data.message,
       };
     } catch (error) {
       throw error;
@@ -109,32 +124,45 @@ export const CourseService = {
     try {
       const response = await axios.get(`${API_URL}/api/courses/${courseId}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('idToken')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem("idToken")}`,
+        },
       });
       return response.data.courseDetails;
     } catch (error) {
       throw error;
     }
-  }
+  },
+
+  getFreeCourses: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/courses/free`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("idToken")}`,
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export const OrderService = {
   createOrder: async (orderData) => {
-
     console.log("orderData: ", orderData);
 
     try {
       const response = await axiosInstance.post(API_ENDPOINTS.ORDERS.CREATE, {
         courses: orderData.courses,
-        totalAmount: orderData.totalAmount
+        totalAmount: orderData.totalAmount,
       });
-      return response.data
+      return response.data;
     } catch (error) {
-      console.error('주문 생성 실패:', error);
+      console.error("주문 생성 실패:", error);
       throw error;
     }
-  }
+  },
 };
 
 export const PaymentService = {
@@ -146,13 +174,13 @@ export const PaymentService = {
         buyerName: paymentData.buyerName,
         amount: paymentData.amount,
         status: paymentData.status,
-        payMethod: paymentData.payMethod
+        payMethod: paymentData.payMethod,
       });
       return response.data;
     } catch (error) {
-      console.error('결제 검증 실패:', error);
+      console.error("결제 검증 실패:", error);
       throw error;
     }
-  }
+  },
 };
 export default CourseService;

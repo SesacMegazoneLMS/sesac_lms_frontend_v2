@@ -1,28 +1,33 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { CourseService, getRoadmaps } from '../../infrastructure/services/CourseService';
-import CourseCard from '../../shared/components/CourseCard';
-import RoadmapCard from '../../shared/components/RoadmapCard';
-import { toast } from 'react-hot-toast';
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  CourseService,
+  getRoadmaps,
+  getFreeCourses,
+} from "../../infrastructure/services/CourseService";
+import CourseCard from "../../shared/components/CourseCard";
+import RoadmapCard from "../../shared/components/RoadmapCard";
+import { toast } from "react-hot-toast";
 
 function HomePage() {
   const [courses, setCourses] = useState([]);
   const [roadmaps, setRoadmaps] = useState([]);
+  const [freeCourses, setFreeCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [coursesData, roadmapsData] = await Promise.all([
+        const [coursesData, freeCourseData] = await Promise.all([
           CourseService.getCourses({ page: 0, size: 4 }),
-          getRoadmaps(),
+          getFreeCourses(),
         ]);
         setCourses(coursesData.courses || []);
-        setRoadmaps(roadmapsData || []);
+        setFreeCourses(freeCourseData || []);
       } catch (error) {
-        console.error('Error fetching data:', error);
-        toast.error('데이터를 불러오는데 실패했습니다.');
+        console.error("Error fetching data:", error);
+        toast.error("데이터를 불러오는데 실패했습니다.");
       } finally {
         setIsLoading(false);
       }
@@ -71,31 +76,40 @@ function HomePage() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {courses.length > 0 ? (
-            courses.slice(0, 4).map((course) => (
-              <CourseCard key={course.id} course={course} />
-            ))
+            courses
+              .slice(0, 4)
+              .map((course) => <CourseCard key={course.id} course={course} />)
           ) : (
-            <p className="col-span-4 text-center text-gray-500">등록된 강좌가 없습니다.</p>
+            <p className="col-span-4 text-center text-gray-500">
+              등록된 강좌가 없습니다.
+            </p>
           )}
         </div>
       </section>
 
-      {/* 로드맵 섹션 */}
+      {/* 무료 강좌 섹션 */}
       <section className="bg-gray-50 py-12 -mx-4 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold">학습 로드맵</h2>
-            <Link to="/roadmaps" className="text-primary hover:text-primary-dark">
+            <h2 className="text-2xl font-bold">무료 강좌</h2>
+            <Link
+              to="/courses/free"
+              className="text-primary hover:text-primary-dark"
+            >
               전체 보기 →
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {roadmaps.length > 0 ? (
-              roadmaps.slice(0, 2).map((roadmap) => (
-                <RoadmapCard key={roadmap.id} roadmap={roadmap} />
-              ))
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {freeCourses.length > 0 ? (
+              freeCourses
+                .slice(0, 4)
+                .map((freeCourse) => (
+                  <CourseCard key={freeCourse.id} course={freeCourse} />
+                ))
             ) : (
-              <p className="col-span-2 text-center text-gray-500">등록된 로드맵이 없습니다.</p>
+              <p className="col-span-2 text-center text-gray-500">
+                등록된 무료 강좌가 없습니다.
+              </p>
             )}
           </div>
         </div>

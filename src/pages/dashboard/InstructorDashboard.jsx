@@ -23,7 +23,25 @@ function InstructorDashboard() {
     totalRevenue: 0,
     monthlyRevenue: 0,
     averageRating: 0,
-    completionRate: 0
+    completionRate: 0,
+    totalStudentsTrend: {
+      value: 0,
+      trend: 0,
+      trendType: 'NO_CHANGE',
+      isNew: false
+    },
+    monthlyRevenueTrend: {
+      value: 0,
+      trend: 0,
+      trendType: 'NO_CHANGE',
+      isNew: false
+    },
+    averageRatingTrend: {
+      value: 0,
+      trend: 0,
+      trendType: 'NO_CHANGE',
+      isNew: false
+    }
   });
 
   const [recentCourses, setRecentCourses] = useState([]);
@@ -105,6 +123,17 @@ function InstructorDashboard() {
     }
   }
 
+  const formatMonth = (yearMonth) => {
+    const [year, month] = yearMonth.split('-');
+    const currentYear = new Date().getFullYear().toString();
+
+    if (year === currentYear) {
+      return `${parseInt(month)}월`;
+    }
+
+    return `${year}.${parseInt(month)}월`;
+  }
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -112,6 +141,14 @@ function InstructorDashboard() {
         await fetchInstructorProfile();
 
         const data = await StatsService.getInstructorStats();
+        console.log("Backend response:", data.statistics);
+
+        // 월별 수익 데이터 가공
+        const revenueChartData = data.statistics.monthlyRevenue.map(item => ({
+          month: formatMonth(item.yearMonth),
+          revenue: Number(item.revenue),
+          yearMonth: item.yearMonth // 정렬용
+        }));
 
         const stats = {
           totalStudents: data.statistics.totalStudents,
@@ -119,34 +156,10 @@ function InstructorDashboard() {
           totalRevenue: data.statistics.totalRevenue,
           averageRating: data.statistics.averageRating,
           monthlyRevenue: data.statistics.monthlyStats?.revenue || 0,
+          totalStudentsTrend: data.statistics.totalStudentsTrend,
+          monthlyRevenueTrend: data.statistics.monthlyRevenueTrend,
+          averageRatingTrend: data.statistics.averageRatingTrend
         }
-
-        const mockEnrollments = [
-          {
-            id: 1,
-            studentName: "김철수",
-            courseName: "React 완벽 가이드",
-            date: "2024-03-20",
-            profileImage: "/default-avatar.png"
-          },
-        ];
-
-        const mockReviews = [
-          {
-            id: 1,
-            studentName: "이영희",
-            courseName: "React 완벽 가이드",
-            rating: 5,
-            content: "정말 유익한 강의였습니다. 무에서 바로 적용할 수 있는 내용이라 좋았어요.",
-            date: "2024-03-19"
-          },
-        ];
-
-        const mockRevenueData = [
-          { month: '1월', revenue: 500000 },
-          { month: '2월', revenue: 700000 },
-          { month: '3월', revenue: 800000 },
-        ];
 
         const mockQuizzes = [
           {
@@ -168,9 +181,7 @@ function InstructorDashboard() {
         ];
 
         setStats(stats);
-        setRecentEnrollments(mockEnrollments);
-        setRecentReviews(mockReviews);
-        setRevenueData(mockRevenueData);
+        setRevenueData(revenueChartData);
         setQuizzes(mockQuizzes);
 
         requestMyCourses(currentPage, coursesPerPage);
@@ -181,7 +192,30 @@ function InstructorDashboard() {
       }
     };
 
+    const fetchRecentEnrollments = async () => {
+
+      setIsLoading(true);
+      await fetchInstructorProfile();
+
+      const enrollmentData = await StatsService.getRecentEnrollments();
+
+      setRecentEnrollments(enrollmentData);
+
+    }
+
+    const fetchRecentReviews = async () => {
+
+      setIsLoading(true);
+      await fetchInstructorProfile();
+
+      const reviewData = await StatsService.getRecentReviews();
+
+      setRecentReviews(reviewData);
+    }
+
     fetchDashboardData();
+    fetchRecentEnrollments();
+    fetchRecentReviews();
   }, [currentPage, fetchInstructorProfile]);
 
   const handleManualUpdate = async () => {
@@ -196,6 +230,9 @@ function InstructorDashboard() {
         totalRevenue: data.statistics.totalRevenue,
         averageRating: data.statistics.averageRating,
         monthlyRevenue: data.statistics.monthlyStats?.revenue || 0,
+        totalStudentsTrend: data.statistics.totalStudentsTrend,
+        monthlyRevenueTrend: data.statistics.monthlyRevenueTrend,
+        averageRatingTrend: data.statistics.averageRatingTrend
       });
       toast.success('통계가 성공적으로 업데이트되었습니다.');
     } catch (error) {
@@ -347,28 +384,41 @@ function InstructorDashboard() {
             {isLoading ? '업데이트 중...' : '통계 수동 업데이트'}
           </button>
         </div>
+        {/* 총 수강생 */}
         <StatCard
           title="총 수강생"
-          value={`${stats?.totalStudents != null ? stats.totalStudents : 0}명`}
+          value={`${stats?.totalStudents || 0}명`}
           icon={<FiUsers />}
-          trend={`${stats?.totalStudents != null ? "+12% 증가" : "증가율 변동 없음"}`}
+          trend={stats?.totalStudentsTrend?.new  // isNew 대신 new로 수정
+            ? "NEW"
+            : stats?.totalStudentsTrend?.trend !== 0
+              ? `${stats.totalStudentsTrend.trend > 0 ? '+' : ''}${stats.totalStudentsTrend.trend}% ${stats.totalStudentsTrend.trendType === 'INCREASE' ? '증가' : '감소'}`
+              : "변동 없음"}
         />
+        {/* 운영 중인 강좌 */}
         <StatCard
           title="운영 중인 강좌"
-          value={`${stats?.totalCourses != null ? stats.totalCourses : 0}개`}
+          value={`${stats?.totalCourses || 0}개`}
           icon={<FiBookOpen />}
         />
+        {/* 이번 달 수익 */}
         <StatCard
           title="이번 달 수익"
-          value={`${stats?.monthlyRevenue != null ? stats.monthlyRevenue.toLocaleString() : 0}원`}
+          value={`${stats?.monthlyRevenue?.toLocaleString() || 0}원`}
           icon={<FiDollarSign />}
-          trend={`${stats?.monthlyRevenue != null ? "+8% 증가" : "증가율 변동 없음"}`}
+          trend={stats?.monthlyRevenueTrend?.new  // isNew 대신 new로 수정
+            ? "NEW"
+            : stats?.monthlyRevenueTrend?.trend !== 0
+              ? `${stats.monthlyRevenueTrend.trend > 0 ? '+' : ''}${stats.monthlyRevenueTrend.trend}% ${stats.monthlyRevenueTrend.trendType === 'INCREASE' ? '증가' : '감소'}`
+              : "변동 없음"}
         />
         <StatCard
           title="평균 평점"
-          value={(stats?.averageRating != null ? stats.averageRating : 0).toFixed(1) + "점"}
+          value={`${stats?.averageRating?.toFixed(1) || 0}점`}
           icon={<FiStar />}
-          trend={`${stats?.averageRating != null ? "+0.2 상승" : "증가율 변동 없음"}`}
+          trend={stats?.averageRatingTrend
+            ? `${stats.averageRatingTrend.trend > 0 ? '+' : ''}${stats.averageRatingTrend.trend.toFixed(1)} ${stats.averageRatingTrend.trendType === 'INCREASE' ? '상승' : '하락'}`
+            : "변동 없음"}
         />
       </div>
 
@@ -472,20 +522,31 @@ function InstructorDashboard() {
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-4">최근 수강신청</h2>
           <div className="space-y-4">
-            {recentEnrollments.map(enrollment => (
-              <div key={enrollment.id} className="flex items-center space-x-4">
-                <img
-                  src={enrollment.profileImage}
-                  alt={enrollment.studentName}
-                  className="w-10 h-10 rounded-full"
-                />
-                <div className="flex-1">
-                  <p className="font-medium">{enrollment.studentName}</p>
-                  <p className="text-sm text-gray-500">{enrollment.courseName}</p>
+            {recentEnrollments.length > 0 ? (
+              recentEnrollments.map(enrollment => (
+                <div
+                  key={`enrollment-${enrollment.userId}-${enrollment.enrolledAt}`}
+                  className="flex items-center space-x-4"
+                >
+                  <img
+                    src="/default-profile.png"
+                    alt={enrollment.username}
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div className="flex-1">
+                    <p className="font-medium">{enrollment.username}</p>
+                    <p className="text-sm text-gray-500">{enrollment.courseName}</p>
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {new Date(enrollment.enrolledAt).toLocaleDateString()}
+                  </span>
                 </div>
-                <span className="text-sm text-gray-500">{enrollment.date}</span>
+              ))
+            ) : (
+              <div className="text-center text-gray-500">
+                최근 수강신청이 없습니다.
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -493,22 +554,31 @@ function InstructorDashboard() {
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-4">최근 수강평</h2>
           <div className="space-y-4">
-            {recentReviews.map(review => (
-              <div key={review.id} className="border-b pb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium">{review.studentName}</span>
-                  <div className="flex items-center">
-                    <FiStar className="text-yellow-400 mr-1" />
-                    {review.rating}
+            {recentReviews.length > 0 ? (
+              recentReviews.map(review => (
+                <div
+                  key={`review-${review.id}`}
+                  className="border-b pb-4"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium">{review.writer}</span>
+                    <div className="flex items-center">
+                      <FiStar className="text-yellow-400 mr-1" />
+                      <span>{review.rating}</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-1">{review.content}</p>
+                  <div className="flex justify-between items-center text-sm text-gray-500">
+                    <span>{review.courseName}</span>
+                    <span>{new Date(review.createdAt).toLocaleDateString()}</span>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">{review.content}</p>
-                <div className="flex justify-between items-center text-sm text-gray-500">
-                  <span>{review.courseName}</span>
-                  <span>{review.date}</span>
-                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500">
+                최근 수강평이 없습니다.
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
@@ -674,7 +744,10 @@ function StatCard({ title, value, icon, trend }) {
           <p className="text-sm text-gray-500">{title}</p>
           <p className="text-2xl font-bold">{value}</p>
           {trend && (
-            <p className="text-sm text-green-500 flex items-center mt-1">
+            <p className={`text-sm flex items-center mt-1 ${trend.includes("+") ? "text-green-500" :
+              trend.includes("-") ? "text-red-500" :
+                "text-gray-500"
+              }`}>
               <FiTrendingUp className="mr-1" />
               {trend}
             </p>
