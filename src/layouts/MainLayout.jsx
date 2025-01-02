@@ -37,6 +37,7 @@ function MainLayout() {
   const [isChatOpen, setIsChatOpen] = useState(() => {
     return localStorage.getItem("isChatOpen") === "true";
   });
+  const [searchParam, setSearchParam] = useState("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -45,6 +46,25 @@ function MainLayout() {
   useEffect(() => {
     localStorage.setItem("isChatOpen", isChatOpen);
   }, [isChatOpen]);
+
+  const handleSearch = () => {
+    if (!searchParam.trim()) {
+      navigate("/courses");
+      return;
+    }
+
+    // 현재 URL의 파라미터를 유지하면서 search만 업데이트
+    const currentParams = new URLSearchParams(window.location.search);
+    currentParams.set("search", searchParam.trim());
+    currentParams.delete("page");
+
+    navigate({
+      pathname: "/courses",
+      search: currentParams.toString(),
+    });
+
+    setSearchParam("");
+  };
 
   const handleLogout = () => {
     dispatch(logout());
@@ -84,8 +104,18 @@ function MainLayout() {
                   type="text"
                   placeholder="배우고 싶은 지식을 검색해보세요"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  value={searchParam}
+                  onChange={(e) => setSearchParam(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearch();
+                    }
+                  }}
                 />
-                <button className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <button
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                  onClick={() => handleSearch()}
+                >
                   🔍
                 </button>
               </div>
