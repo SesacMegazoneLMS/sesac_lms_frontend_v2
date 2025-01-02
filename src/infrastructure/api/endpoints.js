@@ -127,7 +127,9 @@ export const API_ENDPOINTS = {
   },
   STATS: {
     INSTRUCTOR: `${BACKEND_URL}/instructor/stats`,
-    MANUAL_UPDATE: `${BACKEND_URL}/instructor/stats/manual-update`
+    MANUAL_UPDATE: `${BACKEND_URL}/instructor/stats/manual-update`,
+    RECENT_ENROLLMENTS: `${BACKEND_URL}/courses/instructor/me/recentenrollments`,
+    RECENT_REVIEWS: `${BACKEND_URL}/courses/instructor/me/recentreviews`
   },
 };
 
