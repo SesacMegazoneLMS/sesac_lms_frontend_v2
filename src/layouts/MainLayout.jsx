@@ -93,9 +93,6 @@ function MainLayout() {
 
             {/* 네비게이션 메뉴 */}
             <nav className="flex items-center space-x-8">
-              <Link to="/courses" className="text-gray-600 hover:text-primary">
-                전체강좌
-              </Link>
               <Link
                 to="/community/all"
                 className="text-gray-600 hover:text-primary"
@@ -140,6 +137,17 @@ function MainLayout() {
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex space-x-8 py-4">
+            <Link
+              to="/courses"
+              className="flex items-center space-x-2 text-gray-600 hover:text-primary"
+            >
+              <img
+                src="/icons/design.png"
+                alt="Programming"
+                className="w-5 h-5"
+              />
+              <span>전체강좌</span>
+            </Link>
             <Link
               to="/courses?category=PROGRAMMING"
               className="flex items-center space-x-2 text-gray-600 hover:text-primary"
