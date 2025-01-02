@@ -94,10 +94,7 @@ function MainLayout() {
             {/* 네비게이션 메뉴 */}
             <nav className="flex items-center space-x-8">
               <Link to="/courses" className="text-gray-600 hover:text-primary">
-                강좌
-              </Link>
-              <Link to="/roadmaps" className="text-gray-600 hover:text-primary">
-                로드맵
+                전체강좌
               </Link>
               <Link
                 to="/community/all"
@@ -144,7 +141,7 @@ function MainLayout() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex space-x-8 py-4">
             <Link
-              to="/category/programming"
+              to="/courses?category=PROGRAMMING"
               className="flex items-center space-x-2 text-gray-600 hover:text-primary"
             >
               <img
@@ -155,33 +152,33 @@ function MainLayout() {
               <span>프로그래밍</span>
             </Link>
             <Link
-              to="/category/security"
+              to="/courses?category=FRONTEND"
               className="flex items-center space-x-2 text-gray-600 hover:text-primary"
             >
               <img
-                src="/icons/security.png"
+                src="/icons/frontend.png"
                 alt="Security"
                 className="w-5 h-5"
               />
-              <span>보안</span>
+              <span>프론트엔드</span>
             </Link>
             <Link
-              to="/category/data-science"
+              to="/courses?category=BACKEND"
               className="flex items-center space-x-2 text-gray-600 hover:text-primary"
             >
               <img
-                src="/icons/data.png"
+                src="/icons/backend2.png"
                 alt="Data Science"
                 className="w-5 h-5"
               />
-              <span>데이터 사이언스</span>
+              <span>백엔드</span>
             </Link>
             <Link
-              to="/category/design"
+              to="/courses?category=AI"
               className="flex items-center space-x-2 text-gray-600 hover:text-primary"
             >
-              <img src="/icons/design.png" alt="Design" className="w-5 h-5" />
-              <span>디자인</span>
+              <img src="/icons/ai.png" alt="Design" className="w-5 h-5" />
+              <span>AI</span>
             </Link>
           </div>
         </div>
