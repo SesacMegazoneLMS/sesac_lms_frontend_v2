@@ -18,11 +18,7 @@ export const CourseSection = ({ courses, onViewAll, title, type = 'enrolled' }) 
           <SectionTitle>{title}</SectionTitle>
           <CourseCount>{courses.length}개의 강좌</CourseCount>
         </div>
-        {courses.length > 0 && (
-          <ViewAllButton onClick={onViewAll}>
-            전체 보기
-          </ViewAllButton>
-        )}
+
       </SectionHeader>
 
       <CourseList>

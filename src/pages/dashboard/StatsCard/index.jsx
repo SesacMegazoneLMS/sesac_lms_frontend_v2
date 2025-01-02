@@ -18,12 +18,8 @@ export const StatsCard = ({ stats }) => {
           <StatValue>{stats.totalHours}시간</StatValue>
         </StatItem>
         <StatItem>
-          <StatLabel>이번 주 학습</StatLabel>
-          <StatValue>{stats.weeklyHours}시간</StatValue>
-        </StatItem>
-        <StatItem>
           <StatLabel>완료한 강좌</StatLabel>
-          <StatValue>{stats.completedCourses}개</StatValue>
+          <StatValue>{stats.completedlectures}개</StatValue>
         </StatItem>
       </StatsList>
     </StatsContainer>

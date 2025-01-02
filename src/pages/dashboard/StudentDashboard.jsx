@@ -59,7 +59,7 @@ function StudentDashboard() {
         <h1>안녕하세요, {user?.name}님!</h1>
         <HeaderLinks>
           <StyledLink to="/profile">프로필 관리</StyledLink>
-          <StyledLink to="/certificates">수료증 관리</StyledLink>
+          {/* <StyledLink to="/certificates">수료증 관리</StyledLink> */}
         </HeaderLinks>
       </Header>
 
@@ -71,12 +71,11 @@ function StudentDashboard() {
         <SideSection>
           <StatsCard
             stats={{
-              totalHours: 23,
-              weeklyHours: 5,
-              completedCourses: 3
+              totalHours: 23,  //총 강의 학습 시간 
+              completedlectures: 3,  //완료한 강의 수
             }}
           />
-          <QuizCard quizzes={[]} />
+          {/* <QuizCard quizzes={[]} /> */}
         </SideSection>
       </MainContent>
     </DashboardContainer>
