@@ -105,7 +105,7 @@ function LectureDetailPage() {
                       >
                         <div className="flex items-center space-x-4">
                           <span className="text-gray-500 font-medium min-w-[48px]">
-                            {lecture.orderIndex}강 {lecture.isCompleted ? '완료' : '미완료'}
+                            {lecture.orderIndex}강 {lecture.progress?.isCompleted ? '수강완료' : '미완료'}
                           </span>
                           <h3 className="text-gray-900 font-medium">{lecture.title}</h3>
                         </div>
