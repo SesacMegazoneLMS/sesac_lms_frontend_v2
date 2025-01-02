@@ -125,6 +125,10 @@ export const API_ENDPOINTS = {
   PAYMENTS: {
     VERIFY: `${BACKEND_URL}/payments/verify`,
   },
+  STATS: {
+    INSTRUCTOR: `${BACKEND_URL}/instructor/stats`,
+    MANUAL_UPDATE: `${BACKEND_URL}/instructor/stats/manual-update`
+  },
 };
 
 export const apiEndpoints = {
