@@ -16,7 +16,7 @@ function CoursesPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState({
-    category: "",
+    category: searchParams.get("category") || "",
     level: "",
     sort: "newest",
     search: "",
