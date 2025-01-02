@@ -123,6 +123,12 @@ function MainLayout() {
 
             {/* 네비게이션 메뉴 */}
             <nav className="flex items-center space-x-8">
+              {!user && (
+                <div>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </div>
+              )}
               <Link
                 to="/community/all"
                 className="text-gray-600 hover:text-primary"

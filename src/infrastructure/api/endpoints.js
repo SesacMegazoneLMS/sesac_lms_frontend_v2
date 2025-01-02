@@ -127,8 +127,9 @@ export const API_ENDPOINTS = {
   },
   STATS: {
     INSTRUCTOR: `${BACKEND_URL}/instructor/stats`,
-    MANUAL_UPDATE: `${BACKEND_URL}/instructor/stats/manual-update`
+    MANUAL_UPDATE: `${BACKEND_URL}/instructor/stats/manual-update`,
   },
+  FREE_COURSES: `${BACKEND_URL}/courses/free`,
 };
 
 export const apiEndpoints = {
