@@ -131,6 +131,7 @@ export const API_ENDPOINTS = {
     RECENT_ENROLLMENTS: `${BACKEND_URL}/courses/instructor/me/recentenrollments`,
     RECENT_REVIEWS: `${BACKEND_URL}/courses/instructor/me/recentreviews`
   },
+  FREE_COURSES: `${BACKEND_URL}/courses/free`,
 };
 
 export const apiEndpoints = {
