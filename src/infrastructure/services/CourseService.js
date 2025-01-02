@@ -29,8 +29,38 @@ export const userService = {
 
       throw new Error('네트워크 오류가 발생했습니다.');
     }
-  }
-}
+  },
+
+  getMyStats: async () => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/lectures/students/stats`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('idToken')}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch stats');
+      }
+
+      const data = await response.json();
+      return {
+        totalHours: Math.floor(data.totalSeconds / 3600),
+        completedLectures: data.completedLectures
+      };
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      return {
+        totalHours: 0,
+        completedLectures: 0
+      };
+    }
+  },
+};
 
 export const getRoadmaps = async () => {
   try {
