@@ -1,22 +1,37 @@
-import { useState, useEffect } from 'react';
-import { CourseService } from '../../infrastructure/services/CourseService';
-import CourseCard from '../../shared/components/CourseCard';
-import { getCategoryOptions, getLevelOptions, getSortOptions } from '../../infrastructure/constants/courseConstants';
-import { toast } from 'react-toastify';
+import { useState, useEffect } from "react";
+import { CourseService } from "../../infrastructure/services/CourseService";
+import CourseCard from "../../shared/components/CourseCard";
+import {
+  getCategoryOptions,
+  getLevelOptions,
+  getSortOptions,
+} from "../../infrastructure/constants/courseConstants";
+import { toast } from "react-toastify";
+import { useSearchParams } from "react-router-dom";
 
 function CoursesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [courses, setCourses] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState({
-    category: '',
-    level: '',
-    sort: 'newest',
-    search: '',
+    category: "",
+    level: "",
+    sort: "newest",
+    search: "",
     page: 0,
-    size: 12
+    size: 12,
   });
+
+  useEffect(() => {
+    const urlCategory = searchParams.get("category") || "";
+
+    setFilters((prev) => ({
+      ...prev,
+      category: urlCategory,
+    }));
+  }, [searchParams]);
 
   const fetchCourses = async () => {
     setIsLoading(true);
@@ -26,8 +41,8 @@ function CoursesPage() {
       setTotalPages(response.totalPages || 0);
       setCurrentPage(response.currentPage || 0);
     } catch (error) {
-      console.error('Error fetching courses:', error);
-      toast.error('강좌 목록을 불러오는데 실패했습니다.');
+      console.error("Error fetching courses:", error);
+      toast.error("강좌 목록을 불러오는데 실패했습니다.");
       setCourses([]);
     } finally {
       setIsLoading(false);
@@ -39,17 +54,17 @@ function CoursesPage() {
   }, [filters]);
 
   const handleFilterChange = (name, value) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      [name]: value === 'all' ? '' : value,
-      page: 0
+      [name]: value === "all" ? "" : value,
+      page: 0,
     }));
   };
 
   const handlePageChange = (newPage) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      page: newPage
+      page: newPage,
     }));
   };
 
@@ -63,7 +78,7 @@ function CoursesPage() {
           type="text"
           placeholder="강좌 검색..."
           value={filters.search}
-          onChange={(e) => handleFilterChange('search', e.target.value)}
+          onChange={(e) => handleFilterChange("search", e.target.value)}
           className="w-full p-2 border rounded-md"
         />
       </div>
@@ -72,31 +87,37 @@ function CoursesPage() {
       <div className="flex gap-4 mb-8">
         <select
           value={filters.category}
-          onChange={(e) => handleFilterChange('category', e.target.value)}
+          onChange={(e) => handleFilterChange("category", e.target.value)}
           className="border rounded-md px-3 py-2"
         >
           {getCategoryOptions().map(({ value, label }) => (
-            <option key={value} value={value}>{label}</option>
+            <option key={value} value={value}>
+              {label}
+            </option>
           ))}
         </select>
 
         <select
           value={filters.level}
-          onChange={(e) => handleFilterChange('level', e.target.value)}
+          onChange={(e) => handleFilterChange("level", e.target.value)}
           className="border rounded-md px-3 py-2"
         >
           {getLevelOptions().map(({ value, label }) => (
-            <option key={value} value={value}>{label}</option>
+            <option key={value} value={value}>
+              {label}
+            </option>
           ))}
         </select>
 
         <select
           value={filters.sort}
-          onChange={(e) => handleFilterChange('sort', e.target.value)}
+          onChange={(e) => handleFilterChange("sort", e.target.value)}
           className="border rounded-md px-3 py-2"
         >
           {getSortOptions().map(({ value, label }) => (
-            <option key={value} value={value}>{label}</option>
+            <option key={value} value={value}>
+              {label}
+            </option>
           ))}
         </select>
       </div>
@@ -115,11 +136,8 @@ function CoursesPage() {
             검색 결과가 없습니다.
           </div>
         ) : (
-          courses.map(course => (
-            <CourseCard
-              key={course.id}
-              course={course}
-            />
+          courses.map((course) => (
+            <CourseCard key={course.id} course={course} />
           ))
         )}
       </div>
@@ -131,10 +149,9 @@ function CoursesPage() {
             <button
               key={i}
               onClick={() => handlePageChange(i)}
-              className={`mx-1 px-4 py-2 rounded ${currentPage === i
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200'
-                }`}
+              className={`mx-1 px-4 py-2 rounded ${
+                currentPage === i ? "bg-blue-500 text-white" : "bg-gray-200"
+              }`}
             >
               {i + 1}
             </button>
