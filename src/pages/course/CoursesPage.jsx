@@ -15,30 +15,19 @@ function CoursesPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState(() => ({
     category: searchParams.get("category") || "",
-    level: "",
-    sort: "newest",
-    search: "",
-    page: 0,
+    level: searchParams.get("level") || "",
+    sort: searchParams.get("sort") || "newest",
+    search: searchParams.get("search") || "",
+    page: parseInt(searchParams.get("page")) || 0,
     size: 12,
-  });
+  }));
 
-  useEffect(() => {
-    const urlCategory = searchParams.get("category") || "";
-
-    setFilters((prev) => ({
-      ...prev,
-      category: urlCategory,
-    }));
-
-    fetchCourses();
-  }, [searchParams]);
-
-  const fetchCourses = async () => {
+  const fetchCourses = async (currentFilters) => {
     setIsLoading(true);
     try {
-      const response = await CourseService.getCourses(filters);
+      const response = await CourseService.getCourses(currentFilters);
       setCourses(response.courses || []);
       setTotalPages(response.totalPages || 0);
       setCurrentPage(response.currentPage || 0);
@@ -52,38 +41,46 @@ function CoursesPage() {
   };
 
   useEffect(() => {
-    fetchCourses();
-  }, [filters]);
+    const newFilters = {
+      category: searchParams.get("category") || "",
+      level: searchParams.get("level") || "",
+      sort: searchParams.get("sort") || "newest",
+      search: searchParams.get("search") || "",
+      page: parseInt(searchParams.get("page")) || 0,
+      size: 12,
+    };
+    setFilters(newFilters);
+    fetchCourses(newFilters);
+  }, [searchParams]);
 
   const handleFilterChange = (name, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [name]: value === "all" ? "" : value,
-      page: 0,
-    }));
+    const newValue = value === "all" ? "" : value;
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      if (newValue) {
+        newParams.set(name, newValue);
+      } else {
+        newParams.delete(name);
+      }
+      if (name === "sort" && !newValue) {
+        newParams.set("sort", "newest");
+      }
+      newParams.delete("page"); // 필터 변경 시 페이지 초기화
+      return newParams;
+    });
   };
 
   const handlePageChange = (newPage) => {
-    setFilters((prev) => ({
-      ...prev,
-      page: newPage,
-    }));
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set("page", newPage.toString());
+      return newParams;
+    });
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">전체 강좌</h1>
-
-      {/* 검색 바 */}
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="강좌 검색..."
-          value={filters.search}
-          onChange={(e) => handleFilterChange("search", e.target.value)}
-          className="w-full p-2 border rounded-md"
-        />
-      </div>
+      <h1 className="text-3xl font-bold mb-8">강좌 목록</h1>
 
       {/* 필터 섹션 */}
       <div className="flex gap-4 mb-8">
