@@ -121,15 +121,6 @@ function InstructorDashboard() {
           monthlyRevenue: data.statistics.monthlyStats?.revenue || 0,
         }
 
-        // const mockStats = {
-        //   totalStudents: 150,
-        //   totalCourses: 5,
-        //   totalRevenue: 3000000,
-        //   monthlyRevenue: 800000,
-        //   averageRating: 4.5,
-        //   completionRate: 78
-        // };
-
         const mockEnrollments = [
           {
             id: 1,
@@ -358,26 +349,26 @@ function InstructorDashboard() {
         </div>
         <StatCard
           title="총 수강생"
-          value={`${stats.totalStudents}명`}
+          value={`${stats?.totalStudents != null ? stats.totalStudents : 0}명`}
           icon={<FiUsers />}
-          trend="+12% 증가"
+          trend={`${stats?.totalStudents != null ? "+12% 증가" : "증가율 변동 없음"}`}
         />
         <StatCard
           title="운영 중인 강좌"
-          value={`${stats.totalCourses}개`}
+          value={`${stats?.totalCourses != null ? stats.totalCourses : 0}개`}
           icon={<FiBookOpen />}
         />
         <StatCard
           title="이번 달 수익"
-          value={`${stats.monthlyRevenue.toLocaleString()}원`}
+          value={`${stats?.monthlyRevenue != null ? stats.monthlyRevenue.toLocaleString() : 0}원`}
           icon={<FiDollarSign />}
-          trend="+8% 증가"
+          trend={`${stats?.monthlyRevenue != null ? "+8% 증가" : "증가율 변동 없음"}`}
         />
         <StatCard
           title="평균 평점"
-          value={stats.averageRating.toFixed(1)}
+          value={(stats?.averageRating != null ? stats.averageRating : 0).toFixed(1) + "점"}
           icon={<FiStar />}
-          trend="+0.2 상승"
+          trend={`${stats?.averageRating != null ? "+0.2 상승" : "증가율 변동 없음"}`}
         />
       </div>
 
@@ -441,7 +432,7 @@ function InstructorDashboard() {
                 .sort((a, b) => b.createdAt.localeCompare(a.createdAt)) // 최신 순으로 정렬
                 .map(course => (
                   <tr key={course.id} className="cursor-pointer hover:bg-gray-100"
-                    onClick={() => window.location.href = `/instructor/course/${course.id}/content`}>
+                    onClick={() => window.location.href = `/instructor/courses/${course.id}/content`}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {course.title}
                     </td>
@@ -533,7 +524,7 @@ function InstructorDashboard() {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">강좌 관리</h2>
         <Link
-          to="/instructor/course/create"
+          to="/instructor/courses/create"
           className="bg-primary text-white px-4 py-2 rounded-lg flex items-center"
         >
           <FiPlus className="mr-2" />
@@ -557,7 +548,7 @@ function InstructorDashboard() {
                 <td className="px-6 py-4">
                   <span
                     className="cursor-pointer hover:underline"
-                    onClick={() => window.location.href = `/instructor/course/${course.id}/content`}
+                    onClick={() => window.location.href = `/instructor/courses/${course.id}/content`}
                   >
                     {course.title}
                   </span>
@@ -572,19 +563,19 @@ function InstructorDashboard() {
                 <td className="px-6 py-4 text-center">
                   <div className="flex justify-center space-x-2">
                     <Link
-                      to={`/instructor/course/${course.id}/edit`}
+                      to={`/instructor/courses/${course.id}/edit`}
                       className="text-primary hover:text-primary-dark"
                     >
                       수정
                     </Link>
                     <Link
-                      to={`/instructor/course/${course.id}/content`}
+                      to={`/instructor/courses/${course.id}/content`}
                       className="text-gray-600 hover:text-gray-800"
                     >
                       콘텐츠
                     </Link>
                     <Link
-                      to={`/instructor/course/${course.id}/quiz`}
+                      to={`/instructor/courses/${course.id}/quiz`}
                       className="text-gray-600 hover:text-gray-800"
                     >
                       퀴즈

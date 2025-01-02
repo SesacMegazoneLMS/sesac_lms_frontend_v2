@@ -29,7 +29,11 @@ function LectureDetailPage() {
           }
         );
         console.log('Course data received:', response.data);
-        setCourse(response.data.courseDetails);
+        const sortedData = {
+          ...response.data.courseDetails,
+          lectures: response.data.courseDetails.lectures.sort((a, b) => a.orderIndex - b.orderIndex)
+        };
+        setCourse(sortedData);
       } catch (error) {
         console.error('Error fetching course:', error);
         toast.error('강좌 정보를 불러오는데 실패했습니다.');
@@ -105,7 +109,7 @@ function LectureDetailPage() {
                       >
                         <div className="flex items-center space-x-4">
                           <span className="text-gray-500 font-medium min-w-[48px]">
-                            {lecture.orderIndex}강 {lecture.progress?.isCompleted ? '수강완료' : '미완료'}
+                            {lecture.orderIndex}강 {lecture.completed ? '수강완료' : '미완료'}
                           </span>
                           <h3 className="text-gray-900 font-medium">{lecture.title}</h3>
                         </div>

@@ -7,7 +7,7 @@ import axios from "axios";
 function CourseCreatePage() {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
-
+  
   const [courseData, setCourseData] = useState({
     title: '',
     description: '',
@@ -45,11 +45,11 @@ function CourseCreatePage() {
         status: 'draft',
         ...courseData
       };
-
+      
       const drafts = JSON.parse(localStorage.getItem('draft_courses') || '[]');
       drafts.push(draftCourse);
       localStorage.setItem('draft_courses', JSON.stringify(drafts));
-
+      
       toast.success('임시저장되었습니다.');
     } catch (error) {
       toast.error('저장에 실패했습니다.');
@@ -62,7 +62,7 @@ function CourseCreatePage() {
       if (!courseData.title) {
         console.error('강좌명을 입력해주세요.');
         return;
-      } else if (!courseData.description) {
+      }else if(!courseData.description){
         console.error("강좌에 대한 설명을 입력해주세요.")
         return;
       }
@@ -76,10 +76,10 @@ function CourseCreatePage() {
           },
         }
       );
-      const courseId = res.data.courseId;
-      alert(res.data.message);
+        const courseId = res.data.courseId;
+        alert(res.data.message);
 
-      navigate(`/instructor/course/${courseId}/content`);
+        navigate(`/instructor/course/${courseId}/content`);
     } catch (error) {
       alert(error.response.data.message);
     }
@@ -114,10 +114,10 @@ function CourseCreatePage() {
               강좌명
             </label>
             <input
-              type="text"
-              value={courseData.title}
-              onChange={(e) => setCourseData({ ...courseData, title: e.target.value })}
-              className="w-full px-3 py-2 border rounded-md"
+                type="text"
+                value={courseData.title}
+                onChange={(e) => setCourseData({...courseData, title: e.target.value})}
+                className="w-full px-3 py-2 border rounded-md"
             />
           </div>
           <div>
@@ -125,10 +125,10 @@ function CourseCreatePage() {
               강좌내용
             </label>
             <input
-              type="text"
-              value={courseData.description}
-              onChange={(e) => setCourseData({ ...courseData, description: e.target.value })}
-              className="w-full px-3 py-2 border rounded-md"
+                type="text"
+                value={courseData.description}
+                onChange={(e) => setCourseData({...courseData, description: e.target.value})}
+                className="w-full px-3 py-2 border rounded-md"
             />
           </div>
           <div>
@@ -136,9 +136,9 @@ function CourseCreatePage() {
               난이도
             </label>
             <select
-              value={courseData.level} // courseData의 난이도 속성에 맞게 수정
-              onChange={(e) => setCourseData({ ...courseData, level: e.target.value })} // 난이도 속성 업데이트
-              className="w-full px-3 py-2 border rounded-md"
+                value={courseData.level} // courseData의 난이도 속성에 맞게 수정
+                onChange={(e) => setCourseData({...courseData, level: e.target.value})} // 난이도 속성 업데이트
+                className="w-full px-3 py-2 border rounded-md"
             >
               <option value="초급">초급</option>
               <option value="중급">중급</option>
@@ -150,9 +150,9 @@ function CourseCreatePage() {
               카테고리
             </label>
             <select
-              value={courseData.category} // courseData의 난이도 속성에 맞게 수정
-              onChange={(e) => setCourseData({ ...courseData, category: e.target.value })} // 난이도 속성 업데이트
-              className="w-full px-3 py-2 border rounded-md"
+                value={courseData.category} // courseData의 난이도 속성에 맞게 수정
+                onChange={(e) => setCourseData({...courseData, category: e.target.value})} // 난이도 속성 업데이트
+                className="w-full px-3 py-2 border rounded-md"
             >
               <option value="programming">프로그래밍</option>
               <option value="frontend">프런트엔드</option>
@@ -165,16 +165,16 @@ function CourseCreatePage() {
               가격
             </label>
             <div className="flex items-center">
-              <input
+            <input
                 type="number"
                 value={courseData.price}
-                onChange={(e) => setCourseData({ ...courseData, price: Number(e.target.value) })}
+                onChange={(e) => setCourseData({...courseData, price: Number(e.target.value)})}
                 className="w-full px-3 py-2 border rounded-md"
                 min="0" // 최소값 설정
                 step="1" // 소수점 두 자리까지 입력 가능
                 placeholder="가격을 입력하세요" // 플레이스홀더 추가
-              />
-              <span className="text-sm font-medium text-gray-700">원</span>
+            />
+            <span className="text-sm font-medium text-gray-700">원</span>
             </div>
           </div>
           {/* 다른 기본 정보 필드들... */}

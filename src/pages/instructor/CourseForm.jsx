@@ -62,17 +62,17 @@ function CourseForm({ initialData, onSubmit }) {
             <input
               type="text"
               value={courseData.title}
-              onChange={(e) => setCourseData({ ...courseData, title: e.target.value })}
+              onChange={(e) => setCourseData({...courseData, title: e.target.value})}
               className="mt-1 block w-full border rounded-md p-2"
               required
             />
           </div>
-
+          
           <div>
             <label className="block text-sm font-medium text-gray-700">설명</label>
             <textarea
               value={courseData.description}
-              onChange={(e) => setCourseData({ ...courseData, description: e.target.value })}
+              onChange={(e) => setCourseData({...courseData, description: e.target.value})}
               rows={4}
               className="mt-1 block w-full border rounded-md p-2"
               required
@@ -82,9 +82,9 @@ function CourseForm({ initialData, onSubmit }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">카테고리</label>
-              <select
+              <select 
                 value={courseData.category}
-                onChange={(e) => setCourseData({ ...courseData, category: e.target.value })}
+                onChange={(e) => setCourseData({...courseData, category: e.target.value})}
                 className="mt-1 block w-full border rounded-md p-2"
               >
                 <option value="programming">프로그래밍</option>
@@ -96,7 +96,7 @@ function CourseForm({ initialData, onSubmit }) {
               <label className="block text-sm font-medium text-gray-700">난이도</label>
               <select
                 value={courseData.level}
-                onChange={(e) => setCourseData({ ...courseData, level: e.target.value })}
+                onChange={(e) => setCourseData({...courseData, level: e.target.value})}
                 className="mt-1 block w-full border rounded-md p-2"
               >
                 <option value="beginner">입문</option>

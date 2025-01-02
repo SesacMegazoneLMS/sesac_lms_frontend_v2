@@ -92,10 +92,10 @@ function App() {
 
               <Route path="instructor">
                 <Route path="dashboard" element={<InstructorDashboard />} />
-                <Route path="course/create" element={<CourseCreatePage />} />
-                <Route path="course/:id/edit" element={<CourseManagementPage />} />
-                <Route path="/instructor/course/:courseId/content" element={<CourseContentPage />} />
-                <Route path="/instructor/course/:courseId/quiz" element={<CourseQuizPage />} />
+                <Route path="courses/create" element={<CourseCreatePage />} />
+                <Route path="courses/:id/edit" element={<CourseManagementPage />} />
+                <Route path="/instructor/courses/:courseId/content" element={<CourseContentPage />} />
+                <Route path="/instructor/courses/:courseId/quiz" element={<CourseQuizPage />} />
                 <Route path="/instructor/profile" element={<InstructorMyPage />} />
               </Route>
 
