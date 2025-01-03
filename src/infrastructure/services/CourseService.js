@@ -100,8 +100,7 @@ export const CourseService = {
       params.append("size", filters.size.toString());
 
       const response = await axios.get(
-        // `${API_URL}/api/courses?${params.toString()}`,
-          `http://localhost:8081/api/courses?${params.toString()}`,
+        `${API_URL}/api/courses?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("idToken")}`,
