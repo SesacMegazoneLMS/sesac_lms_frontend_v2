@@ -37,6 +37,7 @@ import EditPost from "./pages/community/EditPost";
 
 const AppContent = ({ children }) => {
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(true); // 로딩 상태 추가
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -63,10 +64,19 @@ const AppContent = ({ children }) => {
           console.error("사용자 정보 조회 실패:", err);
         }
       }
+      setIsLoading(false); // 데이터 로딩 완료
     };
 
     fetchUserInfo();
   }, [dispatch]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
 
   return children;
 };
