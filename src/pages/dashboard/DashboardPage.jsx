@@ -14,7 +14,7 @@ function DashboardPage() {
   }
 
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   if (user.role === 'instructor') {

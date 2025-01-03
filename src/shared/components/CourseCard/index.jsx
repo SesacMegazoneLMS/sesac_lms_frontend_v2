@@ -1,15 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { cartService } from '../../../infrastructure/services/CartService';
 import { getCourseImage } from '../../utils/imageUtils'; // import
+import axios from 'axios';  // axios 추가
 
 const CourseCard = ({ course, type = 'course' }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [lectureProgress, setLectureProgress] = useState({
+    completedCount: 0,
+    totalCount: 0,
+    progressPercent: 0
+  });
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const isEnrolled = type === 'enrolled';
   const isCart = type === 'cart';
+
+  useEffect(() => {
+    // 수강 중인 강좌일 때만 강의 진행률 정보를 가져옴
+    if (isEnrolled && course.id) {
+      fetchLectureProgress();
+    }
+  }, [course.id, isEnrolled]);
+
+  const fetchLectureProgress = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/courses/${course.id}/progress`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('idToken')}`
+          }
+        }
+      );
+
+      console.log('Progress response:', response.data); // 데이터 확인용 로그
+
+      // 백엔드 응답 구조에 맞게 수정하고 진도율은 정수로 변환
+      setLectureProgress({
+        completedCount: response.data.completedLectures,
+        totalCount: response.data.totalLectures,
+        progressPercent: Math.floor(response.data.progressRate) // Math.floor로 소수점 제거
+      });
+    } catch (error) {
+      console.error('Failed to fetch lecture progress:', error);
+    }
+  };
 
   const courseImage = getCourseImage(course);
 
@@ -128,6 +165,31 @@ const CourseCard = ({ course, type = 'course' }) => {
                 </div>
             )} */}
         </div>
+
+
+        {/* 25.01.03 홍인표 작성. 수강 중인 강좌의 진행률을 표시하는 코드 */}
+        {isEnrolled && (
+          <div className="mt-2">
+            <div className="flex items-center justify-between text-sm text-gray-500">
+              <span>진행률: {lectureProgress.progressPercent}%</span>
+              <span>
+                {lectureProgress.completedCount}/{lectureProgress.totalCount} 강의
+              </span>
+            </div>
+            <div className="mt-1 h-2 bg-gray-200 rounded-full">
+              <div
+                className="h-full bg-green-500 rounded-full"
+                style={{ width: `${lectureProgress.progressPercent}%` }}
+              />
+            </div>
+            {lectureProgress.completedCount === lectureProgress.totalCount &&
+              lectureProgress.totalCount > 0 && (
+                <span className="mt-1 inline-block px-2 py-1 text-xs text-green-700 bg-green-100 rounded">
+                  수강 완료
+                </span>
+              )}
+          </div>
+        )}
       </div>
     </div>
   );

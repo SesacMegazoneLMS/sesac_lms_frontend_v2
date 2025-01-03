@@ -7,6 +7,7 @@ import { StatsCard } from './StatsCard';
 import { QuizCard } from './QuizCard';
 import { CourseSection } from './CourseSection';
 import { userService } from '../../infrastructure/services/CourseService';
+import axios from 'axios';
 
 function StudentDashboard() {
   const { user, loading } = useSelector(state => state.auth);
@@ -18,20 +19,40 @@ function StudentDashboard() {
       try {
         const { enrollments } = await userService.getMyEnrollments();
 
-        const formattedCourses = enrollments.map(enrollment => ({
-          id: enrollment.courseId,
-          title: enrollment.title,
-          thumbnail: enrollment.thumbnail,
-          progress: enrollment.progress || 0,
-          category: enrollment.category,
-          level: enrollment.level,
-          description: enrollment.description,
-          completedLectures: enrollment.completedLectures || 0,
-          totalLectures: enrollment.totalLectures || 0,
-          isCompleted: enrollment.isCompleted || false
-        }));
+        // 각 강좌의 진행률 정보를 가져오기
+        const coursesWithProgress = await Promise.all(
+          enrollments.map(async (enrollment) => {
+            try {
+              const progressResponse = await axios.get(
+                `${process.env.REACT_APP_BACKEND_API_URL}/api/courses/${enrollment.courseId}/progress`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${localStorage.getItem('idToken')}`
+                  }
+                }
+              );
 
-        setEnrolledCourses(formattedCourses);
+              return {
+                id: enrollment.courseId,
+                title: enrollment.title,
+                thumbnail: enrollment.thumbnail,
+                category: enrollment.category,
+                level: enrollment.level,
+                description: enrollment.description,
+                completedLectures: progressResponse.data.completedLectures,
+                totalLectures: progressResponse.data.totalLectures,
+                progressRate: progressResponse.data.progressRate,
+                isCompleted: progressResponse.data.progressRate === 100
+              };
+            } catch (error) {
+              console.error(`Error fetching progress for course ${enrollment.courseId}:`, error);
+              return enrollment;
+            }
+          })
+        );
+
+        console.log('Courses with progress:', coursesWithProgress);
+        setEnrolledCourses(coursesWithProgress);
       } catch (error) {
         console.error('Error loading student data:', error);
       }
