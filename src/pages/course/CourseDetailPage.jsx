@@ -1,20 +1,18 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {useNavigate, useParams} from 'react-router-dom';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
-import {toast} from 'react-toastify';
-import {LoadingSpinner} from '../../shared/components/common/LoadingSpinner';
-import {CourseService} from '../../infrastructure/services/CourseService';
+import { toast } from 'react-toastify';
+import { LoadingSpinner } from '../../shared/components/common/LoadingSpinner';
+import { CourseService } from '../../infrastructure/services/CourseService';
 import CourseDetailTabs from './components/CourseDetailTabs';
 import InstructorSection from './components/InstructorSection';
-import {AddToCartButton, EnrollButton, Pagination} from '../../shared/components/common/Pagination';
-import {reviewService} from "../../infrastructure/services/ReviewService";
-import OnLoadMorePagination from "../../shared/components/common/OnLoadMorePagination";
-import {getCourseImage} from "../../shared/utils/imageUtils";
-import {cartService} from "../../infrastructure/services/CartService"; // import
+import { cartService } from '../../infrastructure/services/CartService';
 import 'react-quill/dist/quill.snow.css';
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
-import {faHeart} from '@fortawesome/free-solid-svg-icons';
-import {useSelector} from "react-redux";
+import { getCourseImage } from '../../shared/utils/imageUtils';
+import { reviewService } from "../../infrastructure/services/ReviewService";
+import OnLoadMorePagination from "../../shared/components/common/OnLoadMorePagination";
+import LikeButton from '../course/LikeButton';
+import { useSelector } from "react-redux";
 
 function CourseDetailPage() {
   const { id } = useParams();
@@ -26,7 +24,7 @@ function CourseDetailPage() {
   const [activeTab, setActiveTab] = useState('curriculum');
   const [message, setMessage] = useState('');
   const [courseImage, setCourseImage] = useState('');
-  const user = localStorage.getItem( 'idToken' );
+  const user = localStorage.getItem('idToken');
   const [reviewContent, setReviewContent] = useState('');
   const [reviewRating, setReviewRating] = useState(1);
   const selectRef = useRef(null);
@@ -38,111 +36,168 @@ function CourseDetailPage() {
   const [editRatingWidth, setEditRatingWidth] = useState('6rem');
 
 
-  const fetchCourseData = useCallback(async () => {
-    try {
-      const courseData = await CourseService.getCourseById(parseInt(id));
-      const reviewData = await reviewService.getReviewsByCourse(parseInt(id), currentPage);
+  const fetchCourseData = useCallback(
+      async (resetReviews = false) => {
+        try {
+          const courseData = await CourseService.getCourseById(parseInt(id));
+          const reviewData = await reviewService.getReviewsByCourse(parseInt(id), currentPage);
 
-      setCourse(courseData);
-      setReviews(reviewData.reviews);
-      setTotalPages(reviewData.totalPages);
-      setMessage(reviewData.message);
+          console.log( reviewData ); // 로그 확인
 
-      // 강의 이미지 로직 추가
-      setCourseImage(getCourseImage(courseData));
+          setCourse(courseData);
 
-    } catch (error) {
-      toast.error('강좌 정보를 불러오는데 실패했습니다.');
-    }
-  }, [id, currentPage]);
+          // reviews 배열이 있는지 확인 후 처리
+          if (reviewData && reviewData.reviews) {
+            setReviews((prevReviews) => {
+              if (resetReviews || currentPage === 1) {
+                return [...reviewData.reviews];
+              }
+              const combinedReviews = [...prevReviews, ...reviewData.reviews];
+              return Array.from(new Set(combinedReviews.map((review) => review.id))).map((id) =>
+                  combinedReviews.find((review) => review.id === id)
+              );
+            });
+          } else {
+            // reviews 배열이 없을 경우 빈 배열 처리 또는 에러 처리
+            setReviews([]);
+            console.error("reviews 배열이 없습니다.")
+          }
+          setTotalPages(reviewData?.totalPages || 0); // totalPages 설정 (null 또는 undefined 대비)
+          setMessage(reviewData?.message || ''); // message 설정 (null 또는 undefined 대비)
+          setCourseImage(getCourseImage(courseData));
+
+        } catch (error) {
+          toast.error('강좌 정보를 불러오는데 실패했습니다.');
+        }
+      },
+      [id, currentPage] // currentPage를 디펜던시로 추가
+  );
 
   useEffect(() => {
     fetchCourseData();
   }, [fetchCourseData]);
 
-  const handleAddToCart = async (user, course) => {
-    try{
-      const res = await cartService.addToCart( user, course.id );
-      if (res.success) {
-        alert(res.message); // 성공 메시지 표시
-      } else {
-        // 에러 타입에 따른 처리
-        switch (res.type) {
-          case 'AUTH_ERROR':
-            // 로그인 페이지로 리다이렉트하거나 로그인 모달 표시
-            break;
-          case 'DUPLICATE_ERROR':
-            // 중복 알림 표시
-            break;
-          case 'RUNTIME_ERROR':
-          case 'NETWORK_ERROR':
-            // 일반 에러 메시지 표시
-            break;
-        }
-        alert(res.message);
-      }
-    }catch(error){
-      alert('장바구니에 동일한 강좌가 있습니다.');
-    }
-  };
+  // 수강평 작성 중 글자 수 계산
+  const countText = useCallback((text) => {
+    if (!text) return 0;
+    const textWithoutSpace = text.replace(/\s/g, '').replace(/[\n\r]/g, '');
+    return textWithoutSpace.length;
+  }, []);
 
-  const handleLoadMore = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(prevPage => prevPage + 1);
-    }
-  };
-
-  const handleLike = async (review) => {
-    const likeStatus = await reviewService.getLikeStatus(review.id);
-    //console.log("like : " + JSON.stringify(likeStatus));
-    //console.log("course : " + JSON.stringify(course));
-    console.log( "review Info : " + JSON.stringify(review) );
-  };
-
+  // 수강평 제출
   const handleReviewSubmit = async (user, course, reviewContent, reviewRating) => {
-    if (!reviewContent || reviewContent.length > 200 ) {
-      alert("수강평은 1자 이상 50자 이하로 작성해야 합니다.")
+    if (!reviewContent || reviewContent.length > 50) {
+      alert('수강평은 1자 이상 50자 이하로 작성해야 합니다.');
       return;
     }
-    if(!reviewRating){
-      alert("평점을 선택해주세요.");
+    if (!reviewRating) {
+      alert('평점을 선택해주세요.');
       return;
     }
 
     try {
-      const res = await reviewService.createReview(user, course,reviewContent,reviewRating);
+      const res = await reviewService.createReview(user, course, reviewContent, reviewRating);
       if (res.success) {
         alert(res.message);
+        setReviewContent('');
+        setReviewRating(1);
+        document.getElementById('reviewCount').innerText = `0/50`;
+        setCurrentPage(1);
+        await fetchCourseData(true);
       }
-      setReviewContent("");
-      setReviewRating(1)
-      document.getElementById("reviewCount").innerText = `0/50`;
-      fetchCourseData();
     } catch (error) {
-      alert("수강평 등록에 실패했습니다.");
+      alert('수강평 등록에 실패했습니다.');
     }
   };
 
-  const countText = useCallback((text) => {
-    if (!text) return 0;
-    const textWithoutSpace = text.replace(/\s/g, '').replace(/[\n\r]/g, ''); // 공백 및 줄바꿈 제거
-    return textWithoutSpace.length;
-  }, []);
+  const handleEditReview = async (review) => {
+    if (!editReviewContent || editReviewContent.length > 50) {
+      alert('수강평은 1자 이상 50자 이하로 작성해야 합니다.');
+      return;
+    }
+    if (!editReviewRating) {
+      alert('평점을 선택해주세요.');
+      return;
+    }
+
+    try {
+      const res = await reviewService.updateReview(review.id, user, editReviewContent, editReviewRating);
+      if (res.success) {
+        alert(res.message);
+
+        // 수정된 리뷰 데이터 가져오기
+        const updatedReview = {...review, content: editReviewContent, rating: editReviewRating}
+
+        setReviews((prevReviews) => {
+          return prevReviews.map(prevReview => {
+            if (prevReview.id === review.id) {
+              return updatedReview // 수정된 리뷰 데이터로 업데이트
+            }
+            return prevReview
+          });
+        });
+
+        setEditReviewId(null);
+        setEditReviewContent('');
+        setEditReviewRating(1);
+      }
+    } catch (error) {
+      alert('수강평 수정에 실패했습니다.');
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    try {
+      const res = await reviewService.deleteReview(reviewId, user);
+      if (res.success) {
+        alert(res.message);
+        setCurrentPage(1);
+        await fetchCourseData(true);
+      } else {
+        alert(res.message);
+      }
+    } catch (error) {
+      alert('수강평 삭제에 실패했습니다.');
+    }
+  };
 
   const handleReviewContentChange = (e, isEdit = false) => {
     const currentReviewContent = e.target.value;
     const count = countText(currentReviewContent);
-    if(count <= 50){
+    if (count <= 50) {
       if (isEdit) {
         setEditReviewContent(currentReviewContent);
       } else {
         setReviewContent(currentReviewContent);
       }
-      document.getElementById(isEdit ? "editReviewCount" : "reviewCount").innerText = `${count}/50`;
+      document.getElementById(isEdit ? 'editReviewCount' : 'reviewCount').innerText = `${count}/50`;
     } else {
-      toast.warn("수강평은 최대 50자까지 작성 가능합니다."); // 경고 메시지 표시
+      toast.warn('수강평은 최대 50자까지 작성 가능합니다.');
     }
-  }
+  };
+
+  const handleAddToCart = async (user, course) => {
+    try {
+      const res = await cartService.addToCart(user, course.id);
+      if (res.success) {
+        alert(res.message);
+      } else {
+        switch (res.type) {
+          case 'AUTH_ERROR':
+            navigate('/auth/login');
+            break;
+          case 'DUPLICATE_ERROR':
+            alert('이미 장바구니에 추가된 강좌입니다.');
+            break;
+          default:
+            alert(res.message);
+        }
+      }
+    } catch (error) {
+      alert('장바구니 추가 중 오류가 발생했습니다.');
+    }
+  };
+
   const handleRatingChange = (e) => {
     const newRating = Number(e.target.value);
     setReviewRating(newRating);
@@ -161,70 +216,34 @@ function CourseDetailPage() {
 
   useEffect(() => {
     handleEditRatingChange({ target: { value: editReviewRating } });
-  }, [editReviewId,selectRef]);
-
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
-  };
-
-  const handleEditReview = async (review) => {
-    try {
-      const res = await reviewService.updateReview(review.id, {
-        content: editReviewContent,
-        rating: editReviewRating
-      });
-      if (res.success) {
-        alert(res.message);
-        await fetchCourseData();
-        setEditReviewId(null)
-        setEditReviewContent("");
-        setEditReviewRating(1);
-      } else {
-        alert(res.message);
-      }
-    }catch(error){
-      alert("수강평 수정에 실패했습니다.");
-    }
-  }
-
-  const handleDeleteReview = async (reviewId) => {
-    try {
-      const res = await reviewService.deleteReview(reviewId, user);
-      if (res.success) {
-        alert(res.message);
-        setReviews((prevReviews) => prevReviews.filter((review) => review.id !== reviewId));
-        await fetchCourseData();
-
-      } else {
-        alert(res.message);
-      }
-    } catch (error) {
-      alert("수강평 삭제에 실패했습니다.");
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditReviewId(null);
-    setEditReviewContent("");
-    setEditReviewRating(1);
-    setEditRatingWidth('6rem');
-  };
+  }, [editReviewId, selectRef]);
 
   const handleEditClick = (review) => {
     setEditReviewId(review.id);
     setEditReviewContent(review.content);
     setEditReviewRating(review.rating);
-    setEditRatingWidth(`${(review.rating * 1.25) + 4}rem`)
+    setEditRatingWidth(`${(review.rating * 1.25) + 4}rem`);
   };
 
+  const handleCancelEdit = () => {
+    setEditReviewId(null);
+    setEditReviewContent('');
+    setEditReviewRating(1);
+    setEditRatingWidth('6rem');
+  };
+  const handleLoadMore = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prevPage) => prevPage + 1);
+    }
+  };
 
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 
   return (
       !course ? (<LoadingSpinner/>) :
@@ -281,7 +300,7 @@ function CourseDetailPage() {
                         <LectureList>
                           {course.lectures.map((lecture) => (
                               <LectureItem key={lecture.id}>
-                                <LectureItemHr/>
+                                <LectureItemHr />
                                 <LectureOrderIndex>{lecture.orderIndex}강</LectureOrderIndex>
                                 <LectureTitle>강의명 :{lecture.title}</LectureTitle>
                                 <LectureDuration>영상 시간: {lecture.duration}</LectureDuration>
@@ -327,85 +346,81 @@ function CourseDetailPage() {
                               </div>
                               <SubmitButton
                                   onClick={() => handleReviewSubmit(user, course, reviewContent, reviewRating)}>등록</SubmitButton>
-                            </ReviewInputArea>
-                            <ObjectivesList>
-                              {reviews.length === 0 ? (
-                                  <div>{message}</div>
-                              ) : (
-                                  reviews.map(review => (
-                                      <ObjectiveItem key={review.id}>
-                                        {editReviewId === review.id ? (
-                                            <ReviewEditArea>
-                                              <div className="flex justify-between items-center">
-                                                <ReviewInputLabel>수강평 수정</ReviewInputLabel>
-                                                <RatingSelectWrapper>
-                                                  <RatingSelect
-                                                      ref={selectRef}
-                                                      style={{
-                                                        width: editRatingWidth,
-                                                        minWidth: '6rem'
-                                                      }}
-                                                      value={editReviewRating}
-                                                      onChange={handleEditRatingChange}
-                                                  >
-                                                    <option value={1}>★</option>
-                                                    <option value={2}>★★</option>
-                                                    <option value={3}>★★★</option>
-                                                    <option value={4}>★★★★</option>
-                                                    <option value={5}>★★★★★</option>
-                                                  </RatingSelect>
-                                                </RatingSelectWrapper>
-                                              </div>
-                                              <ReviewTextarea
-                                                  value={editReviewContent}
-                                                  onChange={(e) => handleReviewContentChange(e, true)}
-                                                  placeholder="수강평을 작성해주세요"
-                                              />
-                                              <div className="flex justify-end mt-1">
-                                                <div className="text-gray-500 text-sm" id="editReviewCount">0/50</div>
-                                              </div>
-                                              <EditDeleteButtonContainer style={{justifyContent: 'flex-end'}}>
-                                                <EditButton onClick={() => handleEditReview(review)}>저장</EditButton>
-                                                <DeleteButton onClick={() => handleCancelEdit()}>취소</DeleteButton>
+                            </ReviewInputArea></>) : null}
+                      <ObjectivesList>
+                        {reviews.length === 0 ? (
+                            <div>{message}</div>
+                        ) : (
+                            reviews.map(review => (
+                                <ObjectiveItem key={review.id}>
+                                  {editReviewId === review.id ? (
+                                      <ReviewEditArea>
+                                        <div className="flex justify-between items-center">
+                                          <ReviewInputLabel>수강평 수정</ReviewInputLabel>
+                                          <RatingSelectWrapper>
+                                            <RatingSelect
+                                                ref={selectRef}
+                                                style={{
+                                                  width: editRatingWidth,
+                                                  minWidth: '6rem'
+                                                }}
+                                                value={editReviewRating}
+                                                onChange={handleEditRatingChange}
+                                            >
+                                              <option value={1}>★</option>
+                                              <option value={2}>★★</option>
+                                              <option value={3}>★★★</option>
+                                              <option value={4}>★★★★</option>
+                                              <option value={5}>★★★★★</option>
+                                            </RatingSelect>
+                                          </RatingSelectWrapper>
+                                        </div>
+                                        <ReviewTextarea
+                                            value={editReviewContent}
+                                            onChange={(e) => handleReviewContentChange(e, true)}
+                                            placeholder="수강평을 작성해주세요"
+                                        />
+                                        <div className="flex justify-end mt-1">
+                                          <div className="text-gray-500 text-sm" id="editReviewCount">0/50</div>
+                                        </div>
+                                        <EditDeleteButtonContainer style={{justifyContent: 'flex-end'}}>
+                                          <EditButton onClick={() => handleEditReview(review)}>저장</EditButton>
+                                          <DeleteButton onClick={() => handleCancelEdit()}>취소</DeleteButton>
+                                        </EditDeleteButtonContainer>
+                                      </ReviewEditArea>
+                                  ) : (
+                                      <>
+                                        <div className="flex justify-between">
+                                          <ReviewWriter>{review.writer}</ReviewWriter>
+                                          <ReviewDate>
+                                            {formatDate(review.createdAt)}
+                                          </ReviewDate>
+                                        </div>
+                                        <ReviewContent>{review.content}</ReviewContent>
+                                        <div className="flex justify-between">
+                                          <ReviewRating>
+                                            {'★'.repeat(review.rating)}{''}
+                                            {'☆'.repeat(5 - review.rating)}
+                                          </ReviewRating>
+                                          <LikeButton
+                                              reviewId={review.id}
+                                              fetchCourseData={fetchCourseData}
+                                          />
+                                        </div>
+                                        <div className="flex justify-end">
+                                          {userInfo.user && userInfo.user.name === review.writer && (
+                                              <EditDeleteButtonContainer>
+                                                <EditButton onClick={() => handleEditClick(review)}>수정</EditButton>
+                                                <DeleteButton onClick={() => handleDeleteReview(review.id)}>삭제</DeleteButton>
                                               </EditDeleteButtonContainer>
-                                            </ReviewEditArea>
-                                        ) : (
-                                            <>
-                                              <div className="flex justify-between">
-                                                <ReviewWriter>{review.writer}</ReviewWriter>
-                                                <ReviewDate>
-                                                  {formatDate(review.createdAt)}
-                                                </ReviewDate>
-                                              </div>
-                                              <ReviewContent>{review.content}</ReviewContent>
-                                              <div className="flex justify-between">
-                                                <ReviewRating>
-                                                  {'★'.repeat(review.rating)}{''}
-                                                  {'☆'.repeat(5 - review.rating)} {/* 5점 만점으로 별 표시 */}
-                                                </ReviewRating>
-                                                <LikeButton onClick={() => handleLike(review)}>
-                                                  <FontAwesomeIcon icon={faHeart}
-                                                                   style={{color: '#ff6b6b', marginRight: '0.3rem'}}/>
-                                                  <span>{review.likesCount}</span>
-                                                </LikeButton>
-                                              </div>
-                                              <div className="flex justify-end">
-                                                {userInfo.user && userInfo.user.name === review.writer && (
-                                                    <EditDeleteButtonContainer>
-                                                      <EditButton onClick={() => handleEditClick(review)}>수정</EditButton>
-                                                      <DeleteButton onClick={() => handleDeleteReview(review.id)}>삭제</DeleteButton>
-                                                    </EditDeleteButtonContainer>
-                                                )}
-                                              </div>
-                                            </>
-                                        )}
-                                      </ObjectiveItem>
-                                  ))
-                              )}
-                            </ObjectivesList>
-
-                          </>) : null}
-
+                                          )}
+                                        </div>
+                                      </>
+                                  )}
+                                </ObjectiveItem>
+                            ))
+                        )}
+                      </ObjectivesList>
                       <OnLoadMorePagination
                           currentPage={currentPage}
                           totalPages={totalPages}
@@ -423,13 +438,13 @@ function CourseDetailPage() {
                   <PriceInfo>
                     <CurrentPrice>₩{course.price.toLocaleString()}</CurrentPrice>
                     <ButtonGroup>
-                      <AddToCartButton onClick={() => handleAddToCart(user, course)}>
+                      <CartButton onClick={() => handleAddToCart(user, course)}>
                         장바구니에 담기
-                      </AddToCartButton>
+                      </CartButton>
                       {course.price !== 0 && (
-                          <EnrollButton onClick={() => navigate(`/checkout/${course.id}`)}>
+                          <BuyButton onClick={() => navigate(`/checkout/${course.id}`)}>
                             바로 구매하기
-                          </EnrollButton>
+                          </BuyButton>
                       )}
                     </ButtonGroup>
                   </PriceInfo>
@@ -439,7 +454,6 @@ function CourseDetailPage() {
           </PageContainer>
   );
 }
-
 const PageContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -653,7 +667,6 @@ const ButtonGroup = styled.div`
   gap: 1rem;
 `;
 
-
 const CartButton = styled.button`
   width: 100%;
   padding: 0.75rem 1.5rem;
@@ -759,7 +772,6 @@ const RatingSelect = styled.select`
   width: ${props => props.width};
 `;
 
-
 const SubmitButton = styled.button`
   background-color: #1971C2; /* 녹색 */
   color: white; /* 글자색 */
@@ -789,29 +801,6 @@ const ReviewContent = styled.p`
 const ReviewRating = styled.div`
   margin-top: 5px;
   color: #ffc107; // Gold color for rating stars
-`;
-
-const LikeButton = styled.div`
-  background-color: transparent; /* 좋아요 버튼 배경색 */
-  color: white; /* 글자색 */
-  border: none; /* 테두리 없음 */
-  border-radius: 5px; /* 모서리 둥글게 */
-  padding: 10px 15px; /* 패딩 */
-  cursor: pointer; /* 커서 모양 변경 */
-  font-size: 16px; /* 글자 크기 */
-  transition: background-color 0.3s; /* 배경색 변화 애니메이션 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-
-  &:hover {
-    background-color: transparent; /* 호버 시 배경색 변화 */
-  }
-
-  &:active {
-    background-color: transparent; /* 클릭 시 배경색 변화 */
-  }
 `;
 
 const ReviewDate = styled.div`
@@ -863,5 +852,6 @@ const ReviewEditArea = styled.div`
   padding: 15px;
   border-radius: 8px;
 `;
+
 
 export default CourseDetailPage;
