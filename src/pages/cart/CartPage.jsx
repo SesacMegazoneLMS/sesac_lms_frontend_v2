@@ -7,6 +7,7 @@ import {OrderService, PaymentService} from '../../infrastructure/services/Course
 import {toast} from 'react-toastify';
 import {cartService} from "../../infrastructure/services/CartService";
 import {getCourseImage} from "../../shared/utils/imageUtils";
+import cartCount from "../../store/actions/cartActions"; // cartCount 임포트
 
 function CartPage() {
   const user = localStorage.getItem("idToken");
@@ -36,6 +37,7 @@ function CartPage() {
           setCartItems(prevItems => prevItems.filter((_, index) => !selectedIndexes.includes(index)));
           setSelectedItems({});
           alert('선택한 강좌가 삭제되었습니다.');
+          dispatch(cartCount()); // 추가: cartCount dispatch
         }
       }catch (error){
         toast.error('선택한 강좌 삭제 실패');
@@ -49,17 +51,21 @@ function CartPage() {
       toast.error('장바구니가 비어있습니다.');
       return;
     }
+
     if (window.confirm('장바구니의 모든 강좌를 삭제하시겠습니까?')) {
-      try{
-        // 모든 인덱스를 가져와 delete 요청 보내기
+      try {
         const allIndexes = cartItems.map((_, index) => index);
         const res = await cartService.deleteFromCart(allIndexes);
-        if(res){
+
+        if(res) {
+          alert('장바구니의 모든 강좌가 삭제되었습니다.');
+          await dispatch(cartCount());
+
           setCartItems([]);
           setSelectedItems({});
-          alert('장바구니의 모든 강좌가 삭제되었습니다.');
         }
-      }catch (error){
+
+      } catch (error) {
         toast.error('장바구니 삭제 실패');
         console.log(error);
       }
@@ -77,6 +83,7 @@ function CartPage() {
           delete newSelection[index];
           setSelectedItems(newSelection);
           alert('선택한 강좌가 삭제되었습니다.');
+          dispatch(cartCount()); // 추가: cartCount dispatch
           return newItems;
         })
       }

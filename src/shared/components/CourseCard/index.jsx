@@ -4,6 +4,8 @@ import { useDispatch } from 'react-redux';
 import { cartService } from '../../../infrastructure/services/CartService';
 import { getCourseImage } from '../../utils/imageUtils'; // import
 import axios from 'axios';  // axios 추가
+import cartCount from "../../../store/actions/cartActions"; // cartCount import
+
 
 const CourseCard = ({ course, type = 'course' }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -16,6 +18,8 @@ const CourseCard = ({ course, type = 'course' }) => {
   const isEnrolled = type === 'enrolled';
   const isCart = type === 'cart';
   const user = localStorage.getItem('idToken');
+  const dispatch = useDispatch();
+
 
   useEffect(() => {
     // 수강 중인 강좌일 때만 강의 진행률 정보를 가져옴
@@ -27,12 +31,12 @@ const CourseCard = ({ course, type = 'course' }) => {
   const fetchLectureProgress = async () => {
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_API_URL}/api/courses/${course.id}/progress`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('idToken')}`
+          `${process.env.REACT_APP_BACKEND_API_URL}/api/courses/${course.id}/progress`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('idToken')}`
+            }
           }
-        }
       );
 
       console.log('Progress response:', response.data); // 데이터 확인용 로그
@@ -52,11 +56,12 @@ const CourseCard = ({ course, type = 'course' }) => {
 
   if (!course) return null;
 
-  const handleAddToCart = async (user, course) => {
+  const handleAddToCart = async (course) => {
     try{
-      const res = await cartService.addToCart( user,course.id );
+      const res = await cartService.addToCart(user, course.id);
       if (res.success) {
         alert(res.message); // 성공 메시지 표시
+        dispatch(cartCount()); // 추가: cartCount dispatch
       } else {
         // 에러 타입에 따른 처리
         switch (res.type) {
@@ -145,52 +150,47 @@ const CourseCard = ({ course, type = 'course' }) => {
               </>
           )}
 
-        <div className="flex justify-between items-center">
-          <div className="flex flex-col">
-            {!isNaN(course.price) && (
-              <>
+          <div className="flex justify-between items-center">
+            <div className="flex flex-col">
+              {!isNaN(course.price) && (
+                  <>
                 <span className="text-sm text-gray-500 line-through">
                   ₩{(course.price * 1.2)?.toLocaleString()}
                 </span>
-                <span className={`font-bold text-[#1e40af] ${isCart ? 'text-base' : 'text-lg'}`}>
+                    <span className={`font-bold text-[#1e40af] ${isCart ? 'text-base' : 'text-lg'}`}>
                   ₩{course.price?.toLocaleString() ?? 0}
                 </span>
-              </>
-            )}
+                  </>
+              )}
+            </div>
           </div>
-          {/* {!isCart && (
-                <div className="text-xs bg-[#fff7ed] text-[#ea580c] px-2 py-1 rounded">
-                  {course.totalLectures}개 강의
-                </div>
-            )} */}
-        </div>
 
 
-        {/* 25.01.03 홍인표 작성. 수강 중인 강좌의 진행률을 표시하는 코드 */}
-        {isEnrolled && (
-          <div className="mt-2">
-            <div className="flex items-center justify-between text-sm text-gray-500">
-              <span>진행률: {lectureProgress.progressPercent}%</span>
-              <span>
+          {/* 25.01.03 홍인표 작성. 수강 중인 강좌의 진행률을 표시하는 코드 */}
+          {isEnrolled && (
+              <div className="mt-2">
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                  <span>진행률: {lectureProgress.progressPercent}%</span>
+                  <span>
                 {lectureProgress.completedCount}/{lectureProgress.totalCount} 강의
               </span>
-            </div>
-            <div className="mt-1 h-2 bg-gray-200 rounded-full">
-              <div
-                className="h-full bg-green-500 rounded-full"
-                style={{ width: `${lectureProgress.progressPercent}%` }}
-              />
-            </div>
-            {lectureProgress.completedCount === lectureProgress.totalCount &&
-              lectureProgress.totalCount > 0 && (
-                <span className="mt-1 inline-block px-2 py-1 text-xs text-green-700 bg-green-100 rounded">
+                </div>
+                <div className="mt-1 h-2 bg-gray-200 rounded-full">
+                  <div
+                      className="h-full bg-green-500 rounded-full"
+                      style={{ width: `${lectureProgress.progressPercent}%` }}
+                  />
+                </div>
+                {lectureProgress.completedCount === lectureProgress.totalCount &&
+                    lectureProgress.totalCount > 0 && (
+                        <span className="mt-1 inline-block px-2 py-1 text-xs text-green-700 bg-green-100 rounded">
                   수강 완료
                 </span>
-              )}
-          </div>
-        )}
+                    )}
+              </div>
+          )}
+        </div>
       </div>
-    </div>
   );
 };
 

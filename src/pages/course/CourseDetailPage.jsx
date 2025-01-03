@@ -12,7 +12,9 @@ import { getCourseImage } from '../../shared/utils/imageUtils';
 import { reviewService } from "../../infrastructure/services/ReviewService";
 import OnLoadMorePagination from "../../shared/components/common/OnLoadMorePagination";
 import LikeButton from '../course/LikeButton';
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import cartCount from "../../store/actions/cartActions";
+import axios from "axios"; // cartCount 임포트
 
 function CourseDetailPage() {
   const { id } = useParams();
@@ -34,6 +36,10 @@ function CourseDetailPage() {
   const [editReviewContent, setEditReviewContent] = useState('');
   const [editReviewRating, setEditReviewRating] = useState(1);
   const [editRatingWidth, setEditRatingWidth] = useState('6rem');
+  const dispatch = useDispatch(); // useDispatch 훅 추가
+  const [instructorInfo, setInstructorInfo] = useState([]);
+
+  const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 
 
   const fetchCourseData = useCallback(
@@ -42,7 +48,7 @@ function CourseDetailPage() {
           const courseData = await CourseService.getCourseById(parseInt(id));
           const reviewData = await reviewService.getReviewsByCourse(parseInt(id), currentPage);
 
-          console.log( reviewData ); // 로그 확인
+          console.log( "courseData : " + JSON.stringify(courseData) ); // 로그 확인
 
           setCourse(courseData);
 
@@ -181,6 +187,7 @@ function CourseDetailPage() {
       const res = await cartService.addToCart(user, course.id);
       if (res.success) {
         alert(res.message);
+        dispatch(cartCount()); // 추가: cartCount dispatch
       } else {
         switch (res.type) {
           case 'AUTH_ERROR':
@@ -245,6 +252,24 @@ function CourseDetailPage() {
     return `${year}-${month}-${day}`;
   }
 
+  const instructorInfos = async (course) => {
+    try{
+      if(course){
+        const res = await axios.get(`${API_URL}/api/courses/instructor/${course.instructorId}`);
+        console.log("강사 : " + JSON.stringify(res.data[0]));
+        setInstructorInfo(res.data[0]);
+      }
+    }catch(error){
+      console.error(error);
+    }
+  }
+
+  useEffect(() => {
+    if (course) {
+      instructorInfos(course);
+    }
+  }, [course]);
+
   return (
       !course ? (<LoadingSpinner/>) :
           <PageContainer>
@@ -270,7 +295,6 @@ function CourseDetailPage() {
                               )}
                         </ObjectivesList>
                       </ObjectivesSection>
-
                       <RequirementsSection>
                         <SectionTitle>수강 전 필요한 것들</SectionTitle>
                         <RequirementsList>
@@ -429,7 +453,7 @@ function CourseDetailPage() {
                     </ReviewsSection>
                 )}
                 {activeTab === 'instructor' && (
-                    <InstructorSection instructor={course.user}/>
+                    <InstructorSection instructor={instructorInfo}/>
                 )}
               </CourseInfoSection>
               <PurchaseSection>
