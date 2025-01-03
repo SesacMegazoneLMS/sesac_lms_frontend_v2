@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
   FiUsers, FiBookOpen, FiDollarSign, FiStar,
-  FiTrendingUp, FiActivity, FiMessageCircle, FiPlus, FiEdit2, FiSave, FiUpload
+  FiTrendingUp, FiTrendingDown, FiActivity, FiMessageCircle, FiPlus, FiEdit2, FiSave, FiUpload
 } from 'react-icons/fi';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Tooltip as CustomTooltip } from 'react-tooltip'; // 추가
 import toast, { Toaster, useToasterStore } from 'react-hot-toast';
 import { StatsService } from '../../infrastructure/services/StatisticsService';
 import InstructorMyPage from '../instructor/InstructorMyPage';
@@ -19,11 +20,15 @@ function InstructorDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({
     totalStudents: 0,
-    totalCourses: 0,
+    activeCourses: 0,
     totalRevenue: 0,
-    monthlyRevenue: 0,
     averageRating: 0,
-    completionRate: 0,
+    monthlyStats: {
+      revenue: 0,
+      newStudents: 0,
+      averageRating: 0
+    },
+    monthlyRevenue: [],
     totalStudentsTrend: {
       value: 0,
       trend: 0,
@@ -41,6 +46,32 @@ function InstructorDashboard() {
       trend: 0,
       trendType: 'NO_CHANGE',
       isNew: false
+    },
+    studentsDetail: {
+      total: 0,
+      currentMonth: 0,
+      previousMonth: 0,
+      trend: {
+        value: 0,
+        trend: 0,
+        trendType: 'NO_CHANGE',
+        isNew: false
+      },
+      currentMonthLabel: '',
+      previousMonthLabel: ''
+    },
+    revenueDetail: {
+      total: 0,
+      currentMonth: 0,
+      previousMonth: 0,
+      trend: {
+        value: 0,
+        trend: 0,
+        trendType: 'NO_CHANGE',
+        isNew: false
+      },
+      currentMonthLabel: '',
+      previousMonthLabel: ''
     }
   });
 
@@ -76,12 +107,12 @@ function InstructorDashboard() {
   const fetchInstructorProfile = useCallback(async () => {
     try {
       const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_API_URL}/api/users/profile/instructor`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("idToken")}`
-            }
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/users/profile/instructor`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("idToken")}`
           }
+        }
       );
 
       const { profile } = response.data;
@@ -107,12 +138,12 @@ function InstructorDashboard() {
   const requestMyCourses = async (page = 1, size = coursesPerPage) => {
     try {
       const res = await axios.get(
-          `${process.env.REACT_APP_BACKEND_API_URL}/api/courses/instructor/me?page=${page}&size=${size}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("idToken")}`
-            }
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/courses/instructor/me?page=${page}&size=${size}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("idToken")}`
           }
+        }
       );
       console.log("myCourseList : " + res.data.myCourseList);
       setRecentCourses(res.data.myCourseList);
@@ -141,52 +172,14 @@ function InstructorDashboard() {
         await fetchInstructorProfile();
 
         const data = await StatsService.getInstructorStats();
-        console.log("Backend response:", data.statistics);
+        console.log("Backend response:", data);
 
         // 월별 수익 데이터 가공
-        const revenueChartData = data.statistics.monthlyRevenue.map(item => ({
+        const revenueChartData = (data.monthlyRevenue || []).map(item => ({
           month: formatMonth(item.yearMonth),
-          revenue: Number(item.revenue),
-          yearMonth: item.yearMonth // 정렬용
+          revenue: Number(item.revenue || 0),
+          yearMonth: item.yearMonth
         }));
-
-        const stats = {
-          totalStudents: data.statistics.totalStudents,
-          totalCourses: data.statistics.activeCourses,
-          totalRevenue: data.statistics.totalRevenue,
-          averageRating: data.statistics.averageRating,
-          monthlyRevenue: data.statistics.monthlyStats?.revenue || 0,
-          totalStudentsTrend: data.statistics.totalStudentsTrend,
-          monthlyRevenueTrend: data.statistics.monthlyRevenueTrend,
-          averageRatingTrend: data.statistics.averageRatingTrend
-        }
-
-        const mockEnrollments = [
-          {
-            id: 1,
-            studentName: "김철수",
-            courseName: "React 완벽 가이드",
-            date: "2024-03-20",
-            profileImage: "/default-avatar.png"
-          },
-        ];
-
-        const mockReviews = [
-          {
-            id: 1,
-            studentName: "이영희",
-            courseName: "React 완벽 가이드",
-            rating: 5,
-            content: "정말 유익한 강의였습니다. 무에서 바로 적용할 수 있는 내용이라 좋았어요.",
-            date: "2024-03-19"
-          },
-        ];
-
-        const mockRevenueData = [
-          { month: '1월', revenue: 500000 },
-          { month: '2월', revenue: 700000 },
-          { month: '3월', revenue: 800000 },
-        ];
 
         const mockQuizzes = [
           {
@@ -207,7 +200,7 @@ function InstructorDashboard() {
           }
         ];
 
-        setStats(stats);
+        setStats(data);
         setRevenueData(revenueChartData);
         setQuizzes(mockQuizzes);
 
@@ -251,16 +244,22 @@ function InstructorDashboard() {
       await StatsService.manualUpdate();
 
       const data = await StatsService.getInstructorStats();
-      setStats({
-        totalStudents: data.statistics.totalStudents,
-        totalCourses: data.statistics.activeCourses,
-        totalRevenue: data.statistics.totalRevenue,
-        averageRating: data.statistics.averageRating,
-        monthlyRevenue: data.statistics.monthlyStats?.revenue || 0,
-        totalStudentsTrend: data.statistics.totalStudentsTrend,
-        monthlyRevenueTrend: data.statistics.monthlyRevenueTrend,
-        averageRatingTrend: data.statistics.averageRatingTrend
-      });
+
+      const revenueChartData = (data.monthlyRevenue || []).map(item => ({
+        month: formatMonth(item.yearMonth),
+        revenue: Number(item.revenue || 0),
+        yearMonth: item.yearMonth
+      }));
+
+      setStats(data);
+
+      setRevenueData(revenueChartData);
+
+      const enrollmentData = await StatsService.getRecentEnrollments();
+      setRecentEnrollments(enrollmentData);
+
+      await requestMyCourses(currentPage, coursesPerPage);
+
       toast.success('통계가 성공적으로 업데이트되었습니다.');
     } catch (error) {
       console.log('통계 업데이트 실패: ', error);
@@ -276,16 +275,98 @@ function InstructorDashboard() {
     requestMyCourses(page, coursesPerPage); // 페이지 변경 시 데이터 요청
   };
 
-  const renderDashboardContent = () => (
+  const formatNumber = (num) => {
+    return new Intl.NumberFormat('ko-KR').format(num);
+  };
+
+  const renderDashboardContent = () => {
+
+    const renderStudentsTooltip = () => (
+      <div className="space-y-2">
+        <p className="font-bold text-base">총 수강생: {formatNumber(stats.studentsDetail.total)}명</p>
+        <div className="border-t pt-2">
+          <p className="text-xs text-gray-600">
+            {stats.studentsDetail.previousMonthLabel} 신규 수강생: {formatNumber(stats.studentsDetail.previousMonth)}명
+          </p>
+          <p className="text-xs text-gray-600">
+            {stats.studentsDetail.currentMonthLabel} 신규 수강생: {formatNumber(stats.studentsDetail.currentMonth)}명
+          </p>
+          <p className={`mt-1 text-xs ${stats.studentsDetail.trend.isNew ? "text-gray-500" :
+            stats.studentsDetail.trend.trend > 0 ? "text-green-500" :
+              stats.studentsDetail.trend.trend < 0 ? "text-red-500" :
+                "text-gray-500"
+            }`}>
+            전월대비: {' '}
+            <span className="inline-flex items-center">
+              {stats.studentsDetail.trend.isNew ? (
+                <span className="font-medium">NEW</span>
+              ) : stats.studentsDetail.trend.trend > 0 ? (
+                <>
+                  <FiTrendingUp className="mx-1 w-3 h-3" />
+                  {`+${stats.studentsDetail.trend.trend}%`}
+                </>
+              ) : stats.studentsDetail.trend.trend < 0 ? (
+                <>
+                  <FiTrendingDown className="mx-1 w-3 h-3" />
+                  {`${stats.studentsDetail.trend.trend}%`}
+                </>
+              ) : (
+                <span>변동 없음</span>
+              )}
+            </span>
+          </p>
+        </div>
+      </div>
+    );
+
+    const renderRevenueTooltip = () => (
+      <div className="space-y-2">
+        <p className="font-bold text-base">총 수익: {formatNumber(stats.revenueDetail.total)}원</p>
+        <div className="border-t pt-2">
+          <p className="text-xs text-gray-600">
+            {stats.revenueDetail.previousMonthLabel} 수익: {formatNumber(stats.revenueDetail.previousMonth)}원
+          </p>
+          <p className="text-xs text-gray-600">
+            {stats.revenueDetail.currentMonthLabel} 수익: {formatNumber(stats.revenueDetail.currentMonth)}원
+          </p>
+          <p className={`mt-1 text-xs ${stats.revenueDetail.trend.isNew ? "text-gray-500" :
+            stats.revenueDetail.trend.trend > 0 ? "text-green-500" :
+              stats.revenueDetail.trend.trend < 0 ? "text-red-500" :
+                "text-gray-500"
+            }`}>
+            전월대비: {' '}
+            <span className="inline-flex items-center">
+              {stats.revenueDetail.trend.isNew ? (
+                <span className="font-medium">NEW</span>
+              ) : stats.revenueDetail.trend.trend > 0 ? (
+                <>
+                  <FiTrendingUp className="mx-1 w-3 h-3" />
+                  {`+${stats.revenueDetail.trend.trend}%`}
+                </>
+              ) : stats.revenueDetail.trend.trend < 0 ? (
+                <>
+                  <FiTrendingDown className="mx-1 w-3 h-3" />
+                  {`${stats.revenueDetail.trend.trend}%`}
+                </>
+              ) : (
+                <span>변동 없음</span>
+              )}
+            </span>
+          </p>
+        </div>
+      </div>
+    );
+
+    return (
       <div className="space-y-6">
 
         {/* 강사 프로필 섹션 */}
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center space-x-4">
             <img
-                src={profileData.profileImage} // 기본 프로필 이미지 설정
-                alt={profileData.name}
-                className="w-16 h-16 rounded-full"
+              src={profileData.profileImage} // 기본 프로필 이미지 설정
+              alt={profileData.name}
+              className="w-16 h-16 rounded-full"
             />
             <div>
               <h1 className="text-2xl font-bold">
@@ -294,8 +375,8 @@ function InstructorDashboard() {
               <p className="text-gray-600">{profileData.bio}</p>
             </div>
             <Link
-                to="/instructor/profile"
-                className="ml-auto text-primary hover:text-primary-dark"
+              to="/instructor/profile"
+              className="ml-auto text-primary hover:text-primary-dark"
             >
               프로필 수정
             </Link>
@@ -308,16 +389,16 @@ function InstructorDashboard() {
               <h2 className="text-lg font-semibold">전문 분야</h2>
               <div className="flex flex-wrap gap-2">
                 {profileData.expertise.length > 0 ? (
-                    profileData.expertise.map((skill, index) => (
-                        <span
-                            key={index}
-                            className="bg-gray-100 rounded-full px-3 py-1 text-sm"
-                        >
-                                        {skill}
-                                    </span>
-                    ))
+                  profileData.expertise.map((skill, index) => (
+                    <span
+                      key={index}
+                      className="bg-gray-100 rounded-full px-3 py-1 text-sm"
+                    >
+                      {skill}
+                    </span>
+                  ))
                 ) : (
-                    <p className="text-gray-500">전문 분야가 아직 등록되지 않았습니다.</p>
+                  <p className="text-gray-500">전문 분야가 아직 등록되지 않았습니다.</p>
                 )}
               </div>
             </div>
@@ -328,69 +409,69 @@ function InstructorDashboard() {
               <div className="space-y-3">
                 {/* Website */}
                 <div className="flex items-center gap-2">
-                                <span className="w-6 h-6 flex-shrink-0 flex items-center justify-center">
-                                    🌐 {/* Web Site 아이콘 */}
-                                </span>
+                  <span className="w-6 h-6 flex-shrink-0 flex items-center justify-center">
+                    🌐 {/* Web Site 아이콘 */}
+                  </span>
                   <span className="font-semibold w-24">Web Site</span>
                   {profileData.socialLinks.website ? (
-                      <a
-                          href={profileData.socialLinks.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:text-primary-dark flex-1 truncate"
-                      >
-                        {profileData.socialLinks.website}
-                      </a>
+                    <a
+                      href={profileData.socialLinks.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary-dark flex-1 truncate"
+                    >
+                      {profileData.socialLinks.website}
+                    </a>
                   ) : (
-                      <span className="text-gray-400 flex-1">https://www.my-website.com</span>
+                    <span className="text-gray-400 flex-1">https://www.my-website.com</span>
                   )}
                 </div>
 
                 {/* LinkedIn */}
                 <div className="flex items-center gap-2">
-                                <span className="w-6 h-6 flex-shrink-0 flex items-center justify-center">
-                                    <img
-                                        src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linkedin/linkedin-original.svg"
-                                        alt="LinkedIn Icon"
-                                        className="w-5 h-5"
-                                    />
-                                </span>
+                  <span className="w-6 h-6 flex-shrink-0 flex items-center justify-center">
+                    <img
+                      src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linkedin/linkedin-original.svg"
+                      alt="LinkedIn Icon"
+                      className="w-5 h-5"
+                    />
+                  </span>
                   <span className="font-semibold w-24">LinkedIn</span>
                   {profileData.socialLinks.linkedin ? (
-                      <a
-                          href={profileData.socialLinks.linkedin}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:text-primary-dark flex-1 truncate"
-                      >
-                        {profileData.socialLinks.linkedin}
-                      </a>
+                    <a
+                      href={profileData.socialLinks.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary-dark flex-1 truncate"
+                    >
+                      {profileData.socialLinks.linkedin}
+                    </a>
                   ) : (
-                      <span className="text-gray-400 flex-1">https://linkedin.com/example</span>
+                    <span className="text-gray-400 flex-1">https://linkedin.com/example</span>
                   )}
                 </div>
 
                 {/* GitHub */}
                 <div className="flex items-center gap-2">
-                                <span className="w-6 h-6 flex-shrink-0 flex items-center justify-center" >
-                                    <img
-                                        src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg"
-                                        alt="GitHub Icon"
-                                        className="w-5 h-5"
-                                    />
-                                </span>
+                  <span className="w-6 h-6 flex-shrink-0 flex items-center justify-center" >
+                    <img
+                      src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg"
+                      alt="GitHub Icon"
+                      className="w-5 h-5"
+                    />
+                  </span>
                   <span className="font-semibold w-24">GitHub</span>
                   {profileData.socialLinks.github ? (
-                      <a
-                          href={profileData.socialLinks.github}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:text-primary-dark flex-1 truncate"
-                      >
-                        {profileData.socialLinks.github}
-                      </a>
+                    <a
+                      href={profileData.socialLinks.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary-dark flex-1 truncate"
+                    >
+                      {profileData.socialLinks.github}
+                    </a>
                   ) : (
-                      <span className="text-gray-400 flex-1">https://github.com/example</span>
+                    <span className="text-gray-400 flex-1">https://github.com/example</span>
                   )}
                 </div>
               </div>
@@ -399,55 +480,50 @@ function InstructorDashboard() {
           </div>
         </div>
 
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* 수동 업데이트 버튼 추가 */}
-        <div className="col-span-full flex justify-end mb-4">
-          <button
-            onClick={handleManualUpdate}
-            disabled={isLoading}
-            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
-          >
-            {isLoading ? '업데이트 중...' : '통계 수동 업데이트'}
-          </button>
+        {/* 통계 카드 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* 수동 업데이트 버튼 추가 */}
+          <div className="col-span-full flex justify-end mb-4">
+            <button
+              onClick={handleManualUpdate}
+              disabled={isLoading}
+              className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
+            >
+              {isLoading ? '업데이트 중...' : '통계 수동 업데이트'}
+            </button>
+          </div>
+          {/* 총 수강생 */}
+          <StatCard
+            title="총 수강생"
+            value={`${formatNumber(stats?.totalStudents || 0)}명`}
+            icon={<FiUsers />}
+            tooltipContent={renderStudentsTooltip()}
+          />
+
+          {/* 운영 중인 강좌 */}
+          <StatCard
+            title="운영 중인 강좌"
+            value={`${stats?.activeCourses || 0}개`}
+            icon={<FiBookOpen />}
+          />
+          {/* 이번 달 수익 */}
+          <StatCard
+            title="총 수익"
+            value={`${formatNumber(stats?.totalRevenue || 0)}원`}
+            icon={<FiDollarSign />}
+            tooltipContent={renderRevenueTooltip()}
+          />
+          <StatCard
+            title="평균 평점"
+            value={`${stats?.averageRating?.toFixed(1) || 0}점`}
+            icon={<FiStar />}
+            trend={stats?.averageRatingTrend
+              ? stats.averageRatingTrend.trend === 0
+                ? "변동 없음"
+                : `${stats.averageRatingTrend.trend > 0 ? '+' : ''}${stats.averageRatingTrend.trend.toFixed(1)} ${stats.averageRatingTrend.trendType === 'INCREASE' ? '상승' : '하락'}`
+              : "변동 없음"}
+          />
         </div>
-        {/* 총 수강생 */}
-        <StatCard
-          title="총 수강생"
-          value={`${stats?.totalStudents || 0}명`}
-          icon={<FiUsers />}
-          trend={stats?.totalStudentsTrend?.new  // isNew 대신 new로 수정
-            ? "NEW"
-            : stats?.totalStudentsTrend?.trend !== 0
-              ? `${stats.totalStudentsTrend.trend > 0 ? '+' : ''}${stats.totalStudentsTrend.trend}% ${stats.totalStudentsTrend.trendType === 'INCREASE' ? '증가' : '감소'}`
-              : "변동 없음"}
-        />
-        {/* 운영 중인 강좌 */}
-        <StatCard
-          title="운영 중인 강좌"
-          value={`${stats?.totalCourses || 0}개`}
-          icon={<FiBookOpen />}
-        />
-        {/* 이번 달 수익 */}
-        <StatCard
-          title="이번 달 수익"
-          value={`${stats?.monthlyRevenue?.toLocaleString() || 0}원`}
-          icon={<FiDollarSign />}
-          trend={stats?.monthlyRevenueTrend?.new  // isNew 대신 new로 수정
-            ? "NEW"
-            : stats?.monthlyRevenueTrend?.trend !== 0
-              ? `${stats.monthlyRevenueTrend.trend > 0 ? '+' : ''}${stats.monthlyRevenueTrend.trend}% ${stats.monthlyRevenueTrend.trendType === 'INCREASE' ? '증가' : '감소'}`
-              : "변동 없음"}
-        />
-        <StatCard
-          title="평균 평점"
-          value={`${stats?.averageRating?.toFixed(1) || 0}점`}
-          icon={<FiStar />}
-          trend={stats?.averageRatingTrend
-            ? `${stats.averageRatingTrend.trend > 0 ? '+' : ''}${stats.averageRatingTrend.trend.toFixed(1)} ${stats.averageRatingTrend.trendType === 'INCREASE' ? '상승' : '하락'}`
-            : "변동 없음"}
-        />
-      </div>
 
         {/* 수익 차트 */}
         <div className="bg-white p-6 rounded-lg shadow">
@@ -459,10 +535,10 @@ function InstructorDashboard() {
                 <YAxis />
                 <Tooltip />
                 <Line
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#4F46E5"
-                    strokeWidth={2}
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#4F46E5"
+                  strokeWidth={2}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -474,8 +550,8 @@ function InstructorDashboard() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">최근 강좌 현황</h2>
             <Link
-                to="/instructor/courses"
-                className="text-primary hover:text-primary-dark"
+              to="/instructor/courses"
+              className="text-primary hover:text-primary-dark"
             >
               전체보기
             </Link>
@@ -483,134 +559,135 @@ function InstructorDashboard() {
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
-              <tr className="bg-gray-50">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  강좌명
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  수강생
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  평점
-                </th>
-                {/*<th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">*/}
-                {/*  수익*/}
-                {/*</th>*/}
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  진행률
-                </th>
-                {/*<th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">*/}
-                {/*  최근 업데이트*/}
-                {/*</th>*/}
-              </tr>
+                <tr className="bg-gray-50">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    강좌명
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    수강생
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    평점
+                  </th>
+                  {/*<th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">*/}
+                  {/*  수익*/}
+                  {/*</th>*/}
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    진행률
+                  </th>
+                  {/*<th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">*/}
+                  {/*  최근 업데이트*/}
+                  {/*</th>*/}
+                </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-              {[...recentCourses]
-                .sort((a, b) => b.createdAt.localeCompare(a.createdAt)) // 최신 순으로 정렬
-                .map(course => (
-                  <tr key={course.id} className="cursor-pointer hover:bg-gray-100"
-                    onClick={() => window.location.href = `/instructor/courses/${course.id}/content`}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {course.title}
-                    </td>
-                    <td className="px-6 py-4 text-center whitespace-nowrap">
-                      {course.enrollmentCount}명
-                    </td>
-                    <td className="px-6 py-4 text-center whitespace-nowrap">
-                      <div className="flex items-center justify-center">
-                        <FiStar className="text-yellow-400 mr-1" />
-                        {course.averageRating.toFixed(1)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-primary h-2 rounded-full"
-                          style={{ width: `${course.progress || 0}%` }}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-        {/* pagination component */}
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
-      </div>
-
-      {/* 최근 활동 섹션 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 최근 수강신청 */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4">최근 수강신청</h2>
-          <div className="space-y-4">
-            {recentEnrollments.length > 0 ? (
-              recentEnrollments.map(enrollment => (
-                <div
-                  key={`enrollment-${enrollment.userId}-${enrollment.enrolledAt}`}
-                  className="flex items-center space-x-4"
-                >
-                  <img
-                    src="/default-profile.png"
-                    alt={enrollment.username}
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <div className="flex-1">
-                    <p className="font-medium">{enrollment.username}</p>
-                    <p className="text-sm text-gray-500">{enrollment.courseName}</p>
-                  </div>
-                  <span className="text-sm text-gray-500">
-                    {new Date(enrollment.enrolledAt).toLocaleDateString()}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div className="text-center text-gray-500">
-                최근 수강신청이 없습니다.
-              </div>
-            )}
+                {[...recentCourses]
+                  .sort((a, b) => b.createdAt.localeCompare(a.createdAt)) // 최신 순으로 정렬
+                  .map(course => (
+                    <tr key={course.id} className="cursor-pointer hover:bg-gray-100"
+                      onClick={() => window.location.href = `/instructor/courses/${course.id}/content`}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {course.title}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap">
+                        {course.enrollmentCount}명
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center">
+                          <FiStar className="text-yellow-400 mr-1" />
+                          {course.averageRating.toFixed(1)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-primary h-2 rounded-full"
+                            style={{ width: `${course.progress || 0}%` }}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           </div>
+          {/* pagination component */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
 
-        {/* 최근 수강평 */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4">최근 수강평</h2>
-          <div className="space-y-4">
-            {recentReviews.length > 0 ? (
-              recentReviews.map(review => (
-                <div
-                  key={`review-${review.id}`}
-                  className="border-b pb-4"
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium">{review.writer}</span>
-                    <div className="flex items-center">
-                      <FiStar className="text-yellow-400 mr-1" />
-                      <span>{review.rating}</span>
+        {/* 최근 활동 섹션 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 최근 수강신청 */}
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h2 className="text-lg font-semibold mb-4">최근 수강신청</h2>
+            <div className="space-y-4">
+              {recentEnrollments.length > 0 ? (
+                recentEnrollments.map(enrollment => (
+                  <div
+                    key={`enrollment-${enrollment.userId}-${enrollment.enrolledAt}`}
+                    className="flex items-center space-x-4"
+                  >
+                    <img
+                      src="/default-profile.png"
+                      alt={enrollment.username}
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium">{enrollment.username}</p>
+                      <p className="text-sm text-gray-500">{enrollment.courseName}</p>
+                    </div>
+                    <span className="text-sm text-gray-500">
+                      {new Date(enrollment.enrolledAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="h-32 flex items-center justify-center text-gray-500">
+                  최근 수강신청이 없습니다.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 최근 수강평 */}
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h2 className="text-lg font-semibold mb-4">최근 수강평</h2>
+            <div className="space-y-4">
+              {recentReviews.length > 0 ? (
+                recentReviews.map(review => (
+                  <div
+                    key={`review-${review.id}`}
+                    className="border-b pb-4"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium">{review.writer}</span>
+                      <div className="flex items-center">
+                        <FiStar className="text-yellow-400 mr-1" />
+                        <span>{review.rating}</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-1">{review.content}</p>
+                    <div className="flex justify-between items-center text-sm text-gray-500">
+                      <span>{review.courseName}</span>
+                      <span>{new Date(review.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600 mb-1">{review.content}</p>
-                  <div className="flex justify-between items-center text-sm text-gray-500">
-                    <span>{review.courseName}</span>
-                    <span>{new Date(review.createdAt).toLocaleDateString()}</span>
-                  </div>
+                ))
+              ) : (
+                <div className="h-32 flex items-center justify-center text-gray-500">
+                  최근 수강평이 없습니다.
                 </div>
-              ))
-            ) : (
-              <div className="text-center text-gray-500">
-                최근 수강평이 없습니다.
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
 
 
@@ -629,17 +706,17 @@ function InstructorDashboard() {
         </Link>
       </div>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full">
-            <thead className="bg-gray-50">
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <table className="min-w-full">
+          <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">강좌명</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">수강생</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">평점</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">관리</th>
             </tr>
-            </thead>
-            <tbody>
+          </thead>
+          <tbody>
             {recentCourses.map(course => (
               <tr key={course.id} className="">
                 <td className="px-6 py-4">
@@ -681,28 +758,28 @@ function InstructorDashboard() {
                 </td>
               </tr>
             ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* pagination component */}
-        <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-        />
+          </tbody>
+        </table>
       </div>
+
+      {/* pagination component */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
+    </div>
   );
 
   const renderQuizzesContent = () => (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">퀴즈 관리</h2>
-        </div>
-
-        {/* CourseQuizPage 컴포넌트 재사용 */}
-        <CourseQuizPage />
+    <div className="space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold">퀴즈 관리</h2>
       </div>
+
+      {/* CourseQuizPage 컴포넌트 재사용 */}
+      <CourseQuizPage />
+    </div>
   );
 
   const handleImageUpload = (event) => {
@@ -730,60 +807,78 @@ function InstructorDashboard() {
   };
 
   const renderProfileContent = () => (
-      <ProfilePage />
+    <ProfilePage />
   );
 
   return (
-      <div className="p-6">
-        {/* 탭 메뉴 */}
-        <div className="mb-6 border-b">
-          <div className="flex space-x-8">
-            {tabs.map(tab => (
-                <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`pb-4 px-2 ${activeTab === tab.id
-                        ? 'border-b-2 border-primary text-primary font-medium'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                  {tab.label}
-                </button>
-            ))}
-          </div>
+    <div className="p-6">
+      {/* 탭 메뉴 */}
+      <div className="mb-6 border-b">
+        <div className="flex space-x-8">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`pb-4 px-2 ${activeTab === tab.id
+                ? 'border-b-2 border-primary text-primary font-medium'
+                : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
-
-        {/* 탭 컨텐츠 */}
-        {activeTab === 'dashboard' && renderDashboardContent()}
-        {activeTab === 'courses' && renderCoursesContent()}
-        {activeTab === 'quizzes' && renderQuizzesContent()}
-        {activeTab === 'profile' && renderProfileContent()}
       </div>
+
+      {/* 탭 컨텐츠 */}
+      {activeTab === 'dashboard' && renderDashboardContent()}
+      {activeTab === 'courses' && renderCoursesContent()}
+      {activeTab === 'quizzes' && renderQuizzesContent()}
+      {activeTab === 'profile' && renderProfileContent()}
+    </div>
   );
 }
 
 // 통계 카드 컴포넌트
-function StatCard({ title, value, icon, trend }) {
+function StatCard({ title, value, icon, tooltipContent }) {
+  const id = `tooltip-${title.replace(/\s+/g, '-').toLowerCase()}`;
+
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
+    <div
+      className="bg-white p-6 rounded-lg shadow"
+      {...(tooltipContent && {
+        "data-tooltip-id": id,
+        "data-tooltip-float": true
+      })}
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-500">{title}</p>
           <p className="text-2xl font-bold">{value}</p>
-          {trend && (
-            <p className={`text-sm flex items-center mt-1 ${trend.includes("+") ? "text-green-500" :
-              trend.includes("-") ? "text-red-500" :
-                "text-gray-500"
-              }`}>
-              <FiTrendingUp className="mr-1" />
-              {trend}
-            </p>
-          )}
         </div>
         <div className="text-primary text-2xl">
           {icon}
         </div>
       </div>
+
+      {tooltipContent && (
+        <CustomTooltip
+          id={id}
+          className="max-w-sm"
+          style={{
+            backgroundColor: 'white',
+            color: '#333',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            borderRadius: '0.5rem'
+          }}
+          float
+        >
+          <div className="p-2">
+            {tooltipContent}
+          </div>
+        </CustomTooltip>
+      )}
     </div>
   );
 }

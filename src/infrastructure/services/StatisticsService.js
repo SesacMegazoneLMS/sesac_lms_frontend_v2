@@ -8,7 +8,64 @@ export const StatsService = {
 
     try {
       const response = await axiosInstance.get(API_ENDPOINTS.STATS.INSTRUCTOR);
-      return response.data;
+      const stats = response.data;
+
+      return {
+        totalStudents: stats.totalStudents || 0,
+        activeCourses: stats.activeCourses || 0,
+        totalRevenue: stats.totalRevenue || 0,
+        averageRating: stats.averageRating || 0,
+        monthlyStats: stats.monthlyStats || {
+          revenue: 0,
+          newStudents: 0,
+          averageRating: 0
+        },
+        monthlyRevenue: stats.monthlyRevenue || [],  // 빈 배열을 기본값으로
+        totalStudentsTrend: stats.totalStudentsTrend || {
+          value: 0,
+          trend: 0,
+          trendType: 'NO_CHANGE',
+          isNew: false
+        },
+        monthlyRevenueTrend: stats.monthlyRevenueTrend || {
+          value: 0,
+          trend: 0,
+          trendType: 'NO_CHANGE',
+          isNew: false
+        },
+        averageRatingTrend: stats.averageRatingTrend || {
+          value: 0,
+          trend: 0,
+          trendType: 'NO_CHANGE',
+          isNew: false
+        },
+        studentsDetail: stats.studentsDetail || {
+          total: 0,
+          currentMonth: 0,
+          previousMonth: 0,
+          trend: {
+            value: 0,
+            trend: 0,
+            trendType: 'NO_CHANGE',
+            isNew: false
+          },
+          currentMonthLabel: '',
+          previousMonthLabel: ''
+        },
+        revenueDetail: stats.revenueDetail || {
+          total: 0,
+          currentMonth: 0,
+          previousMonth: 0,
+          trend: {
+            value: 0,
+            trend: 0,
+            trendType: 'NO_CHANGE',
+            isNew: false
+          },
+          currentMonthLabel: '',
+          previousMonthLabel: ''
+        }
+      };
 
     } catch (error) {
       console.error('통계 로드 실패');
