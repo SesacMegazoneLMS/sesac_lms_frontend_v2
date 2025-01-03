@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
   FiUsers, FiBookOpen, FiDollarSign, FiStar,
-  FiTrendingUp, FiActivity, FiMessageCircle, FiPlus, FiEdit2, FiSave, FiUpload
+  FiTrendingUp, FiTrendingDown, FiActivity, FiMessageCircle, FiPlus, FiEdit2, FiSave, FiUpload
 } from 'react-icons/fi';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import toast, { Toaster, useToasterStore } from 'react-hot-toast';
@@ -224,6 +224,13 @@ function InstructorDashboard() {
       await StatsService.manualUpdate();
 
       const data = await StatsService.getInstructorStats();
+
+      const revenueChartData = data.statistics.monthlyRevenue.map(item => ({
+        month: formatMonth(item.yearMonth),
+        revenue: Number(item.revenue),
+        yearMonth: item.yearMonth
+      }))
+
       setStats({
         totalStudents: data.statistics.totalStudents,
         totalCourses: data.statistics.activeCourses,
@@ -234,6 +241,14 @@ function InstructorDashboard() {
         monthlyRevenueTrend: data.statistics.monthlyRevenueTrend,
         averageRatingTrend: data.statistics.averageRatingTrend
       });
+
+      setRevenueData(revenueChartData);
+
+      const enrollmentData = await StatsService.getRecentEnrollments();
+      setRecentEnrollments(enrollmentData);
+
+      await requestMyCourses(currentPage, coursesPerPage);
+
       toast.success('통계가 성공적으로 업데이트되었습니다.');
     } catch (error) {
       console.log('통계 업데이트 실패: ', error);
@@ -417,7 +432,9 @@ function InstructorDashboard() {
           value={`${stats?.averageRating?.toFixed(1) || 0}점`}
           icon={<FiStar />}
           trend={stats?.averageRatingTrend
-            ? `${stats.averageRatingTrend.trend > 0 ? '+' : ''}${stats.averageRatingTrend.trend.toFixed(1)} ${stats.averageRatingTrend.trendType === 'INCREASE' ? '상승' : '하락'}`
+            ? stats.averageRatingTrend.trend === 0
+              ? "변동 없음"
+              : `${stats.averageRatingTrend.trend > 0 ? '+' : ''}${stats.averageRatingTrend.trend.toFixed(1)} ${stats.averageRatingTrend.trendType === 'INCREASE' ? '상승' : '하락'}`
             : "변동 없음"}
         />
       </div>
@@ -543,7 +560,7 @@ function InstructorDashboard() {
                 </div>
               ))
             ) : (
-              <div className="text-center text-gray-500">
+              <div className="h-32 flex items-center justify-center text-gray-500">
                 최근 수강신청이 없습니다.
               </div>
             )}
@@ -575,7 +592,7 @@ function InstructorDashboard() {
                 </div>
               ))
             ) : (
-              <div className="text-center text-gray-500">
+              <div className="h-32 flex items-center justify-center text-gray-500">
                 최근 수강평이 없습니다.
               </div>
             )}
@@ -744,12 +761,19 @@ function StatCard({ title, value, icon, trend }) {
           <p className="text-sm text-gray-500">{title}</p>
           <p className="text-2xl font-bold">{value}</p>
           {trend && (
-            <p className={`text-sm flex items-center mt-1 ${trend.includes("+") ? "text-green-500" :
-              trend.includes("-") ? "text-red-500" :
-                "text-gray-500"
-              }`}>
-              <FiTrendingUp className="mr-1" />
-              {trend}
+            <p className="text-xs flex items-center mt-1">
+              <span className="text-gray-400 mr-1">전월대비</span>
+              <span className={`flex items-center ${trend.includes("+") ? "text-green-500" :
+                trend.includes("-") ? "text-red-500" :
+                  "text-gray-500"
+                }`}>
+                {trend.includes("-") ? (
+                  <FiTrendingDown className="mr-1 w-3 h-3" />
+                ) : trend.includes("+") ? (
+                  <FiTrendingUp className="mr-1 w-3 h-3" />
+                ) : null}
+                {trend}
+              </span>
             </p>
           )}
         </div>
