@@ -23,7 +23,25 @@ function InstructorDashboard() {
     totalRevenue: 0,
     monthlyRevenue: 0,
     averageRating: 0,
-    completionRate: 0
+    completionRate: 0,
+    totalStudentsTrend: {
+      value: 0,
+      trend: 0,
+      trendType: 'NO_CHANGE',
+      isNew: false
+    },
+    monthlyRevenueTrend: {
+      value: 0,
+      trend: 0,
+      trendType: 'NO_CHANGE',
+      isNew: false
+    },
+    averageRatingTrend: {
+      value: 0,
+      trend: 0,
+      trendType: 'NO_CHANGE',
+      isNew: false
+    }
   });
 
   const [recentCourses, setRecentCourses] = useState([]);
@@ -105,6 +123,17 @@ function InstructorDashboard() {
     }
   }
 
+  const formatMonth = (yearMonth) => {
+    const [year, month] = yearMonth.split('-');
+    const currentYear = new Date().getFullYear().toString();
+
+    if (year === currentYear) {
+      return `${parseInt(month)}월`;
+    }
+
+    return `${year}.${parseInt(month)}월`;
+  }
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -112,6 +141,14 @@ function InstructorDashboard() {
         await fetchInstructorProfile();
 
         const data = await StatsService.getInstructorStats();
+        console.log("Backend response:", data.statistics);
+
+        // 월별 수익 데이터 가공
+        const revenueChartData = data.statistics.monthlyRevenue.map(item => ({
+          month: formatMonth(item.yearMonth),
+          revenue: Number(item.revenue),
+          yearMonth: item.yearMonth // 정렬용
+        }));
 
         const stats = {
           totalStudents: data.statistics.totalStudents,
@@ -119,6 +156,9 @@ function InstructorDashboard() {
           totalRevenue: data.statistics.totalRevenue,
           averageRating: data.statistics.averageRating,
           monthlyRevenue: data.statistics.monthlyStats?.revenue || 0,
+          totalStudentsTrend: data.statistics.totalStudentsTrend,
+          monthlyRevenueTrend: data.statistics.monthlyRevenueTrend,
+          averageRatingTrend: data.statistics.averageRatingTrend
         }
 
         const mockEnrollments = [
@@ -168,9 +208,7 @@ function InstructorDashboard() {
         ];
 
         setStats(stats);
-        setRecentEnrollments(mockEnrollments);
-        setRecentReviews(mockReviews);
-        setRevenueData(mockRevenueData);
+        setRevenueData(revenueChartData);
         setQuizzes(mockQuizzes);
 
         requestMyCourses(currentPage, coursesPerPage);
@@ -181,7 +219,30 @@ function InstructorDashboard() {
       }
     };
 
+    const fetchRecentEnrollments = async () => {
+
+      setIsLoading(true);
+      await fetchInstructorProfile();
+
+      const enrollmentData = await StatsService.getRecentEnrollments();
+
+      setRecentEnrollments(enrollmentData);
+
+    }
+
+    const fetchRecentReviews = async () => {
+
+      setIsLoading(true);
+      await fetchInstructorProfile();
+
+      const reviewData = await StatsService.getRecentReviews();
+
+      setRecentReviews(reviewData);
+    }
+
     fetchDashboardData();
+    fetchRecentEnrollments();
+    fetchRecentReviews();
   }, [currentPage, fetchInstructorProfile]);
 
   const handleManualUpdate = async () => {
@@ -196,6 +257,9 @@ function InstructorDashboard() {
         totalRevenue: data.statistics.totalRevenue,
         averageRating: data.statistics.averageRating,
         monthlyRevenue: data.statistics.monthlyStats?.revenue || 0,
+        totalStudentsTrend: data.statistics.totalStudentsTrend,
+        monthlyRevenueTrend: data.statistics.monthlyRevenueTrend,
+        averageRatingTrend: data.statistics.averageRatingTrend
       });
       toast.success('통계가 성공적으로 업데이트되었습니다.');
     } catch (error) {
@@ -335,42 +399,55 @@ function InstructorDashboard() {
           </div>
         </div>
 
-        {/* 통계 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* 수동 업데이트 버튼 추가 */}
-          <div className="col-span-full flex justify-end mb-4">
-            <button
-                onClick={handleManualUpdate}
-                disabled={isLoading}
-                className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
-            >
-              {isLoading ? '업데이트 중...' : '통계 수동 업데이트'}
-            </button>
-          </div>
-          <StatCard
-              title="총 수강생"
-              value={`${stats?.totalStudents != null ? stats.totalStudents : 0}명`}
-              icon={<FiUsers />}
-              trend={`${stats?.totalStudents != null ? "+12% 증가" : "증가율 변동 없음"}`}
-          />
-          <StatCard
-              title="운영 중인 강좌"
-              value={`${stats?.totalCourses != null ? stats.totalCourses : 0}개`}
-              icon={<FiBookOpen />}
-          />
-          <StatCard
-              title="이번 달 수익"
-              value={`${stats?.monthlyRevenue != null ? stats.monthlyRevenue.toLocaleString() : 0}원`}
-              icon={<FiDollarSign />}
-              trend={`${stats?.monthlyRevenue != null ? "+8% 증가" : "증가율 변동 없음"}`}
-          />
-          <StatCard
-              title="평균 평점"
-              value={(stats?.averageRating != null ? stats.averageRating : 0).toFixed(1) + "점"}
-              icon={<FiStar />}
-              trend={`${stats?.averageRating != null ? "+0.2 상승" : "증가율 변동 없음"}`}
-          />
+      {/* 통계 카드 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* 수동 업데이트 버튼 추가 */}
+        <div className="col-span-full flex justify-end mb-4">
+          <button
+            onClick={handleManualUpdate}
+            disabled={isLoading}
+            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
+          >
+            {isLoading ? '업데이트 중...' : '통계 수동 업데이트'}
+          </button>
         </div>
+        {/* 총 수강생 */}
+        <StatCard
+          title="총 수강생"
+          value={`${stats?.totalStudents || 0}명`}
+          icon={<FiUsers />}
+          trend={stats?.totalStudentsTrend?.new  // isNew 대신 new로 수정
+            ? "NEW"
+            : stats?.totalStudentsTrend?.trend !== 0
+              ? `${stats.totalStudentsTrend.trend > 0 ? '+' : ''}${stats.totalStudentsTrend.trend}% ${stats.totalStudentsTrend.trendType === 'INCREASE' ? '증가' : '감소'}`
+              : "변동 없음"}
+        />
+        {/* 운영 중인 강좌 */}
+        <StatCard
+          title="운영 중인 강좌"
+          value={`${stats?.totalCourses || 0}개`}
+          icon={<FiBookOpen />}
+        />
+        {/* 이번 달 수익 */}
+        <StatCard
+          title="이번 달 수익"
+          value={`${stats?.monthlyRevenue?.toLocaleString() || 0}원`}
+          icon={<FiDollarSign />}
+          trend={stats?.monthlyRevenueTrend?.new  // isNew 대신 new로 수정
+            ? "NEW"
+            : stats?.monthlyRevenueTrend?.trend !== 0
+              ? `${stats.monthlyRevenueTrend.trend > 0 ? '+' : ''}${stats.monthlyRevenueTrend.trend}% ${stats.monthlyRevenueTrend.trendType === 'INCREASE' ? '증가' : '감소'}`
+              : "변동 없음"}
+        />
+        <StatCard
+          title="평균 평점"
+          value={`${stats?.averageRating?.toFixed(1) || 0}점`}
+          icon={<FiStar />}
+          trend={stats?.averageRatingTrend
+            ? `${stats.averageRatingTrend.trend > 0 ? '+' : ''}${stats.averageRatingTrend.trend.toFixed(1)} ${stats.averageRatingTrend.trendType === 'INCREASE' ? '상승' : '하락'}`
+            : "변동 없음"}
+        />
+      </div>
 
         {/* 수익 차트 */}
         <div className="bg-white p-6 rounded-lg shadow">
@@ -429,90 +506,110 @@ function InstructorDashboard() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
               {[...recentCourses]
-                  .sort((a, b) => b.createdAt.localeCompare(a.createdAt)) // 최신 순으로 정렬
-                  .map(course => (
-                      <tr key={course.id} className="cursor-pointer hover:bg-gray-100"
-                          onClick={() => window.location.href = `/instructor/courses/${course.id}/content`}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {course.title}
-                        </td>
-                        <td className="px-6 py-4 text-center whitespace-nowrap">
-                          {course.enrollmentCount}명
-                        </td>
-                        <td className="px-6 py-4 text-center whitespace-nowrap">
-                          <div className="flex items-center justify-center">
-                            <FiStar className="text-yellow-400 mr-1" />
-                            {course.averageRating.toFixed(1)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                                className="bg-primary h-2 rounded-full"
-                                style={{ width: `${course.progress || 0}%` }}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                  ))}
-              </tbody>
-            </table>
+                .sort((a, b) => b.createdAt.localeCompare(a.createdAt)) // 최신 순으로 정렬
+                .map(course => (
+                  <tr key={course.id} className="cursor-pointer hover:bg-gray-100"
+                    onClick={() => window.location.href = `/instructor/courses/${course.id}/content`}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {course.title}
+                    </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                      {course.enrollmentCount}명
+                    </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center">
+                        <FiStar className="text-yellow-400 mr-1" />
+                        {course.averageRating.toFixed(1)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-primary h-2 rounded-full"
+                          style={{ width: `${course.progress || 0}%` }}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+        {/* pagination component */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+      </div>
+
+      {/* 최근 활동 섹션 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 최근 수강신청 */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-lg font-semibold mb-4">최근 수강신청</h2>
+          <div className="space-y-4">
+            {recentEnrollments.length > 0 ? (
+              recentEnrollments.map(enrollment => (
+                <div
+                  key={`enrollment-${enrollment.userId}-${enrollment.enrolledAt}`}
+                  className="flex items-center space-x-4"
+                >
+                  <img
+                    src="/default-profile.png"
+                    alt={enrollment.username}
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div className="flex-1">
+                    <p className="font-medium">{enrollment.username}</p>
+                    <p className="text-sm text-gray-500">{enrollment.courseName}</p>
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {new Date(enrollment.enrolledAt).toLocaleDateString()}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500">
+                최근 수강신청이 없습니다.
+              </div>
+            )}
           </div>
-          {/* pagination component */}
-          <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-          />
         </div>
 
-        {/* 최근 활동 섹션 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 최근 수강신청 */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-lg font-semibold mb-4">최근 수강신청</h2>
-            <div className="space-y-4">
-              {recentEnrollments.map(enrollment => (
-                  <div key={enrollment.id} className="flex items-center space-x-4">
-                    <img
-                        src={enrollment.profileImage}
-                        alt={enrollment.studentName}
-                        className="w-10 h-10 rounded-full"
-                    />
-                    <div className="flex-1">
-                      <p className="font-medium">{enrollment.studentName}</p>
-                      <p className="text-sm text-gray-500">{enrollment.courseName}</p>
-                    </div>
-                    <span className="text-sm text-gray-500">{enrollment.date}</span>
-                  </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 최근 수강평 */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-lg font-semibold mb-4">최근 수강평</h2>
-            <div className="space-y-4">
-              {recentReviews.map(review => (
-                  <div key={review.id} className="border-b pb-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium">{review.studentName}</span>
-                      <div className="flex items-center">
-                        <FiStar className="text-yellow-400 mr-1" />
-                        {review.rating}
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-1">{review.content}</p>
-                    <div className="flex justify-between items-center text-sm text-gray-500">
-                      <span>{review.courseName}</span>
-                      <span>{review.date}</span>
+        {/* 최근 수강평 */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-lg font-semibold mb-4">최근 수강평</h2>
+          <div className="space-y-4">
+            {recentReviews.length > 0 ? (
+              recentReviews.map(review => (
+                <div
+                  key={`review-${review.id}`}
+                  className="border-b pb-4"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium">{review.writer}</span>
+                    <div className="flex items-center">
+                      <FiStar className="text-yellow-400 mr-1" />
+                      <span>{review.rating}</span>
                     </div>
                   </div>
-              ))}
-            </div>
+                  <p className="text-sm text-gray-600 mb-1">{review.content}</p>
+                  <div className="flex justify-between items-center text-sm text-gray-500">
+                    <span>{review.courseName}</span>
+                    <span>{new Date(review.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500">
+                최근 수강평이 없습니다.
+              </div>
+            )}
           </div>
         </div>
       </div>
+    </div>
   );
 
 
@@ -520,17 +617,17 @@ function InstructorDashboard() {
 
   // 강좌 목록 출력 함수
   const renderCoursesContent = () => (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">강좌 관리</h2>
-          <Link
-              to="/instructor/courses/create"
-              className="bg-primary text-white px-4 py-2 rounded-lg flex items-center"
-          >
-            <FiPlus className="mr-2" />
-            새 강좌 만들기
-          </Link>
-        </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">강좌 관리</h2>
+        <Link
+          to="/instructor/courses/create"
+          className="bg-primary text-white px-4 py-2 rounded-lg flex items-center"
+        >
+          <FiPlus className="mr-2" />
+          새 강좌 만들기
+        </Link>
+      </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="min-w-full">
@@ -544,45 +641,45 @@ function InstructorDashboard() {
             </thead>
             <tbody>
             {recentCourses.map(course => (
-                <tr key={course.id} className="">
-                  <td className="px-6 py-4">
-                                  <span
-                                      className="cursor-pointer hover:underline"
-                                      onClick={() => window.location.href = `/instructor/courses/${course.id}/content`}
-                                  >
-                                      {course.title}
-                                  </span>
-                  </td>
-                  <td className="px-6 py-4 text-center">{course.enrollmentCount}명</td>
-                  <td className="px-6 py-4 text-center">
-                    <div className="flex items-center justify-center">
-                      <FiStar className="text-yellow-400 mr-1" />
-                      {course.averageRating.toFixed(1)}점
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <div className="flex justify-center space-x-2">
-                      <Link
-                          to={`/instructor/courses/${course.id}/edit`}
-                          className="text-primary hover:text-primary-dark"
-                      >
-                        수정
-                      </Link>
-                      <Link
-                          to={`/instructor/courses/${course.id}/content`}
-                          className="text-gray-600 hover:text-gray-800"
-                      >
-                        콘텐츠
-                      </Link>
-                      <Link
-                          to={`/instructor/courses/${course.id}/quiz`}
-                          className="text-gray-600 hover:text-gray-800"
-                      >
-                        퀴즈
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
+              <tr key={course.id} className="">
+                <td className="px-6 py-4">
+                  <span
+                    className="cursor-pointer hover:underline"
+                    onClick={() => window.location.href = `/instructor/courses/${course.id}/content`}
+                  >
+                    {course.title}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-center">{course.enrollmentCount}명</td>
+                <td className="px-6 py-4 text-center">
+                  <div className="flex items-center justify-center">
+                    <FiStar className="text-yellow-400 mr-1" />
+                    {course.averageRating.toFixed(1)}점
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <div className="flex justify-center space-x-2">
+                    <Link
+                      to={`/instructor/courses/${course.id}/edit`}
+                      className="text-primary hover:text-primary-dark"
+                    >
+                      수정
+                    </Link>
+                    <Link
+                      to={`/instructor/courses/${course.id}/content`}
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      콘텐츠
+                    </Link>
+                    <Link
+                      to={`/instructor/courses/${course.id}/quiz`}
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      퀴즈
+                    </Link>
+                  </div>
+                </td>
+              </tr>
             ))}
             </tbody>
           </table>
@@ -668,23 +765,26 @@ function InstructorDashboard() {
 // 통계 카드 컴포넌트
 function StatCard({ title, value, icon, trend }) {
   return (
-      <div className="bg-white p-6 rounded-lg shadow">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
-            {trend && (
-                <p className="text-sm text-green-500 flex items-center mt-1">
-                  <FiTrendingUp className="mr-1" />
-                  {trend}
-                </p>
-            )}
-          </div>
-          <div className="text-primary text-2xl">
-            {icon}
-          </div>
+    <div className="bg-white p-6 rounded-lg shadow">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-500">{title}</p>
+          <p className="text-2xl font-bold">{value}</p>
+          {trend && (
+            <p className={`text-sm flex items-center mt-1 ${trend.includes("+") ? "text-green-500" :
+              trend.includes("-") ? "text-red-500" :
+                "text-gray-500"
+              }`}>
+              <FiTrendingUp className="mr-1" />
+              {trend}
+            </p>
+          )}
+        </div>
+        <div className="text-primary text-2xl">
+          {icon}
         </div>
       </div>
+    </div>
   );
 }
 

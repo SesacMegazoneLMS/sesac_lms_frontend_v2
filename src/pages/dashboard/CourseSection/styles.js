@@ -26,15 +26,24 @@ export const CourseCount = styled.span`
 `;
 
 export const CourseList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 export const EmptyCourses = styled.div`
   text-align: center;
   padding: 48px 0;
   color: #868e96;
+  grid-column: 1 / -1;
   
   p {
     margin-top: 8px;

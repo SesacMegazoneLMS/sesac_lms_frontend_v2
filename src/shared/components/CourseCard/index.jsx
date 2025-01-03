@@ -72,7 +72,7 @@ const CourseCard = ({ course, type = 'course' }) => {
                 <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleAddToCart( user,course );
+                      handleAddToCart(course);
                     }}
                     className="bg-[#00c471] text-white px-4 py-2 rounded hover:bg-[#00a65f]"
                 >
@@ -107,23 +107,27 @@ const CourseCard = ({ course, type = 'course' }) => {
               </>
           )}
 
-          <div className="flex justify-between items-center">
-            <div className="flex flex-col">
-                        <span className="text-sm text-gray-500 line-through">
-                            ₩{(course.price * 1.2)?.toLocaleString()}
-                        </span>
-              <span className={`font-bold text-[#1e40af] ${isCart ? 'text-base' : 'text-lg'}`}>
-                            ₩{course.price?.toLocaleString() ?? 0}
-                        </span>
-            </div>
-            {!isCart && (
+        <div className="flex justify-between items-center">
+          <div className="flex flex-col">
+            {!isNaN(course.price) && (
+              <>
+                <span className="text-sm text-gray-500 line-through">
+                  ₩{(course.price * 1.2)?.toLocaleString()}
+                </span>
+                <span className={`font-bold text-[#1e40af] ${isCart ? 'text-base' : 'text-lg'}`}>
+                  ₩{course.price?.toLocaleString() ?? 0}
+                </span>
+              </>
+            )}
+          </div>
+          {/* {!isCart && (
                 <div className="text-xs bg-[#fff7ed] text-[#ea580c] px-2 py-1 rounded">
                   {course.totalLectures}개 강의
                 </div>
-            )}
-          </div>
+            )} */}
         </div>
       </div>
+    </div>
   );
 };
 

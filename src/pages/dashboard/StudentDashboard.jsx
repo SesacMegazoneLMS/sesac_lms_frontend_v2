@@ -13,13 +13,8 @@ function StudentDashboard() {
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const navigate = useNavigate();
 
-  console.log("Current auth state:", { user, loading });  // 디버깅용
-
   useEffect(() => {
     const loadStudentData = async () => {
-
-      console.log("Loading student data...");  // 시작 로그
-
       try {
         const { enrollments } = await userService.getMyEnrollments();
 
@@ -30,7 +25,10 @@ function StudentDashboard() {
           progress: enrollment.progress || 0,
           category: enrollment.category,
           level: enrollment.level,
-          description: enrollment.description
+          description: enrollment.description,
+          completedLectures: enrollment.completedLectures || 0,
+          totalLectures: enrollment.totalLectures || 0,
+          isCompleted: enrollment.isCompleted || false
         }));
 
         setEnrolledCourses(formattedCourses);
@@ -59,24 +57,21 @@ function StudentDashboard() {
         <h1>안녕하세요, {user?.name}님!</h1>
         <HeaderLinks>
           <StyledLink to="/profile">프로필 관리</StyledLink>
-          <StyledLink to="/certificates">수료증 관리</StyledLink>
+          {/* <StyledLink to="/certificates">수료증 관리</StyledLink> */}
         </HeaderLinks>
       </Header>
 
       <MainContent>
-        <CourseSection
-          courses={enrolledCourses}
-          onViewAll={() => navigate('/my-courses')}
-        />
-        <SideSection>
-          <StatsCard
-            stats={{
-              totalHours: 23,
-              weeklyHours: 5,
-              completedCourses: 3
-            }}
+        <CoursesSection>
+          <CourseSection
+            courses={enrolledCourses}
+            onViewAll={() => navigate('/my-courses')}
+            title="수강 중인 강좌"
           />
-          <QuizCard quizzes={[]} />
+        </CoursesSection>
+        <SideSection>
+          <StatsCard enrolledCourses={enrolledCourses} />
+          {/* <QuizCard quizzes={[]} /> */}
         </SideSection>
       </MainContent>
     </DashboardContainer>
