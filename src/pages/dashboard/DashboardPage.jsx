@@ -1,27 +1,21 @@
-import React, { useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import { Navigate } from 'react-router-dom';
-import StudentDashboard from './StudentDashboard';
-import InstructorDashboard from './InstructorDashboard';
+import React from "react";
+import { useSelector } from "react-redux";
+import { Navigate } from "react-router-dom";
+import StudentDashboard from "./StudentDashboard";
+import InstructorDashboard from "./InstructorDashboard";
 
 function DashboardPage() {
-  const { user, loading } = useSelector(state => state.auth);
-
-  console.log("Current auth state:", { user, loading });  // 디버깅용
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  const { user } = useSelector((state) => state.auth);
 
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
-  if (user.role === 'instructor') {
-    return <InstructorDashboard />;
-  }
-
-  return <StudentDashboard />;
+  return user.role === "instructor" ? (
+    <InstructorDashboard />
+  ) : (
+    <StudentDashboard />
+  );
 }
 
 export default DashboardPage;

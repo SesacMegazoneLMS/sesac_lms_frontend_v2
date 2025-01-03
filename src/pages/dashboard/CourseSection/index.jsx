@@ -16,7 +16,7 @@ export const CourseSection = ({ courses, onViewAll, title, type = 'enrolled' }) 
       <SectionHeader>
         <div>
           <SectionTitle>{title}</SectionTitle>
-          <CourseCount>{courses.length}개의 강좌</CourseCount>
+          {/* <CourseCount>{courses.length}개의 강좌</CourseCount> */}
         </div>
 
       </SectionHeader>
