@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 
 export const cartService = {
-    addToCart: async (courseId) => {
+    addToCart: async (user, courseId) => {
         try {
             const res = await axios.post(
                 `${API_URL}/api/carts/items`,
@@ -12,7 +12,7 @@ export const cartService = {
                 },
                 {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('idToken')}`
+                        'Authorization': `Bearer ${user}`
                     }
                 }
             );
