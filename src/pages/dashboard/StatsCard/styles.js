@@ -2,44 +2,47 @@ import styled from 'styled-components';
 
 export const StatsContainer = styled.div`
   background: #ffffff;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 `;
 
 export const StatsTitle = styled.h3`
-  font-size: 18px;
-  color: #212529;
-  margin-bottom: 16px;
+  font-size: 1.125rem;
+  color: #111827;
+  margin-bottom: 1rem;
   font-weight: 600;
 `;
 
 export const StatsList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem;
 `;
 
 export const StatItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #f1f3f5;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
   
-  &:last-child {
-    border-bottom: none;
+  &:hover {
+    background: #f3f4f6;
   }
 `;
 
 export const StatLabel = styled.span`
-  color: #495057;
-  font-size: 14px;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
 `;
 
 export const StatValue = styled.span`
-  color: #212529;
+  color: #111827;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 1rem;
 `;
