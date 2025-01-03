@@ -1,5 +1,3 @@
-import { axiosInstance } from '../api/axios.config'
-import { API_ENDPOINTS } from "../api/endpoints";
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_BACKEND_API_URL;
@@ -8,8 +6,7 @@ export const reviewService = {
     getReviewsByCourse: async (courseId, page) => {
         try{
             const size = 1;
-            console.log(courseId);
-            const res = await axios.get(`${API_URL}/api/courses/${courseId}/reviews?page=${page}&size=${size}`,);
+            const res = await axios.get(`http://localhost:8081/api/courses/${courseId}/reviews?page=${page}&size=${size}`,);
 
             // content가 빈 배열일 때 reviews.message를 반환
             if (res.data.reviews.content.length === 0) {
@@ -39,5 +36,45 @@ export const reviewService = {
         } catch (error) {
             throw error;
         }
+    },
+
+    createReview: async ( user, course, reviewContent, reviewRating ) => {
+        try{
+            const res = await axios.post(`${API_URL}/api/reviews`, {
+                courseId: course.id,
+                content: reviewContent,
+                rating: reviewRating
+            },
+                {headers: { 'Authorization': `Bearer ${user}`}
+                });
+            if(res.status === 200){
+                return {
+                    success: true,
+                    message: res.data
+                };
+            }
+        }catch (error) {
+            throw error;
+        }
+    },
+
+    deleteReview: async (reviewId, user) => {
+        try{
+            const res = await axios.delete( `${API_URL}/api/reviews/${reviewId}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${user}`
+                    }
+                });
+            if(res.status === 200){
+                return {
+                    success: true,
+                    message: res.data
+                };
+            }
+        }catch(error){
+            throw error;
+        }
     }
+
 }

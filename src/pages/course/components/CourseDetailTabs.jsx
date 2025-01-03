@@ -2,8 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 
 const TabContainer = styled.div`
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 2rem;
+  border-bottom: 1px solid;
 `;
 
 const TabList = styled.div`
