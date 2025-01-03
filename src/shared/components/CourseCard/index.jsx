@@ -1,24 +1,22 @@
-import React, { useState} from 'react';
+import React, {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {useDispatch} from 'react-redux';
 import {cartService} from '../../../infrastructure/services/CartService';
 import {getCourseImage} from '../../utils/imageUtils'; // import
 
 const CourseCard = ({ course, type = 'course' }) => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const isEnrolled = type === 'enrolled';
   const isCart = type === 'cart';
+  const user = localStorage.getItem('idToken');
 
   const courseImage =  getCourseImage(course);
 
-
   if (!course) return null;
 
-  const handleAddToCart = async (course) => {
+  const handleAddToCart = async (user, course) => {
     try{
-      const res = await cartService.addToCart( course.id );
+      const res = await cartService.addToCart( user,course.id );
       if (res.success) {
         alert(res.message); // 성공 메시지 표시
       } else {
@@ -74,7 +72,7 @@ const CourseCard = ({ course, type = 'course' }) => {
                 <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleAddToCart(course);
+                      handleAddToCart( user,course );
                     }}
                     className="bg-[#00c471] text-white px-4 py-2 rounded hover:bg-[#00a65f]"
                 >

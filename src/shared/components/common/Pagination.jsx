@@ -45,14 +45,14 @@ export const AddToCartButton = styled.button`
   padding: 0.75rem 1.5rem;
   border: 1px solid #dee2e6;
   border-radius: 4px;
-  background-color: white;
-  color: #495057;
+  background-color: #1971C2;
+  color: white;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
-    background-color: #e9ecef;
+    background-color: #1864AB;
     border-color: #adb5bd;
   }
 `;
