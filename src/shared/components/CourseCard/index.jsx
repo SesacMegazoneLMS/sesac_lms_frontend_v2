@@ -1,24 +1,22 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { cartService } from '../../../infrastructure/services/CartService';
-import { getCourseImage } from '../../utils/imageUtils'; // import
+import React, {useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {cartService} from '../../../infrastructure/services/CartService';
+import {getCourseImage} from '../../utils/imageUtils'; // import
 
 const CourseCard = ({ course, type = 'course' }) => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const isEnrolled = type === 'enrolled';
   const isCart = type === 'cart';
+  const user = localStorage.getItem('idToken');
 
-  const courseImage = getCourseImage(course);
-
+  const courseImage =  getCourseImage(course);
 
   if (!course) return null;
 
-  const handleAddToCart = async (course) => {
-    try {
-      const res = await cartService.addToCart(course.id);
+  const handleAddToCart = async (user, course) => {
+    try{
+      const res = await cartService.addToCart( user,course.id );
       if (res.success) {
         alert(res.message); // 성공 메시지 표시
       } else {
@@ -37,7 +35,7 @@ const CourseCard = ({ course, type = 'course' }) => {
         }
         alert(res.message);
       }
-    } catch (error) {
+    }catch(error){
       alert('장바구니에 동일한 강좌가 있습니다.');
     }
   };
@@ -51,63 +49,63 @@ const CourseCard = ({ course, type = 'course' }) => {
   };
 
   return (
-    <div
-      className={`
+      <div
+          className={`
         bg-white rounded-lg shadow hover:shadow-lg transition-all cursor-pointer
         ${isCart ? 'grid grid-cols-[180px,1fr] h-32' : 'hover:-translate-y-1'}
       `}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={handleCardClick}
-    >
-      <div className={`relative ${isCart ? 'h-full' : ''}`}>
-        <img
-          src={courseImage}
-          alt={course.title}
-          className={`
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          onClick={handleCardClick}
+      >
+        <div className={`relative ${isCart ? 'h-full' : ''}`}>
+          <img
+              src={courseImage}
+              alt={course.title}
+              className={`
             object-cover
             ${isCart ? 'h-full w-full rounded-l-lg' : 'w-full h-48 rounded-t-lg'}
           `}
-        />
-        {!isEnrolled && !isCart && isHovered && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAddToCart(course);
-              }}
-              className="bg-[#00c471] text-white px-4 py-2 rounded hover:bg-[#00a65f]"
-            >
-              장바구니에 담기
-            </button>
-          </div>
-        )}
-      </div>
+          />
+          {!isEnrolled && !isCart && isHovered && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToCart(course);
+                    }}
+                    className="bg-[#00c471] text-white px-4 py-2 rounded hover:bg-[#00a65f]"
+                >
+                  장바구니에 담기
+                </button>
+              </div>
+          )}
+        </div>
 
-      <div className={`${isCart ? 'p-3' : 'p-4'}`}>
-        <h3 className={`font-semibold text-gray-900 mb-1 line-clamp-1 
+        <div className={`${isCart ? 'p-3' : 'p-4'}`}>
+          <h3 className={`font-semibold text-gray-900 mb-1 line-clamp-1 
           ${isCart ? 'text-base' : 'text-lg'}`}>
-          {course.title}
-        </h3>
-        <p className="text-sm text-gray-600 mb-2">{course.instructor}</p>
+            {course.title}
+          </h3>
+          <p className="text-sm text-gray-600 mb-2">{course.instructor}</p>
 
-        {!isCart && (
-          <>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs text-gray-500">{course.category}</span>
-              <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full">
-                {course.level}
-              </span>
-            </div>
-            <div className="flex items-center mb-3">
-              <span className="text-yellow-400 mr-1">★</span>
-              <span className="text-sm font-medium">{course.rating}</span>
-              <span className="text-sm text-gray-500 ml-2">
-                ({course.students?.toLocaleString() ?? 0}명)
-              </span>
-            </div>
-          </>
-        )}
+          {!isCart && (
+              <>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs text-gray-500">{course.category}</span>
+                  <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full">
+                                {course.level}
+                            </span>
+                </div>
+                <div className="flex items-center mb-3">
+                  <span className="text-yellow-400 mr-1">★</span>
+                  <span className="text-sm font-medium">{course.rating}</span>
+                  <span className="text-sm text-gray-500 ml-2">
+                                ({course.students?.toLocaleString() ?? 0}명)
+                            </span>
+                </div>
+              </>
+          )}
 
         <div className="flex justify-between items-center">
           <div className="flex flex-col">

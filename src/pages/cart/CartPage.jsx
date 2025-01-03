@@ -209,7 +209,7 @@ function CartPage() {
       <CartContainer>
         <CartHeaderWrapper>
           <CartHeader>장바구니</CartHeader>
-          <CartCount>강좌 수: {cartItems.length}개</CartCount>
+          <CartCount>장바구니에 담긴 강좌: {cartItems.length}개</CartCount>
         </CartHeaderWrapper>
         {cartItems.length === 0 ? (
             <EmptyCart>
@@ -307,7 +307,6 @@ const SelectAllWrapper = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 1rem 0;
-  margin-bottom: 1rem;
   border-bottom: 1px solid #e5e7eb;
 `;
 const CheckboxArea = styled.div`
@@ -348,7 +347,6 @@ const CartHeaderWrapper = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
 `;
 
 const CartHeader = styled.h1`
@@ -437,7 +435,9 @@ const OrderSummary = styled.div`
   border-radius: 0.5rem;
   height: fit-content;
   position: sticky;
-  top: 2rem;
+  top: 10rem;
+  border: 3px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 `;
 
 const SummaryTitle = styled.h2`
