@@ -48,8 +48,6 @@ function CourseDetailPage() {
           const courseData = await CourseService.getCourseById(parseInt(id));
           const reviewData = await reviewService.getReviewsByCourse(parseInt(id), currentPage);
 
-          console.log( "courseData : " + JSON.stringify(courseData) ); // 로그 확인
-
           setCourse(courseData);
 
           // reviews 배열이 있는지 확인 후 처리
@@ -256,7 +254,6 @@ function CourseDetailPage() {
     try{
       if(course){
         const res = await axios.get(`${API_URL}/api/courses/instructor/${course.instructorId}`);
-        console.log("강사 : " + JSON.stringify(res.data[0]));
         setInstructorInfo(res.data[0]);
       }
     }catch(error){
