@@ -38,8 +38,6 @@ function CourseCreatePage() {
     return textWithoutSpace.length;
   }, []);
 
-
-
   const handleTitleChange = (e) => {
     const currentTitle = e.target.value;
     const count = countText(currentTitle)
@@ -49,7 +47,6 @@ function CourseCreatePage() {
     }
   };
 
-
   const handleEditorChange = (value) => {
     const plainText = value.replace(/<[^>]*>/g, '')
     const count = countText(plainText)
@@ -58,8 +55,6 @@ function CourseCreatePage() {
       document.getElementById("descriptionCount").innerText = `${count}/100`;
     }
   };
-
-
 
   const handleCreateCourse = async (courseData) => {
     try {
