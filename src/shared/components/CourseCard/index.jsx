@@ -19,13 +19,35 @@ const CourseCard = ({ course, type = 'course' }) => {
   const isCart = type === 'cart';
   const user = localStorage.getItem('idToken');
   const dispatch = useDispatch();
+  const [ratingInfo, setRatingInfo] = useState(null); // 수정: 초기값을 null로 설정
+  const [instructorName, setInstructorName] = useState(null);
 
   useEffect(() => {
     // 수강 중인 강좌일 때만 강의 진행률 정보를 가져옴
     if (isEnrolled && course.id) {
       fetchLectureProgress();
     }
+    getRating(course);
+    getInstructor(course);
   }, [course.id, isEnrolled]);
+
+  const getRating = async (course) => {
+    try {
+      const res = await axios.get(`${process.env.REACT_APP_BACKEND_API_URL}/api/courses/${course.id}/scores`,{}, {});
+      setRatingInfo(res.data);
+    } catch (error) {
+      console.error("평점 정보 로딩 에러:", error);
+    }
+  }
+
+  const getInstructor = async (course) => {
+    try{
+      const res = await axios.get(`${process.env.REACT_APP_BACKEND_API_URL}/api/courses/instructor/${course.instructorId}`, {}, {});
+      setInstructorName(res.data[0].nickname);
+    }catch(error){
+      console.error("강사 정보 로딩 실패 : ", error);
+    }
+  }
 
   const fetchLectureProgress = async () => {
     try {
@@ -38,7 +60,7 @@ const CourseCard = ({ course, type = 'course' }) => {
           }
       );
 
-      console.log('Progress response:', JSON.stringify(response.data)); // 데이터 확인용 로그
+      console.log('Progress response:', response.data); // 데이터 확인용 로그
 
       // 백엔드 응답 구조에 맞게 수정하고 진도율은 정수로 변환
       setLectureProgress({
@@ -125,12 +147,19 @@ const CourseCard = ({ course, type = 'course' }) => {
         </div>
 
         <div className={`${isCart ? 'p-3' : 'p-4'}`}>
-          <h3 className={`font-semibold text-gray-900 mb-1 line-clamp-1 
-          ${isCart ? 'text-base' : 'text-lg'}`}>
-            {course.title}
-          </h3>
-          <p className="text-sm text-gray-600 mb-2">{course.instructor}</p>
-
+          <div className="flex justify-between">
+            <h3 className={`font-semibold text-gray-900 mb-1 line-clamp-1 
+            ${isCart ? 'text-base' : 'text-lg'}`}>
+              {course.title}
+            </h3>
+            <div className="flex items-center mb-3">
+              <span className="text-yellow-400 mr-1">★</span>
+              <span className="text-sm font-medium">{ratingInfo?.averageRating}</span> {/* 수정: optional chaining 적용 */}
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <p className="text-sm text-gray-600 mb-2">{instructorName}</p>
+          </div>
           {!isCart && (
               <>
                 <div className="flex items-center gap-2 mb-2">
@@ -139,13 +168,7 @@ const CourseCard = ({ course, type = 'course' }) => {
                                 {course.level}
                             </span>
                 </div>
-                <div className="flex items-center mb-3">
-                  <span className="text-yellow-400 mr-1">★</span>
-                  <span className="text-sm font-medium">{course.rating}</span>
-                  <span className="text-sm text-gray-500 ml-2">
-                                ({course.students?.toLocaleString() ?? 0}명)
-                            </span>
-                </div>
+
               </>
           )}
 
@@ -163,7 +186,8 @@ const CourseCard = ({ course, type = 'course' }) => {
               )}
             </div>
           </div>
-          
+
+
           {/* 25.01.03 홍인표 작성. 수강 중인 강좌의 진행률을 표시하는 코드 */}
           {isEnrolled && (
               <div className="mt-2">
