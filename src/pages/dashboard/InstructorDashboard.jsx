@@ -1,11 +1,11 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {Link} from 'react-router-dom';
-import {useSelector} from 'react-redux';
-import {FiBookOpen, FiDollarSign, FiPlus, FiStar, FiTrendingDown, FiTrendingUp, FiUsers} from 'react-icons/fi';
-import {Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
-import {Tooltip as CustomTooltip} from 'react-tooltip'; // 추가
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { FiBookOpen, FiDollarSign, FiPlus, FiStar, FiTrendingDown, FiTrendingUp, FiUsers } from 'react-icons/fi';
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Tooltip as CustomTooltip } from 'react-tooltip'; // 추가
 import toast from 'react-hot-toast';
-import {StatsService} from '../../infrastructure/services/StatisticsService';
+import { StatsService } from '../../infrastructure/services/StatisticsService';
 import CourseQuizPage from '../instructor/CourseQuizPage';
 import ProfilePage from '../profile/ProfilePage';
 import axios from "axios";
@@ -97,7 +97,7 @@ function InstructorDashboard() {
     { id: 'dashboard', label: '대시보드' },
     { id: 'courses', label: '강좌 관리' },
     { id: 'quizzes', label: '퀴즈 관리' },
-    { id: 'profile', label: '프로필 관리' }
+    // { id: 'profile', label: '프로필 관리' }
   ];
 
   const fetchInstructorProfile = useCallback(async () => {
@@ -566,9 +566,9 @@ function InstructorDashboard() {
                   {/*<th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">*/}
                   {/*  수익*/}
                   {/*</th>*/}
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {/* <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     진행률
-                  </th>
+                  </th> */}
                   {/*<th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">*/}
                   {/*  최근 업데이트*/}
                   {/*</th>*/}
@@ -592,14 +592,14 @@ function InstructorDashboard() {
                           {course.averageRating.toFixed(1)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      {/* <td className="px-6 py-4 whitespace-nowrap">
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
                             className="bg-primary h-2 rounded-full"
                             style={{ width: `${course.progress || 0}%` }}
                           />
                         </div>
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
               </tbody>

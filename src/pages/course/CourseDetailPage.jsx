@@ -43,38 +43,38 @@ function CourseDetailPage() {
 
 
   const fetchCourseData = useCallback(
-      async (resetReviews = false) => {
-        try {
-          const courseData = await CourseService.getCourseById(parseInt(id));
-          const reviewData = await reviewService.getReviewsByCourse(parseInt(id), currentPage);
+    async (resetReviews = false) => {
+      try {
+        const courseData = await CourseService.getCourseById(parseInt(id));
+        const reviewData = await reviewService.getReviewsByCourse(parseInt(id), currentPage);
 
-          setCourse(courseData);
+        setCourse(courseData);
 
-          // reviews 배열이 있는지 확인 후 처리
-          if (reviewData && reviewData.reviews) {
-            setReviews((prevReviews) => {
-              if (resetReviews || currentPage === 1) {
-                return [...reviewData.reviews];
-              }
-              const combinedReviews = [...prevReviews, ...reviewData.reviews];
-              return Array.from(new Set(combinedReviews.map((review) => review.id))).map((id) =>
-                  combinedReviews.find((review) => review.id === id)
-              );
-            });
-          } else {
-            // reviews 배열이 없을 경우 빈 배열 처리 또는 에러 처리
-            setReviews([]);
-            console.error("reviews 배열이 없습니다.")
-          }
-          setTotalPages(reviewData?.totalPages || 0); // totalPages 설정 (null 또는 undefined 대비)
-          setMessage(reviewData?.message || ''); // message 설정 (null 또는 undefined 대비)
-          setCourseImage(getCourseImage(courseData));
-
-        } catch (error) {
-          toast.error('강좌 정보를 불러오는데 실패했습니다.');
+        // reviews 배열이 있는지 확인 후 처리
+        if (reviewData && reviewData.reviews) {
+          setReviews((prevReviews) => {
+            if (resetReviews || currentPage === 1) {
+              return [...reviewData.reviews];
+            }
+            const combinedReviews = [...prevReviews, ...reviewData.reviews];
+            return Array.from(new Set(combinedReviews.map((review) => review.id))).map((id) =>
+              combinedReviews.find((review) => review.id === id)
+            );
+          });
+        } else {
+          // reviews 배열이 없을 경우 빈 배열 처리 또는 에러 처리
+          setReviews([]);
+          console.error("reviews 배열이 없습니다.")
         }
-      },
-      [id, currentPage] // currentPage를 디펜던시로 추가
+        setTotalPages(reviewData?.totalPages || 0); // totalPages 설정 (null 또는 undefined 대비)
+        setMessage(reviewData?.message || ''); // message 설정 (null 또는 undefined 대비)
+        setCourseImage(getCourseImage(courseData));
+
+      } catch (error) {
+        toast.error('강좌 정보를 불러오는데 실패했습니다.');
+      }
+    },
+    [id, currentPage] // currentPage를 디펜던시로 추가
   );
 
   useEffect(() => {
@@ -130,7 +130,7 @@ function CourseDetailPage() {
         alert(res.message);
 
         // 수정된 리뷰 데이터 가져오기
-        const updatedReview = {...review, content: editReviewContent, rating: editReviewRating}
+        const updatedReview = { ...review, content: editReviewContent, rating: editReviewRating }
 
         setReviews((prevReviews) => {
           return prevReviews.map(prevReview => {
@@ -251,12 +251,12 @@ function CourseDetailPage() {
   }
 
   const instructorInfos = async (course) => {
-    try{
-      if(course){
+    try {
+      if (course) {
         const res = await axios.get(`${API_URL}/api/courses/instructor/${course.instructorId}`);
         setInstructorInfo(res.data[0]);
       }
-    }catch(error){
+    } catch (error) {
       console.error(error);
     }
   }
@@ -268,211 +268,211 @@ function CourseDetailPage() {
   }, [course]);
 
   return (
-      !course ? (<LoadingSpinner/>) :
-          <PageContainer>
-            <MainContent>
-              <CourseInfoSection>
-                <CourseHeader>
-                  <CategoryBadge>{course.category}</CategoryBadge>
-                  <LevelBadge>{course.level}</LevelBadge>
-                  <CourseTitle>{course.title}</CourseTitle>
-                  <Description dangerouslySetInnerHTML={{__html: course.description}}/>
-                </CourseHeader>
-                <CourseDetailTabs activeTab={activeTab} onTabChange={setActiveTab}/>
-                {activeTab === 'curriculum' && (
-                    <>
-                      <ObjectivesSection>
-                        <SectionTitle>학습 목표</SectionTitle>
-                        <ObjectivesList>
-                          {course?.objectives.length !== 0 ?
-                              (course.objectives).map((objective, index) => (
-                                  <ObjectiveItem key={index}>{objective}</ObjectiveItem>
-                              )) : (
-                                  <div>학습 목표가 없습니다</div>
-                              )}
-                        </ObjectivesList>
-                      </ObjectivesSection>
-                      <RequirementsSection>
-                        <SectionTitle>수강 전 필요한 것들</SectionTitle>
-                        <RequirementsList>
-                          {course?.requirements.length !== 0 ?
-                              (course.requirements).map((req, index) => (
-                                  <RequirementItem key={index}>{req}</RequirementItem>
-                              )) : (
-                                  <div>요구 사항이 없습니다</div>
-                              )}
-                        </RequirementsList>
-                      </RequirementsSection>
-
-                      <SkillsSection>
-                        <SectionTitle>배울 수 있는 기술</SectionTitle>
-                        <SkillsList>
-                          {course?.skills.length !== 0 ?
-                              (course.skills).map((skill, index) => (
-                                  <SkillTag key={index}>{skill}</SkillTag>
-                              )) : (
-                                  <div>기술 사항이 없습니다</div>
-                              )}
-                        </SkillsList>
-                      </SkillsSection>
-
-                      <CurriculumSection>
-                        <SectionTitle>커리큘럼</SectionTitle>
-                        <LectureList>
-                          {course.lectures.map((lecture) => (
-                              <LectureItem key={lecture.id}>
-                                <LectureItemHr />
-                                <LectureOrderIndex>{lecture.orderIndex}강</LectureOrderIndex>
-                                <LectureTitle>강의명 :{lecture.title}</LectureTitle>
-                                <LectureDuration>영상 시간: {lecture.duration}</LectureDuration>
-                              </LectureItem>
-                          ))}
-                        </LectureList>
-                      </CurriculumSection>
-                    </>
-                )}
-                {activeTab === 'reviews' && (
-                    <ReviewsSection>
-                      <SectionTitle>수강평</SectionTitle>
-                      {user ?
-                          (<>
-                            <ReviewInputArea>
-                              <div className="flex justify-between items-center">
-                                <ReviewInputLabel>수강평 작성</ReviewInputLabel>
-                                <RatingSelectWrapper>
-                                  <RatingSelect
-                                      ref={selectRef}
-                                      style={{
-                                        width: ratingWidth,
-                                        minWidth: '6rem'
-                                      }}
-                                      value={reviewRating}
-                                      onChange={handleRatingChange}
-                                  >
-                                    <option value={1}>★</option>
-                                    <option value={2}>★★</option>
-                                    <option value={3}>★★★</option>
-                                    <option value={4}>★★★★</option>
-                                    <option value={5}>★★★★★</option>
-                                  </RatingSelect>
-                                </RatingSelectWrapper>
-                              </div>
-                              <ReviewTextarea
-                                  value={reviewContent}
-                                  onChange={(e) => handleReviewContentChange(e)}
-                                  placeholder="수강평을 작성해주세요"
-                              />
-                              <div className="flex justify-end mt-1">
-                                <div className="text-gray-500 text-sm" id="reviewCount">0/50</div>
-                              </div>
-                              <SubmitButton
-                                  onClick={() => handleReviewSubmit(user, course, reviewContent, reviewRating)}>등록</SubmitButton>
-                            </ReviewInputArea></>) : null}
-                      <ObjectivesList>
-                        {reviews.length === 0 ? (
-                            <div>{message}</div>
-                        ) : (
-                            reviews.map(review => (
-                                <ObjectiveItem key={review.id}>
-                                  {editReviewId === review.id ? (
-                                      <ReviewEditArea>
-                                        <div className="flex justify-between items-center">
-                                          <ReviewInputLabel>수강평 수정</ReviewInputLabel>
-                                          <RatingSelectWrapper>
-                                            <RatingSelect
-                                                ref={selectRef}
-                                                style={{
-                                                  width: editRatingWidth,
-                                                  minWidth: '6rem'
-                                                }}
-                                                value={editReviewRating}
-                                                onChange={handleEditRatingChange}
-                                            >
-                                              <option value={1}>★</option>
-                                              <option value={2}>★★</option>
-                                              <option value={3}>★★★</option>
-                                              <option value={4}>★★★★</option>
-                                              <option value={5}>★★★★★</option>
-                                            </RatingSelect>
-                                          </RatingSelectWrapper>
-                                        </div>
-                                        <ReviewTextarea
-                                            value={editReviewContent}
-                                            onChange={(e) => handleReviewContentChange(e, true)}
-                                            placeholder="수강평을 작성해주세요"
-                                        />
-                                        <div className="flex justify-end mt-1">
-                                          <div className="text-gray-500 text-sm" id="editReviewCount">0/50</div>
-                                        </div>
-                                        <EditDeleteButtonContainer style={{justifyContent: 'flex-end'}}>
-                                          <EditButton onClick={() => handleEditReview(review)}>저장</EditButton>
-                                          <DeleteButton onClick={() => handleCancelEdit()}>취소</DeleteButton>
-                                        </EditDeleteButtonContainer>
-                                      </ReviewEditArea>
-                                  ) : (
-                                      <>
-                                        <div className="flex justify-between">
-                                          <ReviewWriter>{review.writer}</ReviewWriter>
-                                          <ReviewDate>
-                                            {formatDate(review.createdAt)}
-                                          </ReviewDate>
-                                        </div>
-                                        <ReviewContent>{review.content}</ReviewContent>
-                                        <div className="flex justify-between">
-                                          <ReviewRating>
-                                            {'★'.repeat(review.rating)}{''}
-                                            {'☆'.repeat(5 - review.rating)}
-                                          </ReviewRating>
-                                          <LikeButton
-                                              reviewId={review.id}
-                                              fetchCourseData={fetchCourseData}
-                                          />
-                                        </div>
-                                        <div className="flex justify-end">
-                                          {userInfo.user && userInfo.user.name === review.writer && (
-                                              <EditDeleteButtonContainer>
-                                                <EditButton onClick={() => handleEditClick(review)}>수정</EditButton>
-                                                <DeleteButton onClick={() => handleDeleteReview(review.id)}>삭제</DeleteButton>
-                                              </EditDeleteButtonContainer>
-                                          )}
-                                        </div>
-                                      </>
-                                  )}
-                                </ObjectiveItem>
-                            ))
-                        )}
-                      </ObjectivesList>
-                      <OnLoadMorePagination
-                          currentPage={currentPage}
-                          totalPages={totalPages}
-                          onPageChange={handleLoadMore}
-                      />
-                    </ReviewsSection>
-                )}
-                {activeTab === 'instructor' && (
-                    <InstructorSection instructor={instructorInfo}/>
-                )}
-              </CourseInfoSection>
-              <PurchaseSection>
-                <PurchaseCard>
-                  <PreviewImage src={courseImage} alt={course.title}/>
-                  <PriceInfo>
-                    <CurrentPrice>₩{course.price.toLocaleString()}</CurrentPrice>
-                    <ButtonGroup>
-                      <CartButton onClick={() => handleAddToCart(user, course)}>
-                        장바구니에 담기
-                      </CartButton>
-                      {course.price !== 0 && (
-                          <BuyButton onClick={() => navigate(`/checkout/${course.id}`)}>
-                            바로 구매하기
-                          </BuyButton>
+    !course ? (<LoadingSpinner />) :
+      <PageContainer>
+        <MainContent>
+          <CourseInfoSection>
+            <CourseHeader>
+              <CategoryBadge>{course.category}</CategoryBadge>
+              <LevelBadge>{course.level}</LevelBadge>
+              <CourseTitle>{course.title}</CourseTitle>
+              <Description dangerouslySetInnerHTML={{ __html: course.description }} />
+            </CourseHeader>
+            <CourseDetailTabs activeTab={activeTab} onTabChange={setActiveTab} />
+            {activeTab === 'curriculum' && (
+              <>
+                <ObjectivesSection>
+                  <SectionTitle>학습 목표</SectionTitle>
+                  <ObjectivesList>
+                    {course?.objectives.length !== 0 ?
+                      (course.objectives).map((objective, index) => (
+                        <ObjectiveItem key={index}>{objective}</ObjectiveItem>
+                      )) : (
+                        <div>학습 목표가 없습니다</div>
                       )}
-                    </ButtonGroup>
-                  </PriceInfo>
-                </PurchaseCard>
-              </PurchaseSection>
-            </MainContent>
-          </PageContainer>
+                  </ObjectivesList>
+                </ObjectivesSection>
+                <RequirementsSection>
+                  <SectionTitle>수강 전 필요한 것들</SectionTitle>
+                  <RequirementsList>
+                    {course?.requirements.length !== 0 ?
+                      (course.requirements).map((req, index) => (
+                        <RequirementItem key={index}>{req}</RequirementItem>
+                      )) : (
+                        <div>요구 사항이 없습니다</div>
+                      )}
+                  </RequirementsList>
+                </RequirementsSection>
+
+                <SkillsSection>
+                  <SectionTitle>배울 수 있는 기술</SectionTitle>
+                  <SkillsList>
+                    {course?.skills.length !== 0 ?
+                      (course.skills).map((skill, index) => (
+                        <SkillTag key={index}>{skill}</SkillTag>
+                      )) : (
+                        <div>기술 사항이 없습니다</div>
+                      )}
+                  </SkillsList>
+                </SkillsSection>
+
+                <CurriculumSection>
+                  <SectionTitle>커리큘럼</SectionTitle>
+                  <LectureList>
+                    {course.lectures.map((lecture) => (
+                      <LectureItem key={lecture.id}>
+                        <LectureItemHr />
+                        <LectureOrderIndex>{lecture.orderIndex}강</LectureOrderIndex>
+                        <LectureTitle>강의명 :{lecture.title}</LectureTitle>
+                        <LectureDuration>영상 시간: {lecture.duration}</LectureDuration>
+                      </LectureItem>
+                    ))}
+                  </LectureList>
+                </CurriculumSection>
+              </>
+            )}
+            {activeTab === 'reviews' && (
+              <ReviewsSection>
+                <SectionTitle>수강평</SectionTitle>
+                {user ?
+                  (<>
+                    <ReviewInputArea>
+                      <div className="flex justify-between items-center">
+                        <ReviewInputLabel>수강평 작성</ReviewInputLabel>
+                        <RatingSelectWrapper>
+                          <RatingSelect
+                            ref={selectRef}
+                            style={{
+                              width: ratingWidth,
+                              minWidth: '6rem'
+                            }}
+                            value={reviewRating}
+                            onChange={handleRatingChange}
+                          >
+                            <option value={1}>★</option>
+                            <option value={2}>★★</option>
+                            <option value={3}>★★★</option>
+                            <option value={4}>★★★★</option>
+                            <option value={5}>★★★★★</option>
+                          </RatingSelect>
+                        </RatingSelectWrapper>
+                      </div>
+                      <ReviewTextarea
+                        value={reviewContent}
+                        onChange={(e) => handleReviewContentChange(e)}
+                        placeholder="수강평을 작성해주세요"
+                      />
+                      <div className="flex justify-end mt-1">
+                        <div className="text-gray-500 text-sm" id="reviewCount">0/50</div>
+                      </div>
+                      <SubmitButton
+                        onClick={() => handleReviewSubmit(user, course, reviewContent, reviewRating)}>등록</SubmitButton>
+                    </ReviewInputArea></>) : null}
+                <ObjectivesList>
+                  {reviews.length === 0 ? (
+                    <div>{message}</div>
+                  ) : (
+                    reviews.map(review => (
+                      <ObjectiveItem key={review.id}>
+                        {editReviewId === review.id ? (
+                          <ReviewEditArea>
+                            <div className="flex justify-between items-center">
+                              <ReviewInputLabel>수강평 수정</ReviewInputLabel>
+                              <RatingSelectWrapper>
+                                <RatingSelect
+                                  ref={selectRef}
+                                  style={{
+                                    width: editRatingWidth,
+                                    minWidth: '6rem'
+                                  }}
+                                  value={editReviewRating}
+                                  onChange={handleEditRatingChange}
+                                >
+                                  <option value={1}>★</option>
+                                  <option value={2}>★★</option>
+                                  <option value={3}>★★★</option>
+                                  <option value={4}>★★★★</option>
+                                  <option value={5}>★★★★★</option>
+                                </RatingSelect>
+                              </RatingSelectWrapper>
+                            </div>
+                            <ReviewTextarea
+                              value={editReviewContent}
+                              onChange={(e) => handleReviewContentChange(e, true)}
+                              placeholder="수강평을 작성해주세요"
+                            />
+                            <div className="flex justify-end mt-1">
+                              <div className="text-gray-500 text-sm" id="editReviewCount">0/50</div>
+                            </div>
+                            <EditDeleteButtonContainer style={{ justifyContent: 'flex-end' }}>
+                              <EditButton onClick={() => handleEditReview(review)}>저장</EditButton>
+                              <DeleteButton onClick={() => handleCancelEdit()}>취소</DeleteButton>
+                            </EditDeleteButtonContainer>
+                          </ReviewEditArea>
+                        ) : (
+                          <>
+                            <div className="flex justify-between">
+                              <ReviewWriter>{review.writer}</ReviewWriter>
+                              <ReviewDate>
+                                {formatDate(review.createdAt)}
+                              </ReviewDate>
+                            </div>
+                            <ReviewContent>{review.content}</ReviewContent>
+                            <div className="flex justify-between">
+                              <ReviewRating>
+                                {'★'.repeat(review.rating)}{''}
+                                {'☆'.repeat(5 - review.rating)}
+                              </ReviewRating>
+                              <LikeButton
+                                reviewId={review.id}
+                                fetchCourseData={fetchCourseData}
+                              />
+                            </div>
+                            <div className="flex justify-end">
+                              {userInfo.user && userInfo.user.name === review.writer && (
+                                <EditDeleteButtonContainer>
+                                  <EditButton onClick={() => handleEditClick(review)}>수정</EditButton>
+                                  <DeleteButton onClick={() => handleDeleteReview(review.id)}>삭제</DeleteButton>
+                                </EditDeleteButtonContainer>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </ObjectiveItem>
+                    ))
+                  )}
+                </ObjectivesList>
+                <OnLoadMorePagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handleLoadMore}
+                />
+              </ReviewsSection>
+            )}
+            {activeTab === 'instructor' && (
+              <InstructorSection instructor={instructorInfo} />
+            )}
+          </CourseInfoSection>
+          <PurchaseSection>
+            <PurchaseCard>
+              <PreviewImage src={courseImage} alt={course.title} />
+              <PriceInfo>
+                <CurrentPrice>₩{course.price.toLocaleString()}</CurrentPrice>
+                <ButtonGroup>
+                  <CartButton onClick={() => handleAddToCart(user, course)}>
+                    장바구니에 담기
+                  </CartButton>
+                  {course.price !== 0 && (
+                    <BuyButton onClick={() => navigate(`/checkout/${course.id}`)}>
+                      바로 구매하기
+                    </BuyButton>
+                  )}
+                </ButtonGroup>
+              </PriceInfo>
+            </PurchaseCard>
+          </PurchaseSection>
+        </MainContent>
+      </PageContainer>
   );
 }
 const PageContainer = styled.div`
@@ -515,12 +515,12 @@ const LevelBadge = styled(CategoryBadge)`
 `;
 
 const CourseTitle = styled.h1`
-  font-size: 80px;
+  font-size: 45px;
   font-weight: bold;
   margin: 1rem 0;
 
   @media (max-width: 1200px) {
-    font-size: 60px;
+    font-size: 45px;
   }
 
   @media (max-width: 768px) {
