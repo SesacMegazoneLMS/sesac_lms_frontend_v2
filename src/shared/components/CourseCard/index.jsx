@@ -20,7 +20,6 @@ const CourseCard = ({ course, type = 'course' }) => {
   const user = localStorage.getItem('idToken');
   const dispatch = useDispatch();
 
-
   useEffect(() => {
     // 수강 중인 강좌일 때만 강의 진행률 정보를 가져옴
     if (isEnrolled && course.id) {
@@ -39,7 +38,7 @@ const CourseCard = ({ course, type = 'course' }) => {
           }
       );
 
-      console.log('Progress response:', response.data); // 데이터 확인용 로그
+      console.log('Progress response:', JSON.stringify(response.data)); // 데이터 확인용 로그
 
       // 백엔드 응답 구조에 맞게 수정하고 진도율은 정수로 변환
       setLectureProgress({
@@ -164,8 +163,7 @@ const CourseCard = ({ course, type = 'course' }) => {
               )}
             </div>
           </div>
-
-
+          
           {/* 25.01.03 홍인표 작성. 수강 중인 강좌의 진행률을 표시하는 코드 */}
           {isEnrolled && (
               <div className="mt-2">
