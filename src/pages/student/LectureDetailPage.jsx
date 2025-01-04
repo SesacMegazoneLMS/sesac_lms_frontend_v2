@@ -8,6 +8,7 @@ import { CourseService } from '../../infrastructure/services/CourseService';
 import CourseDetailTabs from '../course/components/CourseDetailTabs';
 import InstructorSection from '../course/components/InstructorSection';
 import axios from 'axios';
+import styled from 'styled-components';
 
 function LectureDetailPage() {
   const { courseId } = useParams();
@@ -62,15 +63,20 @@ function LectureDetailPage() {
             {course.category}
           </span>
           <h1 className="mt-4 text-3xl font-bold text-gray-900">{course.title}</h1>
-          <p className="mt-2 text-lg text-gray-600">{course.description}</p>
+          <br></br>
+          <Description dangerouslySetInnerHTML={{ __html: course.description }} />
         </div>
 
         {/* 탭 네비게이션 */}
-        <CourseDetailTabs
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          isActive={activeTab === 'curriculum'}
-        />
+        <div className="border-t border-gray-200">
+          <div className="px-6">
+            <CourseDetailTabs
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              isActive={activeTab === 'curriculum'}
+            />
+          </div>
+        </div>
 
         {/* 탭 컨텐츠 */}
         <div className="p-6">
@@ -140,5 +146,21 @@ function LectureDetailPage() {
     </div>
   );
 }
+const Description = styled.p`
+  font-size: 20px;
+  color: black;
+  line-height: 1.6;
 
+  @media (max-width: 1200px) {
+    font-size: 20px;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 10px;
+  }
+
+  @media (max-width: 576px) {
+    font-size: 10px;
+  }
+`;
 export default LectureDetailPage;
