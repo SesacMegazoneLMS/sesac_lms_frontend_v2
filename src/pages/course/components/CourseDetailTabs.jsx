@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 const TabContainer = styled.div`
   border-bottom: 1px solid;
+  
 `;
 
 const TabList = styled.div`

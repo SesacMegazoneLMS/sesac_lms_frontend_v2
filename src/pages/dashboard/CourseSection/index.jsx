@@ -32,10 +32,10 @@ export const CourseSection = ({ courses, onViewAll, title, type = 'enrolled' }) 
           ))
         ) : (
           <EmptyCourses>
-            <img
+            {/* <img
               src="/assets/icons/empty-course.svg"
               alt="강좌 없음"
-            />
+            /> */}
             <p>강좌가 없습니다.</p>
           </EmptyCourses>
         )}

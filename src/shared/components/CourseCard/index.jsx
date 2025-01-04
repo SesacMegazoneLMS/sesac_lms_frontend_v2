@@ -33,7 +33,7 @@ const CourseCard = ({ course, type = 'course' }) => {
 
   const getRating = async (course) => {
     try {
-      const res = await axios.get(`${process.env.REACT_APP_BACKEND_API_URL}/api/courses/${course.id}/scores`,{}, {});
+      const res = await axios.get(`${process.env.REACT_APP_BACKEND_API_URL}/api/courses/${course.id}/scores`, {}, {});
       setRatingInfo(res.data);
     } catch (error) {
       console.error("평점 정보 로딩 에러:", error);
@@ -41,10 +41,10 @@ const CourseCard = ({ course, type = 'course' }) => {
   }
 
   const getInstructor = async (course) => {
-    try{
+    try {
       const res = await axios.get(`${process.env.REACT_APP_BACKEND_API_URL}/api/courses/instructor/${course.instructorId}`, {}, {});
       setInstructorName(res.data[0].nickname);
-    }catch(error){
+    } catch (error) {
       console.error("강사 정보 로딩 실패 : ", error);
     }
   }
@@ -52,12 +52,12 @@ const CourseCard = ({ course, type = 'course' }) => {
   const fetchLectureProgress = async () => {
     try {
       const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_API_URL}/api/courses/${course.id}/progress`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('idToken')}`
-            }
+        `${process.env.REACT_APP_BACKEND_API_URL}/api/courses/${course.id}/progress`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('idToken')}`
           }
+        }
       );
 
       console.log('Progress response:', response.data); // 데이터 확인용 로그
@@ -78,7 +78,7 @@ const CourseCard = ({ course, type = 'course' }) => {
   if (!course) return null;
 
   const handleAddToCart = async (course) => {
-    try{
+    try {
       const res = await cartService.addToCart(user, course.id);
       if (res.success) {
         alert(res.message); // 성공 메시지 표시
@@ -99,7 +99,7 @@ const CourseCard = ({ course, type = 'course' }) => {
         }
         alert(res.message);
       }
-    }catch(error){
+    } catch (error) {
       alert('장바구니에 동일한 강좌가 있습니다.');
     }
   };
@@ -113,106 +113,110 @@ const CourseCard = ({ course, type = 'course' }) => {
   };
 
   return (
-      <div
-          className={`
+    <div
+      className={`
         bg-white rounded-lg shadow hover:shadow-lg transition-all cursor-pointer
         ${isCart ? 'grid grid-cols-[180px,1fr] h-32' : 'hover:-translate-y-1'}
       `}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          onClick={handleCardClick}
-      >
-        <div className={`relative ${isCart ? 'h-full' : ''}`}>
-          <img
-              src={courseImage}
-              alt={course.title}
-              className={`
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={handleCardClick}
+    >
+      <div className={`relative ${isCart ? 'h-full' : ''}`}>
+        <img
+          src={courseImage}
+          alt={course.title}
+          className={`
             object-cover
             ${isCart ? 'h-full w-full rounded-l-lg' : 'w-full h-48 rounded-t-lg'}
           `}
-          />
-          {!isEnrolled && !isCart && isHovered && (
-              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddToCart(course);
-                    }}
-                    className="bg-[#00c471] text-white px-4 py-2 rounded hover:bg-[#00a65f]"
-                >
-                  장바구니에 담기
-                </button>
-              </div>
-          )}
-        </div>
+        />
+        {!isEnrolled && !isCart && isHovered && (
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddToCart(course);
+              }}
+              className="bg-[#00c471] text-white px-4 py-2 rounded hover:bg-[#00a65f]"
+            >
+              장바구니에 담기
+            </button>
+          </div>
+        )}
+      </div>
 
-        <div className={`${isCart ? 'p-3' : 'p-4'}`}>
-          <div className="flex justify-between">
-            <h3 className={`font-semibold text-gray-900 mb-1 line-clamp-1 
-            ${isCart ? 'text-base' : 'text-lg'}`}>
-              {course.title}
-            </h3>
-            <div className="flex items-center mb-3">
-              <span className="text-yellow-400 mr-1">★</span>
-              <span className="text-sm font-medium">{ratingInfo?.averageRating}</span> {/* 수정: optional chaining 적용 */}
-            </div>
+      <div className={`${isCart ? 'p-3' : 'p-4'}`}>
+        <div className="flex">
+          <h3 className={`font-semibold text-gray-900 mb-1 min-h-[3rem] line-clamp-2 
+            ${isCart ? 'text-base leading-6' : 'text-lg leading-6'}`}>
+            {course.title}
+          </h3>
+        </div>
+        <div className="flex justify-between">
+          <div className="flex items-center mb-3">
+            <span className="text-yellow-400 mr-1">★</span>
+            <span className="text-sm font-medium">{ratingInfo?.averageRating}</span> {/* 수정: optional chaining 적용 */}
           </div>
           <div className="flex justify-end">
             <p className="text-sm text-gray-600 mb-2">{instructorName}</p>
           </div>
+        </div>
+        <div>
           {!isCart && (
-              <>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs text-gray-500">{course.category}</span>
-                  <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full">
-                                {course.level}
-                            </span>
-                </div>
+            <>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs text-gray-500">{course.category}</span>
+                <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full">
+                  {course.level}
+                </span>
+              </div>
 
-              </>
+            </>
           )}
 
           <div className="flex justify-between items-center">
             <div className="flex flex-col">
               {!isNaN(course.price) && (
-                  <>
-                <span className="text-sm text-gray-500 line-through">
-                  ₩{(course.price * 1.2)?.toLocaleString()}
-                </span>
-                    <span className={`font-bold text-[#1e40af] ${isCart ? 'text-base' : 'text-lg'}`}>
-                  ₩{course.price?.toLocaleString() ?? 0}
-                </span>
-                  </>
+                <>
+                  <span className="text-sm text-gray-500 line-through">
+                    ₩{course.price?.toLocaleString()}
+                  </span>
+                  <span className={`font-bold text-[#1e40af] ${isCart ? 'text-base' : 'text-lg'}`}>
+                    ₩{Math.floor(course.price * 0.8)?.toLocaleString() ?? 0}
+                  </span>
+                </>
               )}
             </div>
           </div>
+        </div>
 
 
-          {/* 25.01.03 홍인표 작성. 수강 중인 강좌의 진행률을 표시하는 코드 */}
-          {isEnrolled && (
-              <div className="mt-2">
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <span>진행률: {lectureProgress.progressPercent}%</span>
-                  <span>
+        {/* 25.01.03 홍인표 작성. 수강 중인 강좌의 진행률을 표시하는 코드 */}
+        {isEnrolled && (
+          <div className="mt-2">
+            <div className="flex items-center justify-between text-sm text-gray-500">
+              <span>진행률: {lectureProgress.progressPercent}%</span>
+              <span>
                 {lectureProgress.completedCount}/{lectureProgress.totalCount} 강의
               </span>
-                </div>
-                <div className="mt-1 h-2 bg-gray-200 rounded-full">
-                  <div
-                      className="h-full bg-green-500 rounded-full"
-                      style={{ width: `${lectureProgress.progressPercent}%` }}
-                  />
-                </div>
-                {lectureProgress.completedCount === lectureProgress.totalCount &&
-                    lectureProgress.totalCount > 0 && (
-                        <span className="mt-1 inline-block px-2 py-1 text-xs text-green-700 bg-green-100 rounded">
+            </div>
+            <div className="mt-1 h-2 bg-gray-200 rounded-full">
+              <div
+                className="h-full bg-green-500 rounded-full"
+                style={{ width: `${lectureProgress.progressPercent}%` }}
+              />
+            </div>
+            {lectureProgress.completedCount === lectureProgress.totalCount &&
+              lectureProgress.totalCount > 0 && (
+                <span className="mt-1 inline-block px-2 py-1 text-xs text-green-700 bg-green-100 rounded">
                   수강 완료
                 </span>
-                    )}
-              </div>
-          )}
-        </div>
+              )}
+          </div>
+        )}
       </div>
+    </div>
   );
 };
 
