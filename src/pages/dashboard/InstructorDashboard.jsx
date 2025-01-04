@@ -1,15 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import {
-  FiUsers, FiBookOpen, FiDollarSign, FiStar,
-  FiTrendingUp, FiTrendingDown, FiActivity, FiMessageCircle, FiPlus, FiEdit2, FiSave, FiUpload
-} from 'react-icons/fi';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Tooltip as CustomTooltip } from 'react-tooltip'; // 추가
-import toast, { Toaster, useToasterStore } from 'react-hot-toast';
-import { StatsService } from '../../infrastructure/services/StatisticsService';
-import InstructorMyPage from '../instructor/InstructorMyPage';
+import React, {useCallback, useEffect, useState} from 'react';
+import {Link} from 'react-router-dom';
+import {useSelector} from 'react-redux';
+import {FiBookOpen, FiDollarSign, FiPlus, FiStar, FiTrendingDown, FiTrendingUp, FiUsers} from 'react-icons/fi';
+import {Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
+import {Tooltip as CustomTooltip} from 'react-tooltip'; // 추가
+import toast from 'react-hot-toast';
+import {StatsService} from '../../infrastructure/services/StatisticsService';
 import CourseQuizPage from '../instructor/CourseQuizPage';
 import ProfilePage from '../profile/ProfilePage';
 import axios from "axios";
@@ -145,10 +141,8 @@ function InstructorDashboard() {
           }
         }
       );
-      console.log("myCourseList : " + res.data.myCourseList);
       setRecentCourses(res.data.myCourseList);
-      setTotalPages(res.data.myCourseList.totalPages);
-
+      setTotalPages(res.data.totalPages);
     } catch (error) {
       console.error(error);
     }
