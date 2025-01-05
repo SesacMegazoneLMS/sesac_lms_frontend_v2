@@ -42,16 +42,14 @@ function CompleteProfile() {
       `${formData.countryCode}${formData.phoneNumber}`,
       formData.address
     )
-      .then(({ data }) => {
-        const { accessToken, idToken, refreshToken } = data.tokens;
-
+      .then(() => {
         // 토큰 저장
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("idToken", idToken);
-        localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("accessToken", location.state?.accessToken);
+        localStorage.setItem("idToken", location.state?.idToken);
+        localStorage.setItem("refreshToken", location.state?.refreshToken);
 
         return axios.get("https://api.sesac-univ.click/api/users/profile/", {
-          headers: { Authorization: `Bearer ${idToken}` },
+          headers: { Authorization: `Bearer ${location.state?.idToken}` },
         });
       })
       .then(({ data }) => {
