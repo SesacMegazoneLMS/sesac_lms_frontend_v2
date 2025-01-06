@@ -190,30 +190,11 @@ function LoginPage() {
               <span className="ml-2">카카오로 시작하기</span>
             </button>
             <button
-              onClick={handleNaverLogin}
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-            >
-              <img className="h-5 w-5" src="/icons/naver.png" alt="Naver" />
-              <span className="ml-2">네이버로 시작하기</span>
-            </button>
-            <button
               onClick={handleGoogleLogin}
               className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
             >
               <img className="h-5 w-5" src="/icons/google.png" alt="Google" />
               <span className="ml-2">구글로 시작하기</span>
-            </button>
-            <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-              <img
-                className="h-5 w-5"
-                src="/icons/facebook.png"
-                alt="Facebook"
-              />
-              <span className="ml-2">페이스북으로 시작하기</span>
-            </button>
-            <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-              <img className="h-5 w-5" src="/icons/github.png" alt="Github" />
-              <span className="ml-2">Github로 시작하기</span>
             </button>
           </div>
         </div>
