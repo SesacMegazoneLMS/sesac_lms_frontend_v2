@@ -1,70 +1,44 @@
-# Getting Started with Create React App123456
+# 새싹 LMS (Learning Management System) - Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 프로젝트 소개
+새싹 LMS의 프론트엔드 프로젝트입니다. React를 기반으로 한 학습관리시스템의 사용자 인터페이스를 제공합니다.
 
-## Available Scripts
+## 팀원
+- **팀장**: 신동진 (프로젝트 관리 및 사용자 CRUD)
+- **팀원**: 성기범 (결제 CRUD)
+- **팀원**: 정진욱 (강좌 CRUD)
+- **팀원**: 홍인표 (강의 CRUD)
 
-In the project directory, you can run:
+## 기술 스택
+- React 18
+- React Router DOM (라우팅)
+- Tailwind CSS (스타일링)
+- AWS SDK
+  - S3
+  - Cognito
+- Axios (HTTP 클라이언트)
+- HLS.js (비디오 스트리밍)
 
-### `npm start`
+### 필수 요구사항
+- Node.js 20.x 이상
+- npm 또는 yarn
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 주요 기능
+- 사용자 인증 (로그인/회원가입)
+- 강좌 관리
+  - 강좌 목록 조회
+  - 강좌 생성 및 수정
+  - 강의 콘텐츠 업로드
+- 강사 대시보드
+  - 통계 및 수익 현황
+- 비디오 스트리밍
+- 결제 시스템 연동
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 배포
+- AWS S3 및 CloudFront를 통한 호스팅
 
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 브라우저 지원
+- Chrome (최신 버전)
+- Firefox (최신 버전)
+- Safari (최신 버전)
+- Edge (최신 버전)
